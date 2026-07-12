@@ -1,0 +1,139 @@
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { useTimerStore } from './store/timer'
+import type {
+  StartTimerResult,
+} from './types'
+
+const queryKeys = {
+  tasks: ['tasks'] as const,
+  todayTasks: ['tasks', 'today'] as const,
+  activeTimer: ['active-timer'] as const,
+  timeEntries: ['time-entries'] as const,
+  timeSummary: ['time-summary'] as const,
+}
+
+export function useTasks() {
+  return useQuery({
+    queryKey: queryKeys.tasks,
+    queryFn: () => window.api.getTasks(),
+  })
+}
+
+export function useTodayTasks() {
+  return useQuery({
+    queryKey: queryKeys.todayTasks,
+    queryFn: () => window.api.getTodayTasks(),
+  })
+}
+
+export function useActiveTimer() {
+  return useQuery({
+    queryKey: queryKeys.activeTimer,
+    queryFn: () => window.api.getActiveTimer(),
+  })
+}
+
+export function useTimeEntries() {
+  return useQuery({
+    queryKey: queryKeys.timeEntries,
+    queryFn: () => window.api.getAllTimeEntries(),
+  })
+}
+
+export function useTimeSummary() {
+  return useQuery({
+    queryKey: queryKeys.timeSummary,
+    queryFn: () => window.api.getTimeSummary(),
+  })
+}
+
+export function useAddTask() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ name, description }: { name: string; description: string }) =>
+      window.api.addTask(name, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+    },
+  })
+}
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => window.api.deleteTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+    },
+  })
+}
+
+export function useToggleToday() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => window.api.toggleTodayTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+    },
+  })
+}
+
+export function useClearToday() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => window.api.clearTodayDate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+    },
+  })
+}
+
+export function useDeleteTimeEntry() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => window.api.deleteTimeEntry(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+      queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+    },
+  })
+}
+
+export function useStartTimer() {
+  const queryClient = useQueryClient()
+  const setActive = useTimerStore((s) => s.setActive)
+  return useMutation({
+    mutationFn: (taskId: number) => window.api.startTimer(taskId),
+    onSuccess: (result: StartTimerResult) => {
+      if (!result.conflict) {
+        setActive(result.entry, null)
+        queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+        queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+      }
+    },
+  })
+}
+
+export function useStopTimer() {
+  const queryClient = useQueryClient()
+  const setActive = useTimerStore((s) => s.setActive)
+  return useMutation({
+    mutationFn: (taskId: number) => window.api.stopTimer(taskId),
+    onSuccess: () => {
+      setActive(null, null)
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+      queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+    },
+  })
+}
