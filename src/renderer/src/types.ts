@@ -1,7 +1,16 @@
+export interface Status {
+  id: number
+  name: string
+  color: string
+  position: number
+  created_at: string
+}
+
 export interface Task {
   id: number
   name: string
   description: string
+  statusId?: number | null
   today_date?: string | null
   created_at: string
   total_duration?: number
@@ -36,7 +45,8 @@ export type StartTimerResult =
 
 export interface Api {
   getTasks: () => Promise<Task[]>
-  addTask: (name: string, description: string) => Promise<Task>
+  getTask: (id: number) => Promise<Task | null>
+  addTask: (name: string, description: string, statusId?: number) => Promise<Task>
   deleteTask: (id: number) => Promise<{ success: boolean }>
   getActiveTimer: () => Promise<ActiveTimerInfo | null>
   startTimer: (taskId: number) => Promise<StartTimerResult>
@@ -48,6 +58,12 @@ export interface Api {
   toggleTodayTask: (id: number) => Promise<{ success: boolean }>
   getTodayTasks: () => Promise<Task[]>
   clearTodayDate: (id: number) => Promise<{ success: boolean }>
+  getStatuses: () => Promise<Status[]>
+  addStatus: (name: string, color: string) => Promise<Status>
+  updateStatus: (id: number, name: string, color: string) => Promise<Status>
+  deleteStatus: (id: number) => Promise<{ success: boolean; reason?: string }>
+  reorderStatuses: (ids: number[]) => Promise<{ success: boolean }>
+  moveTask: (taskId: number, statusId: number) => Promise<Task>
 }
 
 declare global {

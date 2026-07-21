@@ -1,9 +1,9 @@
 import { ipcMain } from 'electron'
-import { desc, eq, sql, count } from 'drizzle-orm'
+import { desc, eq, sql, count, asc } from 'drizzle-orm'
 import { app } from 'electron'
 import { join } from 'path'
 import { createDb } from './db'
-import { tasks, timeEntries } from './db/schema'
+import { tasks, timeEntries, statuses } from './db/schema'
 
 let db: ReturnType<typeof createDb>
 
@@ -20,12 +20,49 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
 
   onTimerChange?.(!!initialActive)
 
+  ipcMain.handle('get-statuses', () => {
+    return db.select().from(statuses).orderBy(asc(statuses.position)).all()
+  })
+
+  ipcMain.handle('add-status', (_event, name: string, color: string) => {
+    const maxPos = db
+      .select({ maxPos: sql<number>`coalesce(max(${statuses.position}), -1)` })
+      .from(statuses)
+      .get()
+    return db.insert(statuses).values({ name, color, position: maxPos!.maxPos + 1 }).returning().get()
+  })
+
+  ipcMain.handle('update-status', (_event, id: number, name: string, color: string) => {
+    return db.update(statuses).set({ name, color }).where(eq(statuses.id, id)).returning().get()
+  })
+
+  ipcMain.handle('delete-status', (_event, id: number) => {
+    const count = db.select({ cnt: sql<number>`count(*)` }).from(tasks).where(eq(tasks.statusId, id)).get()
+    if (count!.cnt > 0) return { success: false, reason: 'Has tasks' }
+    db.delete(statuses).where(eq(statuses.id, id)).run()
+    return { success: true }
+  })
+
+  ipcMain.handle('reorder-statuses', (_event, ids: number[]) => {
+    db.transaction(() => {
+      ids.forEach((id, idx) => {
+        db.update(statuses).set({ position: idx }).where(eq(statuses.id, id)).run()
+      })
+    })
+    return { success: true }
+  })
+
+  ipcMain.handle('move-task', (_event, taskId: number, statusId: number) => {
+    return db.update(tasks).set({ statusId }).where(eq(tasks.id, taskId)).returning().get()
+  })
+
   ipcMain.handle('get-tasks', () => {
     return db
       .select({
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -37,8 +74,26 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
       .all()
   })
 
-  ipcMain.handle('add-task', (_event, name: string, description: string) => {
-    return db.insert(tasks).values({ name, description }).returning().get()
+  ipcMain.handle('get-task', (_event, id: number) => {
+    return db
+      .select({
+        id: tasks.id,
+        name: tasks.name,
+        description: tasks.description,
+        statusId: tasks.statusId,
+        today_date: tasks.today_date,
+        created_at: tasks.created_at,
+        total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
+      })
+      .from(tasks)
+      .leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
+      .where(eq(tasks.id, id))
+      .groupBy(tasks.id)
+      .get()
+  })
+
+  ipcMain.handle('add-task', (_event, name: string, description: string, statusId?: number) => {
+    return db.insert(tasks).values({ name, description, statusId }).returning().get()
   })
 
   ipcMain.handle('delete-task', (_event, id: number) => {
@@ -62,6 +117,7 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        statusId: tasks.statusId,
         created_at: tasks.created_at,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
       })
@@ -178,6 +234,7 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,

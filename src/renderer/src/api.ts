@@ -14,12 +14,21 @@ const queryKeys = {
   activeTimer: ['active-timer'] as const,
   timeEntries: ['time-entries'] as const,
   timeSummary: ['time-summary'] as const,
+  statuses: ['statuses'] as const,
 }
 
 export function useTasks() {
   return useQuery({
     queryKey: queryKeys.tasks,
     queryFn: () => window.api.getTasks(),
+  })
+}
+
+export function useTask(id: number) {
+  return useQuery({
+    queryKey: ['tasks', id],
+    queryFn: () => window.api.getTask(id),
+    enabled: !!id,
   })
 }
 
@@ -134,6 +143,67 @@ export function useStopTimer() {
       queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
       queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
       queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+    },
+  })
+}
+
+export function useStatuses() {
+  return useQuery({
+    queryKey: queryKeys.statuses,
+    queryFn: () => window.api.getStatuses(),
+  })
+}
+
+export function useAddStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ name, color }: { name: string; color: string }) =>
+      window.api.addStatus(name, color),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.statuses })
+    },
+  })
+}
+
+export function useUpdateStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, name, color }: { id: number; name: string; color: string }) =>
+      window.api.updateStatus(id, name, color),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.statuses })
+    },
+  })
+}
+
+export function useDeleteStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => window.api.deleteStatus(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.statuses })
+    },
+  })
+}
+
+export function useReorderStatuses() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) => window.api.reorderStatuses(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.statuses })
+    },
+  })
+}
+
+export function useMoveTask() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ taskId, statusId }: { taskId: number; statusId: number }) =>
+      window.api.moveTask(taskId, statusId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
     },
   })
 }

@@ -2,7 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
   getTasks: () => ipcRenderer.invoke('get-tasks'),
-  addTask: (name: string, description: string) => ipcRenderer.invoke('add-task', name, description),
+  getTask: (id: number) => ipcRenderer.invoke('get-task', id),
+  addTask: (name: string, description: string, statusId?: number) => ipcRenderer.invoke('add-task', name, description, statusId),
   deleteTask: (id: number) => ipcRenderer.invoke('delete-task', id),
   getActiveTimer: () => ipcRenderer.invoke('get-active-timer'),
   startTimer: (taskId: number) => ipcRenderer.invoke('start-timer', taskId),
@@ -14,4 +15,10 @@ contextBridge.exposeInMainWorld('api', {
   toggleTodayTask: (id: number) => ipcRenderer.invoke('toggle-today', id),
   getTodayTasks: () => ipcRenderer.invoke('get-today-tasks'),
   clearTodayDate: (id: number) => ipcRenderer.invoke('clear-today-date', id),
+  getStatuses: () => ipcRenderer.invoke('get-statuses'),
+  addStatus: (name: string, color: string) => ipcRenderer.invoke('add-status', name, color),
+  updateStatus: (id: number, name: string, color: string) => ipcRenderer.invoke('update-status', id, name, color),
+  deleteStatus: (id: number) => ipcRenderer.invoke('delete-status', id),
+  reorderStatuses: (ids: number[]) => ipcRenderer.invoke('reorder-statuses', ids),
+  moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke('move-task', taskId, statusId),
 })
