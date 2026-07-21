@@ -7,7 +7,11 @@ import { tasks, timeEntries, statuses } from './db/schema'
 
 let db: ReturnType<typeof createDb>
 
-export function initDatabase(onTimerChange?: (active: boolean) => void) {
+export type TimerChangeInfo =
+  | { active: false }
+  | { active: true; startTime: string; taskName: string }
+
+export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
   const dbPath = join(app.getPath('userData'), 'tasks.db')
   db = createDb(dbPath)
 
@@ -18,7 +22,12 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
     .limit(1)
     .all()[0]
 
-  onTimerChange?.(!!initialActive)
+  if (initialActive) {
+    const task = db.select({ name: tasks.name }).from(tasks).where(eq(tasks.id, initialActive.taskId)).get()
+    onTimerChange?.({ active: true, startTime: initialActive.startTime, taskName: task?.name ?? 'Unknown' })
+  } else {
+    onTimerChange?.({ active: false })
+  }
 
   ipcMain.handle('get-statuses', () => {
     return db.select().from(statuses).orderBy(asc(statuses.position)).all()
@@ -150,7 +159,8 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
       .returning()
       .get()
 
-    onTimerChange?.(true)
+    const task = db.select({ name: tasks.name }).from(tasks).where(eq(tasks.id, taskId)).get()
+    onTimerChange?.({ active: true, startTime: now, taskName: task?.name ?? 'Unknown' })
     return { conflict: false, entry }
   })
 
@@ -176,7 +186,7 @@ export function initDatabase(onTimerChange?: (active: boolean) => void) {
       .returning()
       .get()
 
-    onTimerChange?.(false)
+    onTimerChange?.({ active: false })
     return entry
   })
 
