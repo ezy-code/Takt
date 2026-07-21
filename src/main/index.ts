@@ -1,15 +1,47 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, Notification, ipcMain } from 'electron'
 import { join } from 'path'
 import { initDatabase } from './database'
+import type { TimerChangeInfo } from './database'
 
 let tray: Tray | null = null
 let isQuitting = false
 let isTimerActive = false
+let timerStartTime: string | null = null
+let timerTaskName: string | null = null
+let trayTimerInterval: ReturnType<typeof setInterval> | null = null
 
 function getTrayIcon(): string {
   const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
   const suffix = isTimerActive ? '-active' : ''
   return join(__dirname, `../../resources/icon-${theme}${suffix}.png`)
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds <= 0) return '0:00'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function startTrayTimerUpdate() {
+  stopTrayTimerUpdate()
+  const update = () => {
+    if (!timerStartTime || !timerTaskName) return
+    const elapsed = Math.floor((Date.now() - new Date(timerStartTime).getTime()) / 1000)
+    tray?.setToolTip(`⏱ ${timerTaskName} — ${formatDuration(elapsed)}`)
+  }
+  update()
+  trayTimerInterval = setInterval(update, 1000)
+}
+
+function stopTrayTimerUpdate() {
+  if (trayTimerInterval) {
+    clearInterval(trayTimerInterval)
+    trayTimerInterval = null
+  }
+  tray?.setToolTip('Electron App')
 }
 
 function createTray() {
@@ -81,8 +113,18 @@ ipcMain.handle('show-notification', (_event, title: string, body: string) => {
 })
 
 app.whenReady().then(() => {
-  initDatabase((active) => {
-    isTimerActive = active
+  initDatabase((info: TimerChangeInfo) => {
+    if (info.active) {
+      isTimerActive = true
+      timerStartTime = info.startTime
+      timerTaskName = info.taskName
+      startTrayTimerUpdate()
+    } else {
+      isTimerActive = false
+      timerStartTime = null
+      timerTaskName = null
+      stopTrayTimerUpdate()
+    }
     updateTrayIcon()
   })
   createWindow()
