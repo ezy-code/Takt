@@ -6,6 +6,8 @@ import {
 import { useTimerStore } from './store/timer'
 import type {
   StartTimerResult,
+  Task,
+  TimeEntry,
 } from './types'
 
 const queryKeys = {
@@ -136,11 +138,21 @@ export function useStopTimer() {
   const setActive = useTimerStore((s) => s.setActive)
   return useMutation({
     mutationFn: (taskId: number) => window.api.stopTimer(taskId),
-    onSuccess: () => {
+    onSuccess: (result: TimeEntry | null, taskId: number) => {
       setActive(null, null)
+      if (result?.duration) {
+        const updater = (tasks: Task[] | undefined) => {
+          if (!tasks) return tasks
+          return tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, total_duration: (t.total_duration ?? 0) + result.duration }
+              : t
+          )
+        }
+        queryClient.setQueryData(queryKeys.tasks, updater)
+        queryClient.setQueryData(queryKeys.todayTasks, updater)
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
       queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
       queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
     },
