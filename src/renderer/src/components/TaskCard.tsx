@@ -1,8 +1,9 @@
-import { Text, Group, Button, Card, ActionIcon, Tooltip } from '@mantine/core'
+import { Text, Group, Button, Card, ActionIcon, Tooltip, Anchor } from '@mantine/core'
 import { IconCalendarPlus, IconCalendarCheck, IconAlertCircle, IconX } from '@tabler/icons-react'
+import { useNavigate } from '@tanstack/react-router'
 import ReactMarkdown from 'react-markdown'
 import { TimerControl } from './TimerControl'
-import { useDeleteTask, useToggleToday, useClearToday } from '../api'
+import { useDeleteTask, useToggleToday, useClearToday, useStatuses } from '../api'
 import type { Task } from '../types'
 
 interface TaskCardProps {
@@ -17,10 +18,13 @@ function getTodayState(todayDate: string | null | undefined): 'none' | 'today' |
 }
 
 export function TaskCard({ task }: TaskCardProps) {
+  const navigate = useNavigate()
   const deleteTask = useDeleteTask()
   const toggleToday = useToggleToday()
   const clearToday = useClearToday()
+  const { data: statuses } = useStatuses()
 
+  const status = statuses?.find((s) => s.id === task.statusId)
   const todayState = getTodayState(task.today_date ?? null)
 
   const TodayIcon = todayState === 'today' ? IconCalendarCheck
@@ -40,7 +44,15 @@ export function TaskCard({ task }: TaskCardProps) {
       <Group justify="space-between" align="flex-start">
         <div style={{ flex: 1 }}>
           <Group gap="xs">
-            <Text fw={500}>{task.name}</Text>
+            <Anchor component="button" fw={500} onClick={() => navigate({ to: '/tasks/$id', params: { id: String(task.id) } })}>
+              {task.name}
+            </Anchor>
+            {status && (
+              <Group gap={4}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }} />
+                <Text size="xs" c="dimmed">{status.name}</Text>
+              </Group>
+            )}
             {todayState === 'overdue' && (
               <Text size="xs" c="red">(overdue)</Text>
             )}

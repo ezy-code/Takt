@@ -1,10 +1,19 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
 
+export const statuses = sqliteTable('statuses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  color: text('color').notNull().default('#868e96'),
+  position: integer('position').notNull().default(0),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
+
 export const tasks = sqliteTable('tasks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   description: text('description').default(''),
+  statusId: integer('status_id').references(() => statuses.id),
   today_date: text('today_date'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
@@ -20,7 +29,15 @@ export const timeEntries = sqliteTable('time_entries', {
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
-export const tasksRelations = relations(tasks, ({ many }) => ({
+export const statusesRelations = relations(statuses, ({ many }) => ({
+  tasks: many(tasks),
+}))
+
+export const tasksRelations = relations(tasks, ({ many, one }) => ({
+  status: one(statuses, {
+    fields: [tasks.statusId],
+    references: [statuses.id],
+  }),
   timeEntries: many(timeEntries),
 }))
 
