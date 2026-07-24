@@ -3,6 +3,7 @@ import { join } from 'path'
 import { initDatabase } from './database'
 import type { TimerChangeInfo } from './database'
 
+let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
 let isTimerActive = false
@@ -84,9 +85,10 @@ function updateTrayIcon() {
 }
 
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: nativeImage.createFromPath(join(__dirname, '../../resources/app-icon.png')),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
