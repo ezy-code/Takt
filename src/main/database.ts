@@ -105,6 +105,10 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
     return db.insert(tasks).values({ name, description, statusId }).returning().get()
   })
 
+  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, statusId?: number) => {
+    return db.update(tasks).set({ name, description, statusId }).where(eq(tasks.id, id)).returning().get()
+  })
+
   ipcMain.handle('delete-task', (_event, id: number) => {
     db.delete(timeEntries).where(eq(timeEntries.taskId, id)).run()
     db.delete(tasks).where(eq(tasks.id, id)).run()
