@@ -41,7 +41,7 @@ function stopTrayTimerUpdate() {
     clearInterval(trayTimerInterval)
     trayTimerInterval = null
   }
-  tray?.setToolTip('Electron App')
+  tray?.setToolTip('Tact')
 }
 
 function createTray() {
@@ -72,7 +72,7 @@ function createTray() {
     }
   ])
 
-  tray.setToolTip('Electron App')
+  tray.setToolTip('Tact')
   tray.setContextMenu(contextMenu)
   tray.on('click', showWindow)
 }
