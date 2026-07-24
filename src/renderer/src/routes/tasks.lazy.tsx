@@ -7,8 +7,9 @@ import { useTimerStore } from '../store/timer'
 import { TaskCard } from '../components/TaskCard'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { ManageStatusesModal } from '../components/ManageStatusesModal'
+import { ROUTES } from '../routes'
 
-const Route = createLazyRoute('/tasks')({
+const Route = createLazyRoute(ROUTES.TASKS)({
   component: TasksPage,
 })
 
@@ -34,7 +35,7 @@ function TasksPage() {
         {tab === 'list' ? (
           <Button
             leftSection={<IconPlus size={16} />}
-            onClick={() => navigate({ to: '/tasks/new' })}
+            onClick={() => navigate({ to: ROUTES.TASKS_NEW })}
           >
             New Task
           </Button>

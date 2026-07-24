@@ -5,11 +5,12 @@ import { IconBell, IconPlus, IconList, IconCalendarCheck, IconClock } from '@tab
 import { useTimerStore } from '../store/timer'
 import { useActiveTimer } from '../api'
 import { TimerControl } from './TimerControl'
+import { ROUTES } from '../routes'
 
 const navItems = [
-  { label: 'Tasks', path: '/tasks', icon: IconList },
-  { label: 'Today', path: '/tasks/today', icon: IconCalendarCheck },
-  { label: 'Time Entries', path: '/time-entries', icon: IconClock },
+  { label: 'Tasks', path: ROUTES.TASKS, icon: IconList },
+  { label: 'Today', path: ROUTES.TASKS_TODAY, icon: IconCalendarCheck },
+  { label: 'Time Entries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
 ]
 
 export default function AppLayout() {
@@ -81,14 +82,14 @@ export default function AppLayout() {
             leftSection={item.icon && <item.icon size={16} />}
             active={location.pathname === item.path}
             onClick={() => navigate({ to: item.path })}
-            rightSection={item.path === '/tasks' ? (
+            rightSection={item.path === ROUTES.TASKS ? (
               <ActionIcon
                 variant="subtle"
                 color="gray"
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation()
-                  navigate({ to: '/tasks/new' })
+                  navigate({ to: ROUTES.TASKS_NEW })
                 }}
               >
                 <IconPlus size={14} />

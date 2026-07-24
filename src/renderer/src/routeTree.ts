@@ -2,13 +2,15 @@ import { createRouter, createRootRoute, createRoute, useNavigate } from '@tansta
 import { useEffect } from 'react'
 import AppLayout from './components/AppLayout'
 
+import { ROUTES } from './routes'
+
 const rootRoute = createRootRoute({
   component: AppLayout
 })
 
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tasks',
+  path: ROUTES.TASKS,
   validateSearch: (search: Record<string, unknown>) => ({
     tab: (search.tab as string) || 'list',
   }),
@@ -16,38 +18,38 @@ const tasksRoute = createRoute({
 
 const tasksNewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tasks/new',
+  path: ROUTES.TASKS_NEW,
 }).lazy(() => import('./routes/tasks-new.lazy').then((d) => d.Route))
 
 const taskDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tasks/$id',
+  path: ROUTES.TASK_DETAIL,
 }).lazy(() => import('./routes/task-detail.lazy').then((d) => d.Route))
 
 const taskEditRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tasks/$id/edit',
+  path: ROUTES.TASK_EDIT,
 }).lazy(() => import('./routes/tasks-edit.lazy').then((d) => d.Route))
 
 const todayRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tasks/today',
+  path: ROUTES.TASKS_TODAY,
 }).lazy(() => import('./routes/today.lazy').then((d) => d.Route))
 
 const timeEntriesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/time-entries',
+  path: ROUTES.TIME_ENTRIES,
 }).lazy(() => import('./routes/time-entries.lazy').then((d) => d.Route))
 
 function IndexRedirect() {
   const navigate = useNavigate()
-  useEffect(() => { navigate({ to: '/tasks' }) }, [])
+  useEffect(() => { navigate({ to: ROUTES.TASKS }) }, [])
   return null
 }
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: ROUTES.INDEX,
   component: IndexRedirect
 })
 

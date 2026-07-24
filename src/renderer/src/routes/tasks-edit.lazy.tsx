@@ -4,9 +4,10 @@ import { useNavigate, createLazyRoute, useParams } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useTask, useUpdateTask } from '../api'
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
+import { ROUTES } from '../routes'
 
 function TasksEditPage() {
-  const { id } = useParams({ from: '/tasks/$id/edit' })
+  const { id } = useParams({ from: ROUTES.TASK_EDIT })
   const navigate = useNavigate()
   const { data: task, isLoading } = useTask(Number(id))
   const updateTask = useUpdateTask()
@@ -18,7 +19,7 @@ function TasksEditPage() {
       if (!value.name.trim()) return
       const description = editorRef.current?.getJSON() ?? ''
       await updateTask.mutateAsync({ id: Number(id), name: value.name.trim(), description: description })
-      navigate({ to: '/tasks/$id', params: { id } })
+navigate({ to: ROUTES.TASK_DETAIL, params: { id } })
     },
   })
 
@@ -54,7 +55,7 @@ function TasksEditPage() {
             />
           </div>
           <Group justify="space-between">
-            <Button variant="default" onClick={() => navigate({ to: '/tasks/$id', params: { id } })}>
+            <Button variant="default" onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id } })}>
               Cancel
             </Button>
             <Button type="submit">Save</Button>
@@ -65,6 +66,6 @@ function TasksEditPage() {
   )
 }
 
-export const Route = createLazyRoute('/tasks/$id/edit')({
+export const Route = createLazyRoute(ROUTES.TASK_EDIT)({
   component: TasksEditPage,
 })

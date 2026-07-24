@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import ReactMarkdown from 'react-markdown'
 import { TimerControl } from './TimerControl'
 import { useDeleteTask, useToggleToday, useClearToday, useStatuses } from '../api'
+import { ROUTES } from '../routes'
 import type { Task } from '../types'
 
 interface TaskCardProps {
@@ -44,7 +45,7 @@ export function TaskCard({ task }: TaskCardProps) {
       <Group justify="space-between" align="flex-start">
         <div style={{ flex: 1 }}>
           <Group gap="xs">
-            <Anchor component="button" fw={500} onClick={() => navigate({ to: '/tasks/$id', params: { id: String(task.id) } })}>
+            <Anchor component="button" fw={500} onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}>
               {task.name}
             </Anchor>
             {status && (
