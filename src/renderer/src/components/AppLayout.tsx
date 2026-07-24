@@ -28,12 +28,12 @@ export default function AppLayout() {
   }, [activeTimer, setActive])
 
   const showNotificationNow = useCallback(() => {
-    window.api.showNotification('My App', 'Уведомление сейчас!')
+    window.api.showNotification('Tact', 'Уведомление сейчас!')
   }, [])
 
   const showNotificationDelayed = useCallback(() => {
     setTimeout(() => {
-      window.api.showNotification('My App', 'Уведомление через 20 секунд!')
+      window.api.showNotification('Tact', 'Уведомление через 20 секунд!')
     }, 20000)
   }, [])
 
@@ -45,7 +45,7 @@ export default function AppLayout() {
     >
       <AppShell.Header p="md">
         <Group h="100%" gap="md">
-          <Title order={3}>My App</Title>
+          <Title order={3}>Tact</Title>
           {activeEntry && activeTask && (
             <>
               <Box style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: 'var(--mantine-color-green-6)', flexShrink: 0 }} />
