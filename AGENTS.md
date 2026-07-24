@@ -30,7 +30,12 @@ src/
         ├── routeTree.ts      TanStack Router config
         ├── types.ts          Shared types + Window API
         ├── routes/
-        │   └── tasks.lazy.tsx   /tasks page
+        │   ├── tasks.lazy.tsx        /tasks page
+        │   ├── tasks-new.lazy.tsx    /tasks/new page
+        │   ├── tasks-edit.lazy.tsx   /tasks/$id/edit page
+        │   ├── task-detail.lazy.tsx  /tasks/$id page
+        │   ├── today.lazy.tsx        /tasks/today page
+        │   └── time-entries.lazy.tsx /time-entries page
         ├── store/
         │   └── tasks.ts         Zustand store
         └── components/
@@ -55,3 +60,6 @@ src/
 - **Renderer** — React app in a sandboxed Chromium window. No Node.js access.
   Communicates with main process exclusively through `window.api`.
 - **SQLite** — Database file stored in Electron's `userData` directory.
+
+## Guidlines
+- Use mcp uservers you have to observe documentation or browse web
