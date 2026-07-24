@@ -41,6 +41,11 @@ const timeEntriesRoute = createRoute({
   path: ROUTES.TIME_ENTRIES,
 }).lazy(() => import('./routes/time-entries.lazy').then((d) => d.Route))
 
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.SETTINGS,
+}).lazy(() => import('./routes/settings.lazy').then((d) => d.Route))
+
 function IndexRedirect() {
   const navigate = useNavigate()
   useEffect(() => { navigate({ to: ROUTES.TASKS }) }, [])
@@ -53,7 +58,7 @@ const indexRoute = createRoute({
   component: IndexRedirect
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, tasksRoute, tasksNewRoute, taskDetailRoute, taskEditRoute, todayRoute, timeEntriesRoute])
+const routeTree = rootRoute.addChildren([indexRoute, tasksRoute, tasksNewRoute, taskDetailRoute, taskEditRoute, todayRoute, timeEntriesRoute, settingsRoute])
 
 export const router = createRouter({ routeTree })
 

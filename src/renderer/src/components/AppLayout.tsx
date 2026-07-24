@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { AppShell, NavLink, Title, Group, Text, Button, ActionIcon, Box } from '@mantine/core'
 import { Outlet, useNavigate, useLocation } from '@tanstack/react-router'
-import { IconBell, IconPlus, IconList, IconCalendarCheck, IconClock } from '@tabler/icons-react'
+import { IconBell, IconPlus, IconList, IconCalendarCheck, IconClock, IconSettings } from '@tabler/icons-react'
 import { useTimerStore } from '../store/timer'
 import { useActiveTimer } from '../api'
 import { TimerControl } from './TimerControl'
@@ -11,6 +11,7 @@ const navItems = [
   { label: 'Tasks', path: ROUTES.TASKS, icon: IconList },
   { label: 'Today', path: ROUTES.TASKS_TODAY, icon: IconCalendarCheck },
   { label: 'Time Entries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
+  { label: 'Settings', path: ROUTES.SETTINGS, icon: IconSettings },
 ]
 
 export default function AppLayout() {
