@@ -73,6 +73,18 @@ export function useAddTask() {
   })
 }
 
+export function useUpdateTask() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, name, description }: { id: number; name: string; description: string }) =>
+      window.api.updateTask(id, name, description),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
+}
+
 export function useDeleteTask() {
   const queryClient = useQueryClient()
   return useMutation({

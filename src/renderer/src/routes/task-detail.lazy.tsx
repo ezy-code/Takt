@@ -19,9 +19,14 @@ function TaskDetailPage() {
       <Stack>
         <Group justify="space-between">
           <Title order={1}>{task.name}</Title>
-          <Button variant="default" onClick={() => navigate({ to: '/tasks' })}>
-            Back
-          </Button>
+          <Group>
+            <Button variant="default" onClick={() => navigate({ to: '/tasks/$id/edit', params: { id } })}>
+              Edit
+            </Button>
+            <Button variant="default" onClick={() => navigate({ to: '/tasks' })}>
+              Back
+            </Button>
+          </Group>
         </Group>
         {status && (
           <Group gap="xs">
@@ -34,7 +39,9 @@ function TaskDetailPage() {
         </Text>
         {task.description && (
           <Paper withBorder p="md" radius="md">
-            <ExtensiveEditor
+                      <ExtensiveEditor
+                          isEditorViewTabsVisible={false}
+                          placeholder={''}
               defaultContent={task.description}
               initialMode="visual-only"
               availableModes={["visual-only"]}

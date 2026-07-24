@@ -48,6 +48,7 @@ export interface Api {
   getTask: (id: number) => Promise<Task | null>
   addTask: (name: string, description: string, statusId?: number) => Promise<Task>
   deleteTask: (id: number) => Promise<{ success: boolean }>
+  updateTask: (id: number, name: string, description: string, statusId?: number) => Promise<Task>
   getActiveTimer: () => Promise<ActiveTimerInfo | null>
   startTimer: (taskId: number) => Promise<StartTimerResult>
   stopTimer: (taskId: number) => Promise<TimeEntry | null>
