@@ -65,6 +65,8 @@ export interface Api {
   deleteStatus: (id: number) => Promise<{ success: boolean; reason?: string }>
   reorderStatuses: (ids: number[]) => Promise<{ success: boolean }>
   moveTask: (taskId: number, statusId: number) => Promise<Task>
+  getAutostart: () => Promise<boolean>
+  setAutostart: (enabled: boolean) => Promise<void>
 }
 
 declare global {
