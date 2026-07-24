@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, Notification, ipcMain } from 'electron'
 import { join } from 'path'
 import { initDatabase } from './database'
+import { initAutostart } from './autostart'
 import type { TimerChangeInfo } from './database'
 
 let mainWindow: BrowserWindow | null = null
@@ -115,6 +116,7 @@ ipcMain.handle('show-notification', (_event, title: string, body: string) => {
 })
 
 app.whenReady().then(() => {
+  initAutostart()
   initDatabase((info: TimerChangeInfo) => {
     if (info.active) {
       isTimerActive = true
@@ -130,6 +132,7 @@ app.whenReady().then(() => {
     updateTrayIcon()
   })
   createWindow()
+  if (process.argv.includes('--hidden')) mainWindow?.hide()
   createTray()
 
   nativeTheme.on('updated', updateTrayIcon)

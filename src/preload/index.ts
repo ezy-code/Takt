@@ -22,4 +22,6 @@ contextBridge.exposeInMainWorld('api', {
   deleteStatus: (id: number) => ipcRenderer.invoke('delete-status', id),
   reorderStatuses: (ids: number[]) => ipcRenderer.invoke('reorder-statuses', ids),
   moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke('move-task', taskId, statusId),
+  getAutostart: () => ipcRenderer.invoke('get-autostart'),
+  setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
 })
