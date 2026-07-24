@@ -3,6 +3,7 @@ import { createLazyRoute } from '@tanstack/react-router'
 import { formatDuration } from '../hooks/useTimer'
 import { useTimeEntries, useTimeSummary, useDeleteTimeEntry } from '../api'
 import { TimerControl } from '../components/TimerControl'
+import { ROUTES } from '../routes'
 
 function TimeEntriesPage() {
   const { data: entries = [] } = useTimeEntries()
@@ -78,6 +79,6 @@ function TimeEntriesPage() {
   )
 }
 
-export const Route = createLazyRoute('/time-entries')({
+export const Route = createLazyRoute(ROUTES.TIME_ENTRIES)({
   component: TimeEntriesPage,
 })

@@ -2,9 +2,10 @@ import { Container, Title, Text, Button, Group, Stack, Paper } from '@mantine/co
 import { useNavigate, createLazyRoute, useParams } from '@tanstack/react-router'
 import { ExtensiveEditor } from '@lyfie/luthor'
 import { useTask, useStatuses } from '../api'
+import { ROUTES } from '../routes'
 
 function TaskDetailPage() {
-  const { id } = useParams({ from: '/tasks/$id' })
+  const { id } = useParams({ from: ROUTES.TASK_DETAIL })
   const { data: task, isLoading } = useTask(Number(id))
   const { data: statuses } = useStatuses()
   const navigate = useNavigate()
@@ -20,10 +21,10 @@ function TaskDetailPage() {
         <Group justify="space-between">
           <Title order={1}>{task.name}</Title>
           <Group>
-            <Button variant="default" onClick={() => navigate({ to: '/tasks/$id/edit', params: { id } })}>
+            <Button variant="default" onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id } })}>
               Edit
             </Button>
-            <Button variant="default" onClick={() => navigate({ to: '/tasks' })}>
+            <Button variant="default" onClick={() => navigate({ to: ROUTES.TASKS })}>
               Back
             </Button>
           </Group>
@@ -54,6 +55,6 @@ function TaskDetailPage() {
   )
 }
 
-export const Route = createLazyRoute('/tasks/$id')({
+export const Route = createLazyRoute(ROUTES.TASK_DETAIL)({
   component: TaskDetailPage,
 })

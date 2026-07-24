@@ -4,6 +4,7 @@ import { useNavigate, createLazyRoute } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useAddTask } from '../api'
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
+import { ROUTES } from '../routes'
 
 function TasksNewPage() {
   const navigate = useNavigate()
@@ -16,7 +17,7 @@ function TasksNewPage() {
       if (!value.name.trim()) return
         const description = editorRef.current?.getJSON() ?? '{}';
         await addTask.mutateAsync({ name: value.name.trim(), description: description });
-      navigate({ to: '/tasks' })
+      navigate({ to: ROUTES.TASKS })
     },
   })
 
@@ -49,7 +50,7 @@ function TasksNewPage() {
             />
           </div>
           <Group justify="space-between">
-            <Button variant="default" onClick={() => navigate({ to: '/tasks' })}>
+            <Button variant="default" onClick={() => navigate({ to: ROUTES.TASKS })}>
               Cancel
             </Button>
             <Button type="submit">Create</Button>
@@ -60,6 +61,6 @@ function TasksNewPage() {
   )
 }
 
-export const Route = createLazyRoute('/tasks/new')({
+export const Route = createLazyRoute(ROUTES.TASKS_NEW)({
   component: TasksNewPage,
 })

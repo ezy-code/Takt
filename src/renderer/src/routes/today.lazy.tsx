@@ -4,6 +4,7 @@ import { createLazyRoute } from '@tanstack/react-router'
 import { useTodayTasks, useActiveTimer } from '../api'
 import { useTimerStore } from '../store/timer'
 import { TaskCard } from '../components/TaskCard'
+import { ROUTES } from '../routes'
 
 function TodayPage() {
   const { data: todayTasks } = useTodayTasks()
@@ -54,6 +55,6 @@ function TodayPage() {
   )
 }
 
-export const Route = createLazyRoute('/tasks/today')({
+export const Route = createLazyRoute(ROUTES.TASKS_TODAY)({
   component: TodayPage,
 })
