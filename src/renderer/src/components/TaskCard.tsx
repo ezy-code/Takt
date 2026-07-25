@@ -58,11 +58,15 @@ export function TaskCard({ task }: TaskCardProps) {
               <Text size="xs" c="red">(overdue)</Text>
             )}
           </Group>
-          {task.description && (
-            <Text size="sm" c="dimmed" component="div">
-              <ReactMarkdown>{task.description}</ReactMarkdown>
-            </Text>
-          )}
+          {task.description_md && (() => {
+            const clean = task.description_md.replace(/<!-- luthor:meta .*? -->/g, '').trim()
+            const preview = clean.length > 150 ? clean.slice(0, 150) + '…' : clean
+            return preview ? (
+              <Text size="sm" c="dimmed" component="div">
+                <ReactMarkdown>{preview}</ReactMarkdown>
+              </Text>
+            ) : null
+          })()}
           <Text size="xs" c="gray" mt={4}>
             {new Date(task.created_at).toLocaleString()}
           </Text>

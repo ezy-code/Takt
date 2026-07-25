@@ -30,13 +30,16 @@ export function TaskForm({ id }: TaskFormProps) {
     defaultValues: { name: task?.name ?? '' },
     onSubmit: async ({ value }) => {
       if (!value.name.trim()) return
-      const raw = editorRef.current?.getJSON()
+      const editor = editorRef.current
+      const raw = editor?.getJSON()
       const description = raw ?? (isEdit ? '' : '{}')
+      const description_md = editor?.getMarkdown() ?? ''
+      const description_html = editor?.getHTML() ?? ''
       if (isEdit) {
-        await updateTask.mutateAsync({ id, name: value.name.trim(), description })
+        await updateTask.mutateAsync({ id, name: value.name.trim(), description, description_md, description_html })
         navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
       } else {
-        await addTask.mutateAsync({ name: value.name.trim(), description })
+        await addTask.mutateAsync({ name: value.name.trim(), description, description_md, description_html })
         navigate({ to: ROUTES.TASKS })
       }
     },

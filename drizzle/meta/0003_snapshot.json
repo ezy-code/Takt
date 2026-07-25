@@ -2,7 +2,7 @@
   "version": "6",
   "dialect": "sqlite",
   "id": "2aff6a85-ba1e-4e70-8d11-1b4582161685",
-  "prevId": "7e8d9fdc-02f0-4d2e-a4bc-4006bd2e4a78",
+  "prevId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "tables": {
     "statuses": {
       "name": "statuses",
