@@ -65,8 +65,8 @@ export function useTimeSummary() {
 export function useAddTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ name, description }: { name: string; description: string }) =>
-      window.api.addTask(name, description),
+    mutationFn: ({ name, description, description_md, description_html }: { name: string; description: string; description_md?: string; description_html?: string }) =>
+      window.api.addTask(name, description, description_md, description_html),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
     },
@@ -76,8 +76,8 @@ export function useAddTask() {
 export function useUpdateTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, name, description }: { id: number; name: string; description: string }) =>
-      window.api.updateTask(id, name, description),
+    mutationFn: ({ id, name, description, description_md, description_html }: { id: number; name: string; description: string; description_md?: string; description_html?: string }) =>
+      window.api.updateTask(id, name, description, description_md, description_html),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })

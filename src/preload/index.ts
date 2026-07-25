@@ -3,9 +3,9 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('api', {
   getTasks: () => ipcRenderer.invoke('get-tasks'),
   getTask: (id: number) => ipcRenderer.invoke('get-task', id),
-  addTask: (name: string, description: string, statusId?: number) => ipcRenderer.invoke('add-task', name, description, statusId),
+  addTask: (name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => ipcRenderer.invoke('add-task', name, description, description_md, description_html, statusId),
   deleteTask: (id: number) => ipcRenderer.invoke('delete-task', id),
-  updateTask: (id: number, name: string, description: string, statusId?: number) => ipcRenderer.invoke('update-task', id, name, description, statusId),
+  updateTask: (id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => ipcRenderer.invoke('update-task', id, name, description, description_md, description_html, statusId),
   getActiveTimer: () => ipcRenderer.invoke('get-active-timer'),
   startTimer: (taskId: number) => ipcRenderer.invoke('start-timer', taskId),
   stopTimer: (taskId: number) => ipcRenderer.invoke('stop-timer', taskId),

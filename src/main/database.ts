@@ -71,6 +71,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        description_md: tasks.descriptionMarkdown,
+        description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
@@ -89,6 +91,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        description_md: tasks.descriptionMarkdown,
+        description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
@@ -101,12 +105,12 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
       .get()
   })
 
-  ipcMain.handle('add-task', (_event, name: string, description: string, statusId?: number) => {
-    return db.insert(tasks).values({ name, description, statusId }).returning().get()
+  ipcMain.handle('add-task', (_event, name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => {
+    return db.insert(tasks).values({ name, description, descriptionMarkdown: description_md ?? '', descriptionHtml: description_html ?? '', statusId }).returning().get()
   })
 
-  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, statusId?: number) => {
-    return db.update(tasks).set({ name, description, statusId }).where(eq(tasks.id, id)).returning().get()
+  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => {
+    return db.update(tasks).set({ name, description, descriptionMarkdown: description_md ?? '', descriptionHtml: description_html ?? '', statusId }).where(eq(tasks.id, id)).returning().get()
   })
 
   ipcMain.handle('delete-task', (_event, id: number) => {
@@ -130,6 +134,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        description_md: tasks.descriptionMarkdown,
+        description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
         created_at: tasks.created_at,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -248,6 +254,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         id: tasks.id,
         name: tasks.name,
         description: tasks.description,
+        description_md: tasks.descriptionMarkdown,
+        description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,

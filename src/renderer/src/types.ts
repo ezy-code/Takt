@@ -10,6 +10,8 @@ export interface Task {
   id: number
   name: string
   description: string
+  description_md: string
+  description_html: string
   statusId?: number | null
   today_date?: string | null
   created_at: string
@@ -46,9 +48,9 @@ export type StartTimerResult =
 export interface Api {
   getTasks: () => Promise<Task[]>
   getTask: (id: number) => Promise<Task | null>
-  addTask: (name: string, description: string, statusId?: number) => Promise<Task>
+  addTask: (name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => Promise<Task>
   deleteTask: (id: number) => Promise<{ success: boolean }>
-  updateTask: (id: number, name: string, description: string, statusId?: number) => Promise<Task>
+  updateTask: (id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => Promise<Task>
   getActiveTimer: () => Promise<ActiveTimerInfo | null>
   startTimer: (taskId: number) => Promise<StartTimerResult>
   stopTimer: (taskId: number) => Promise<TimeEntry | null>
