@@ -1,41 +1,56 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Group, ScrollArea, Text, Loader } from '@mantine/core'
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
   closestCorners,
+  pointerWithin,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DragOverEvent,
+  type UniqueIdentifier,
 } from '@dnd-kit/core'
 import {
   SortableContext,
   horizontalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable'
-import { useTasks, useStatuses, useMoveTask, useReorderStatuses } from '../api'
+import { useTasks, useStatuses, useMoveTask, useReorderStatuses, useReorderTasks } from '../api'
 import { KanbanColumn } from './KanbanColumn'
-import { AddStatusColumn } from './AddStatusColumn'
 import { TaskCard } from './TaskCard'
+import { AddStatusColumn } from './AddStatusColumn'
 import type { Task, Status } from '../types'
-import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 
 export function KanbanBoard() {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [activeColumn, setActiveColumn] = useState<Status | null>(null)
   const [localStatuses, setLocalStatuses] = useState<Status[]>([])
   const [columnTasks, setColumnTasks] = useState<Record<number, Task[]>>({})
+
   const { data: tasks, isLoading: tasksLoading } = useTasks()
   const { data: statuses, isLoading: statusesLoading } = useStatuses()
   const moveTask = useMoveTask()
   const reorderStatuses = useReorderStatuses()
+  const reorderTasks = useReorderTasks()
+
+  const dragOrigin = useRef<{ taskId: number; statusId: number } | null>(null)
+  const isDraggingRef = useRef(false)
+  isDraggingRef.current = activeTask != null
 
   useEffect(() => {
     if (statuses) setLocalStatuses(statuses)
   }, [statuses])
 
   useEffect(() => {
+    if (isDraggingRef.current) return
     if (!statuses || !tasks) return
+
     const grouped: Record<number, Task[]> = {}
     for (const s of statuses) {
       grouped[s.id] = (tasks ?? []).filter((t) => (t.statusId ?? null) === s.id)
@@ -45,14 +60,52 @@ export function KanbanBoard() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor)
   )
 
+  const findContainer = useCallback(
+    (id: UniqueIdentifier): number | null => {
+      const idStr = String(id)
+
+      if (idStr.startsWith('column-')) {
+        return Number(idStr.replace('column-', ''))
+      }
+
+      for (const [statusId, taskList] of Object.entries(columnTasks)) {
+        if (taskList.some((t) => `task-${t.id}` === idStr)) {
+          return Number(statusId)
+        }
+      }
+
+      return null
+    },
+    [columnTasks]
+  )
+
+  const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
+    if (args.active.data.current?.type === 'column') {
+      return closestCorners(args)
+    }
+
+    const pointerCollisions = pointerWithin(args)
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions
+    }
+
+    return closestCorners(args)
+  }, [])
+
   const handleDragStart = (event: DragStartEvent) => {
-    const data = event.active.data.current
+    const { active } = event
+    const data = active.data.current
+
     if (data?.type === 'task') {
-      const task = (tasks ?? []).find((t) => t.id === data.taskId)
-      setActiveTask(task ?? null)
+      const task = data.task as Task
+      setActiveTask(task)
+      dragOrigin.current = { taskId: task.id, statusId: task.statusId }
+    } else if (data?.type === 'column') {
+      setActiveColumn(data.status as Status)
     }
   }
 
@@ -60,58 +113,103 @@ export function KanbanBoard() {
     const { active, over } = event
     if (!over) return
 
+    const activeId = active.id
+    const overId = over.id
+    if (activeId === overId) return
+
     const activeData = active.data.current
     const overData = over.data.current
     if (activeData?.type !== 'task') return
 
-    const overCol = overData?.type === 'column' ? overData.statusId
-      : overData?.type === 'task' ? (overData as { statusId: number }).statusId
-      : null
+    const activeContainer = findContainer(activeId)
+    const overContainer = overData?.type === 'column'
+      ? (overData.statusId ?? overData.status?.id)
+      : findContainer(overId)
 
-    const activeCol = activeData.statusId as number
-    if (!overCol || activeCol === overCol) return
+    if (!activeContainer || !overContainer) return
 
-    setColumnTasks((prev) => {
-      const moved = prev[activeCol]?.find((t) => t.id === activeData.taskId)
-      if (!moved) return prev
-      const dest = [...(prev[overCol] ?? [])]
-      let insertAt = dest.length
-      if (overData?.type === 'task') {
-        const idx = dest.findIndex((t) => `task-${t.id}` === over.id)
-        if (idx !== -1) insertAt = idx
-      }
-      dest.splice(insertAt, 0, { ...moved, statusId: overCol })
-      return {
-        ...prev,
-        [activeCol]: prev[activeCol].filter((t) => t.id !== activeData.taskId),
-        [overCol]: dest,
-      }
-    })
-    active.data.current = { ...activeData, statusId: overCol }
+    if (activeContainer !== overContainer) {
+      setColumnTasks((prev) => {
+        const activeItems = prev[activeContainer] ?? []
+        const overItems = prev[overContainer] ?? []
+
+        const activeIndex = activeItems.findIndex((t) => `task-${t.id}` === activeId)
+        if (activeIndex === -1) return prev
+
+        const taskToMove = activeItems[activeIndex]
+        const updatedTask = { ...taskToMove, statusId: overContainer }
+
+        let overIndex = overData?.type === 'task'
+          ? overItems.findIndex((t) => `task-${t.id}` === overId)
+          : overItems.length
+
+        if (overIndex === -1) overIndex = overItems.length
+
+        return {
+          ...prev,
+          [activeContainer]: activeItems.filter((t) => `task-${t.id}` !== activeId),
+          [overContainer]: [
+            ...overItems.slice(0, overIndex),
+            updatedTask,
+            ...overItems.slice(overIndex),
+          ],
+        }
+      })
+    }
+    else if (overData?.type === 'task') {
+      setColumnTasks((prev) => {
+        const items = prev[activeContainer] ?? []
+        const oldIndex = items.findIndex((t) => `task-${t.id}` === activeId)
+        const newIndex = items.findIndex((t) => `task-${t.id}` === overId)
+
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          return {
+            ...prev,
+            [activeContainer]: arrayMove(items, oldIndex, newIndex),
+          }
+        }
+        return prev
+      })
+    }
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveTask(null)
     const { active, over } = event
+
+    const task = activeTask
+    const column = activeColumn
+    const origin = dragOrigin.current
+
+    setActiveTask(null)
+    setActiveColumn(null)
+    dragOrigin.current = null
+
     if (!over) return
 
-    const activeData = active.data.current
-    const overData = over.data.current
-    if (!activeData) return
-
-    if (activeData.type === 'column') {
+    if (column) {
       if (active.id === over.id) return
       const oldIndex = localStatuses.findIndex((s) => `column-${s.id}` === active.id)
       const newIndex = localStatuses.findIndex((s) => `column-${s.id}` === over.id)
-      if (oldIndex === -1 || newIndex === -1) return
-      const reordered = arrayMove(localStatuses, oldIndex, newIndex)
-      setLocalStatuses(reordered)
-      reorderStatuses.mutate(reordered.map((s) => s.id))
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = arrayMove(localStatuses, oldIndex, newIndex)
+        setLocalStatuses(reordered)
+        reorderStatuses.mutate(reordered.map((s) => s.id))
+      }
       return
     }
 
-    if (activeData.type === 'task' && overData?.type === 'column') {
-      moveTask.mutate({ taskId: activeData.taskId as number, statusId: overData.statusId as number })
+    if (task && origin) {
+      const finalContainer = findContainer(`task-${task.id}`)
+      if (finalContainer == null) return
+
+      const finalItems = columnTasks[finalContainer] ?? []
+
+      if (origin.statusId === finalContainer) {
+        reorderTasks.mutate({ columnId: finalContainer, taskIds: finalItems.map((t) => t.id) })
+      } else {
+        moveTask.mutate({ taskId: task.id, statusId: finalContainer })
+        reorderTasks.mutate({ columnId: finalContainer, taskIds: finalItems.map((t) => t.id) })
+      }
     }
   }
 
@@ -124,15 +222,20 @@ export function KanbanBoard() {
   }
 
   return (
-    <ScrollArea>
+    <ScrollArea style={{ height: 'calc(100vh - 270px)' }}>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={() => {
+          setActiveTask(null)
+          setActiveColumn(null)
+          dragOrigin.current = null
+        }}
       >
-        <Group wrap="nowrap" align="flex-start" gap="md">
+        <Group wrap="nowrap" align="stretch" gap="md">
           <SortableContext
             items={localStatuses.map((s) => `column-${s.id}`)}
             strategy={horizontalListSortingStrategy}
@@ -147,9 +250,10 @@ export function KanbanBoard() {
           </SortableContext>
           <AddStatusColumn />
         </Group>
-        <DragOverlay>
+
+        <DragOverlay dropAnimation={null}>
           {activeTask ? (
-            <div style={{ width: 300 }}>
+            <div style={{ transform: 'rotate(2deg)', cursor: 'grabbing' }}>
               <TaskCard task={activeTask} />
             </div>
           ) : null}

@@ -13,7 +13,7 @@ function TimeEntriesPage() {
   const handleDelete = (id: number) => deleteTimeEntry.mutate(id)
 
   return (
-    <Container size="lg" py="xl">
+    <Container fluid py="xl">
       <Title order={1} mb="lg">Time Entries</Title>
 
       {summary && (

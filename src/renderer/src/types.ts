@@ -16,6 +16,7 @@ export interface Task {
   statusId?: number | null
   today_date?: string | null
   created_at: string
+  position?: number
   total_duration?: number
 }
 
@@ -69,6 +70,7 @@ export interface Api {
   reorderStatuses: (ids: number[]) => Promise<{ success: boolean }>
   setDefaultStatus: (id: number) => Promise<Status>
   moveTask: (taskId: number, statusId: number) => Promise<Task>
+  reorderTasks: (columnId: number, orderedTaskIds: number[]) => Promise<{ success: boolean }>
   getAutostart: () => Promise<boolean>
   setAutostart: (enabled: boolean) => Promise<void>
 }

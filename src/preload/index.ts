@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('api', {
   reorderStatuses: (ids: number[]) => ipcRenderer.invoke('reorder-statuses', ids),
   setDefaultStatus: (id: number) => ipcRenderer.invoke('set-default-status', id),
   moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke('move-task', taskId, statusId),
+  reorderTasks: (columnId: number, orderedTaskIds: number[]) => ipcRenderer.invoke('reorder-tasks', columnId, orderedTaskIds),
   getAutostart: () => ipcRenderer.invoke('get-autostart'),
   setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
 })

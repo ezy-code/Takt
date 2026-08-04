@@ -1,6 +1,6 @@
 import { Container, Title, Text, Button, Group, Stack, Paper } from '@mantine/core'
 import { useNavigate, createLazyRoute, useParams } from '@tanstack/react-router'
-import { ExtensiveEditor } from '@lyfie/luthor'
+import { MarkdownPreview } from '../components/MarkdownPreview'
 import { useTask, useStatuses } from '../api'
 import { ROUTES } from '../routes'
 
@@ -12,11 +12,11 @@ function TaskDetailPage() {
 
   const status = statuses?.find((s) => s.id === task?.statusId)
 
-  if (isLoading) return <Container size="sm" py="xl"><Text c="dimmed">Loading...</Text></Container>
-  if (!task) return <Container size="sm" py="xl"><Text c="red">Task not found</Text></Container>
+  if (isLoading) return <Container fluid py="xl"><Text c="dimmed">Loading...</Text></Container>
+  if (!task) return <Container fluid py="xl"><Text c="red">Task not found</Text></Container>
 
   return (
-    <Container size="sm" py="xl">
+    <Container fluid py="xl">
       <Stack>
         <Group justify="space-between">
           <Title order={1}>{task.name}</Title>
@@ -38,17 +38,8 @@ function TaskDetailPage() {
         <Text size="xs" c="gray">
           Created: {new Date(task.created_at).toLocaleString()}
         </Text>
-        {task.description && (
-          <Paper withBorder p="md" radius="md">
-                      <ExtensiveEditor
-                          isEditorViewTabsVisible={false}
-                          placeholder={''}
-              defaultContent={task.description}
-              initialMode="visual-only"
-              availableModes={["visual-only"]}
-              initialTheme="dark"
-            />
-          </Paper>
+        {task.description_md && (
+          <MarkdownPreview content={task.description_md} variant="full" />
         )}
       </Stack>
     </Container>

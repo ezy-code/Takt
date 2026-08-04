@@ -25,7 +25,7 @@ function TodayPage() {
   const current = tasks.filter((t) => t.today_date === today)
 
   return (
-    <Container size="md" py="xl">
+    <Container fluid py="xl">
       <Title order={1} mb="lg">Today</Title>
 
       {overdue.length > 0 && (
