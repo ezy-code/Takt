@@ -45,7 +45,7 @@ export function TaskCard({ task }: TaskCardProps) {
       <Group justify="space-between" align="flex-start">
         <div style={{ flex: 1 }}>
           <Group gap="xs">
-            <Anchor component="button" fw={500} onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}>
+            <Anchor component="button" fw={500} style={{ textAlign: 'left' }} onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}>
               {task.name}
             </Anchor>
             {status && (
