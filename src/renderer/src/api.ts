@@ -65,10 +65,18 @@ export function useTimeSummary() {
 export function useAddTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ name, description, description_md, description_html }: { name: string; description: string; description_md?: string; description_html?: string }) =>
-      window.api.addTask(name, description, description_md, description_html),
+    mutationFn: ({ name, description, description_md, description_html, statusId, today }: {
+      name: string
+      description: string
+      description_md?: string
+      description_html?: string
+      statusId?: number
+      today?: boolean
+    }) =>
+      window.api.addTask(name, description, description_md, description_html, statusId, today),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
     },
   })
 }
@@ -76,11 +84,20 @@ export function useAddTask() {
 export function useUpdateTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, name, description, description_md, description_html }: { id: number; name: string; description: string; description_md?: string; description_html?: string }) =>
-      window.api.updateTask(id, name, description, description_md, description_html),
+    mutationFn: ({ id, name, description, description_md, description_html, statusId, today }: {
+      id: number
+      name: string
+      description: string
+      description_md?: string
+      description_html?: string
+      statusId?: number
+      today?: boolean
+    }) =>
+      window.api.updateTask(id, name, description, description_md, description_html, statusId, today),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
     },
   })
 }
@@ -214,6 +231,16 @@ export function useReorderStatuses() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) => window.api.reorderStatuses(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.statuses })
+    },
+  })
+}
+
+export function useSetDefaultStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => window.api.setDefaultStatus(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.statuses })
     },

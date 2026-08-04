@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Modal, Group, TextInput, ColorInput, Button, Stack, Text, ActionIcon, Tooltip } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconPlus, IconTrash, IconGripVertical } from '@tabler/icons-react'
+import { IconPlus, IconTrash, IconGripVertical, IconStar, IconStarFilled } from '@tabler/icons-react'
 import {
   DndContext,
   PointerSensor,
@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useStatuses, useAddStatus, useUpdateStatus, useDeleteStatus, useReorderStatuses } from '../api'
+import { useStatuses, useAddStatus, useUpdateStatus, useDeleteStatus, useReorderStatuses, useSetDefaultStatus } from '../api'
 import type { Status } from '../types'
 import type { DragEndEvent } from '@dnd-kit/core'
 
@@ -25,9 +25,10 @@ interface SortableStatusItemProps {
   status: Status
   onUpdate: (id: number, name: string, color: string) => void
   onDelete: (id: number) => void
+  onSetDefault: (id: number) => void
 }
 
-function SortableStatusItem({ status, onUpdate, onDelete }: SortableStatusItemProps) {
+function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: SortableStatusItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `status-${status.id}`,
   })
@@ -48,6 +49,16 @@ function SortableStatusItem({ status, onUpdate, onDelete }: SortableStatusItemPr
         <IconGripVertical size={16} />
       </div>
       <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }} />
+      <Tooltip label={status.is_default ? 'Default for new tasks' : 'Set as default for new tasks'}>
+        <ActionIcon
+          size="sm"
+          variant={status.is_default ? 'filled' : 'subtle'}
+          color={status.is_default ? 'yellow' : 'gray'}
+          onClick={() => !status.is_default && onSetDefault(status.id)}
+        >
+          {status.is_default ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+        </ActionIcon>
+      </Tooltip>
       {editing ? (
         <>
           <TextInput size="xs" value={name} onChange={(e) => setName(e.currentTarget.value)} style={{ flex: 1 }} />
@@ -78,6 +89,7 @@ export function ManageStatusesModal() {
   const updateStatus = useUpdateStatus()
   const deleteStatus = useDeleteStatus()
   const reorderStatuses = useReorderStatuses()
+  const setDefaultStatus = useSetDefaultStatus()
 
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState('#868e96')
@@ -112,6 +124,9 @@ export function ManageStatusesModal() {
 
       <Modal opened={opened} onClose={close} title="Manage Statuses" size="md">
         <Stack>
+          <Text size="sm" c="dimmed">
+            Click the star to set the default status for new tasks.
+          </Text>
           <Group gap="xs">
             <TextInput
               placeholder="Status name"
@@ -140,6 +155,7 @@ export function ManageStatusesModal() {
                       status={status}
                       onUpdate={(id, name, color) => updateStatus.mutate({ id, name, color })}
                       onDelete={(id) => deleteStatus.mutate(id)}
+                      onSetDefault={(id) => setDefaultStatus.mutate(id)}
                     />
                   ))}
                 </Stack>

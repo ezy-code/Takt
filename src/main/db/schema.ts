@@ -6,6 +6,7 @@ export const statuses = sqliteTable('statuses', {
   name: text('name').notNull(),
   color: text('color').notNull().default('#868e96'),
   position: integer('position').notNull().default(0),
+  is_default: integer('is_default', { mode: 'boolean' }).notNull().default(false),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
