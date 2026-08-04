@@ -10,11 +10,21 @@ export const statuses = sqliteTable('statuses', {
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
+export const projects = sqliteTable('projects', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  description: text('description').default(''),
+  descriptionMarkdown: text('description_md').default(''),
+  descriptionHtml: text('description_html').default(''),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
+
 export const tasks = sqliteTable('tasks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   description: text('description').default(''),
   statusId: integer('status_id').references(() => statuses.id),
+  projectId: integer('project_id').references(() => projects.id),
   today_date: text('today_date'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   position: integer('position').notNull().default(0),
@@ -37,10 +47,18 @@ export const statusesRelations = relations(statuses, ({ many }) => ({
   tasks: many(tasks),
 }))
 
+export const projectsRelations = relations(projects, ({ many }) => ({
+  tasks: many(tasks),
+}))
+
 export const tasksRelations = relations(tasks, ({ many, one }) => ({
   status: one(statuses, {
     fields: [tasks.statusId],
     references: [statuses.id],
+  }),
+  project: one(projects, {
+    fields: [tasks.projectId],
+    references: [projects.id],
   }),
   timeEntries: many(timeEntries),
 }))

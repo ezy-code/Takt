@@ -17,6 +17,7 @@ const queryKeys = {
   timeEntries: ['time-entries'] as const,
   timeSummary: ['time-summary'] as const,
   statuses: ['statuses'] as const,
+  projects: ['projects'] as const,
 }
 
 export function useTasks() {
@@ -65,15 +66,16 @@ export function useTimeSummary() {
 export function useAddTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ name, description, description_md, description_html, statusId, today }: {
+    mutationFn: ({ name, description, description_md, description_html, statusId, projectId, today }: {
       name: string
       description: string
       description_md?: string
       description_html?: string
       statusId?: number
+      projectId?: number
       today?: boolean
     }) =>
-      window.api.addTask(name, description, description_md, description_html, statusId, today),
+      window.api.addTask(name, description, description_md, description_html, statusId, projectId, today),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
       queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
@@ -84,16 +86,17 @@ export function useAddTask() {
 export function useUpdateTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, name, description, description_md, description_html, statusId, today }: {
+    mutationFn: ({ id, name, description, description_md, description_html, statusId, projectId, today }: {
       id: number
       name: string
       description: string
       description_md?: string
       description_html?: string
       statusId?: number
+      projectId?: number
       today?: boolean
     }) =>
-      window.api.updateTask(id, name, description, description_md, description_html, statusId, today),
+      window.api.updateTask(id, name, description, description_md, description_html, statusId, projectId, today),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
@@ -267,6 +270,53 @@ export function useReorderTasks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
       queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+    },
+  })
+}
+
+export function useProjects() {
+  return useQuery({
+    queryKey: queryKeys.projects,
+    queryFn: () => window.api.getProjects(),
+  })
+}
+
+export function useProject(id: number) {
+  return useQuery({
+    queryKey: ['projects', id],
+    queryFn: () => window.api.getProject(id),
+    enabled: !!id,
+  })
+}
+
+export function useAddProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ name, description, description_md, description_html }: {
+      name: string
+      description?: string
+      description_md?: string
+      description_html?: string
+    }) => window.api.addProject(name, description, description_md, description_html),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects })
+    },
+  })
+}
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, name, description, description_md, description_html }: {
+      id: number
+      name: string
+      description?: string
+      description_md?: string
+      description_html?: string
+    }) => window.api.updateProject(id, name, description, description_md, description_html),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['projects', vars.id] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects })
     },
   })
 }

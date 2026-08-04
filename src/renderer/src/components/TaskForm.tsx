@@ -3,7 +3,7 @@ import { Container, Title, TextInput, Button, Group, Stack, Text, Select, Switch
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useMantineColorScheme } from '@mantine/core'
-import { useAddTask, useTask, useUpdateTask, useStatuses } from '../api'
+import { useAddTask, useTask, useUpdateTask, useStatuses, useProjects } from '../api'
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
 import { ROUTES } from '../routes'
 
@@ -29,19 +29,23 @@ export function TaskForm({ id }: TaskFormProps) {
 
   const { data: task, isLoading } = useTask(id ?? 0)
   const { data: statuses } = useStatuses()
+  const { data: projects } = useProjects()
   const addTask = useAddTask()
   const updateTask = useUpdateTask()
 
   const [statusId, setStatusId] = useState<number | null>(null)
+  const [projectId, setProjectId] = useState<number | null>(null)
   const [addToToday, setAddToToday] = useState(false)
 
   useEffect(() => {
     if (isEdit && task) {
       setStatusId(task.statusId ?? null)
+      setProjectId(task.projectId ?? null)
       setAddToToday(!!task.today_date)
     } else if (!isEdit && statuses) {
       const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
       setStatusId(defaultStatus?.id ?? null)
+      setProjectId(null)
       setAddToToday(false)
     }
   }, [isEdit, task, statuses])
@@ -61,6 +65,7 @@ export function TaskForm({ id }: TaskFormProps) {
         description_md,
         description_html,
         statusId: statusId ?? undefined,
+        projectId: projectId ?? undefined,
         today: addToToday,
       }
       if (isEdit) {
@@ -85,6 +90,11 @@ export function TaskForm({ id }: TaskFormProps) {
   const statusOptions = (statuses ?? []).map((s) => ({
     value: String(s.id),
     label: s.name,
+  }))
+
+  const projectOptions = (projects ?? []).map((p) => ({
+    value: String(p.id),
+    label: p.name,
   }))
 
   return (
@@ -121,6 +131,16 @@ export function TaskForm({ id }: TaskFormProps) {
             ) : undefined}
             disabled={!statuses?.length}
             required
+          />
+
+          <Select
+            label="Project"
+            placeholder="Select project"
+            clearable
+            data={projectOptions}
+            value={projectId != null ? String(projectId) : null}
+            onChange={(value) => setProjectId(value ? Number(value) : null)}
+            disabled={!projects?.length}
           />
 
           <Switch

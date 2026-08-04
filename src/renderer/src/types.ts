@@ -7,6 +7,15 @@ export interface Status {
   created_at: string
 }
 
+export interface Project {
+  id: number
+  name: string
+  description: string
+  description_md: string
+  description_html: string
+  created_at: string
+}
+
 export interface Task {
   id: number
   name: string
@@ -14,6 +23,7 @@ export interface Task {
   description_md: string
   description_html: string
   statusId?: number | null
+  projectId?: number | null
   today_date?: string | null
   created_at: string
   position?: number
@@ -50,9 +60,13 @@ export type StartTimerResult =
 export interface Api {
   getTasks: () => Promise<Task[]>
   getTask: (id: number) => Promise<Task | null>
-  addTask: (name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => Promise<Task>
+  addTask: (name: string, description: string, description_md?: string, description_html?: string, statusId?: number, projectId?: number, today?: boolean | string | null) => Promise<Task>
   deleteTask: (id: number) => Promise<{ success: boolean }>
-  updateTask: (id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => Promise<Task>
+  updateTask: (id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, projectId?: number, today?: boolean | string | null) => Promise<Task>
+  getProjects: () => Promise<Project[]>
+  getProject: (id: number) => Promise<Project | null>
+  addProject: (name: string, description?: string, description_md?: string, description_html?: string) => Promise<Project>
+  updateProject: (id: number, name: string, description?: string, description_md?: string, description_html?: string) => Promise<Project>
   getActiveTimer: () => Promise<ActiveTimerInfo | null>
   startTimer: (taskId: number) => Promise<StartTimerResult>
   stopTimer: (taskId: number) => Promise<TimeEntry | null>
