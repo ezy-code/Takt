@@ -1,8 +1,9 @@
-import { useRef, type FormEvent } from 'react'
-import { Container, Title, TextInput, Button, Group, Stack, Text } from '@mantine/core'
+import { useRef, useEffect, useState, type FormEvent } from 'react'
+import { Container, Title, TextInput, Button, Group, Stack, Text, Select, Switch } from '@mantine/core'
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
-import { useAddTask, useTask, useUpdateTask } from '../api'
+import { useMantineColorScheme } from '@mantine/core'
+import { useAddTask, useTask, useUpdateTask, useStatuses } from '../api'
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
 import { ROUTES } from '../routes'
 
@@ -21,13 +22,32 @@ export function TaskForm({ id }: TaskFormProps) {
   const navigate = useNavigate()
   const editorRef = useRef<ExtensiveEditorRef>(null)
   const isEdit = id != null
+  const { colorScheme } = useMantineColorScheme()
+  const editorTheme = colorScheme === 'auto'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : colorScheme
 
   const { data: task, isLoading } = useTask(id ?? 0)
+  const { data: statuses } = useStatuses()
   const addTask = useAddTask()
   const updateTask = useUpdateTask()
 
+  const [statusId, setStatusId] = useState<number | null>(null)
+  const [addToToday, setAddToToday] = useState(false)
+
+  useEffect(() => {
+    if (isEdit && task) {
+      setStatusId(task.statusId ?? null)
+      setAddToToday(!!task.today_date)
+    } else if (!isEdit && statuses) {
+      const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
+      setStatusId(defaultStatus?.id ?? null)
+      setAddToToday(false)
+    }
+  }, [isEdit, task, statuses])
+
   const form = useForm({
-    defaultValues: { name: task?.name ?? '' },
+    defaultValues: { name: '' },
     onSubmit: async ({ value }) => {
       if (!value.name.trim()) return
       const editor = editorRef.current
@@ -35,18 +55,37 @@ export function TaskForm({ id }: TaskFormProps) {
       const description = raw ?? (isEdit ? '' : '{}')
       const description_md = editor?.getMarkdown() ?? ''
       const description_html = editor?.getHTML() ?? ''
+      const payload = {
+        name: value.name.trim(),
+        description,
+        description_md,
+        description_html,
+        statusId: statusId ?? undefined,
+        today: addToToday,
+      }
       if (isEdit) {
-        await updateTask.mutateAsync({ id, name: value.name.trim(), description, description_md, description_html })
+        await updateTask.mutateAsync({ id, ...payload })
         navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
       } else {
-        await addTask.mutateAsync({ name: value.name.trim(), description, description_md, description_html })
+        await addTask.mutateAsync(payload)
         navigate({ to: ROUTES.TASKS })
       }
     },
   })
 
+  useEffect(() => {
+    if (isEdit && task) {
+      form.setFieldValue('name', task.name)
+    }
+  }, [isEdit, task, form])
+
   if (isEdit && isLoading) return <Container size="sm" py="xl"><Text c="dimmed">Loading...</Text></Container>
   if (isEdit && !task) return <Container size="sm" py="xl"><Text c="red">Task not found</Text></Container>
+
+  const statusOptions = (statuses ?? []).map((s) => ({
+    value: String(s.id),
+    label: s.name,
+  }))
 
   return (
     <Container size="sm" py="xl">
@@ -61,9 +100,36 @@ export function TaskForm({ id }: TaskFormProps) {
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.currentTarget.value)}
                 data-autofocus
+                required
               />
             )}
           </form.Field>
+
+          <Select
+            label="Status"
+            placeholder="Select status"
+            data={statusOptions}
+            value={statusId != null ? String(statusId) : null}
+            onChange={(value) => setStatusId(value ? Number(value) : null)}
+            leftSection={statusId != null ? (
+              <div style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                backgroundColor: statuses?.find((s) => s.id === statusId)?.color ?? '#868e96',
+              }} />
+            ) : undefined}
+            disabled={!statuses?.length}
+            required
+          />
+
+          <Switch
+            label="Add to Today"
+            description="Show this task on the Today page"
+            checked={addToToday}
+            onChange={(e) => setAddToToday(e.currentTarget.checked)}
+          />
+
           <div>
             <Text size="sm" fw={500} mb={4}>Description</Text>
             <ExtensiveEditor
@@ -71,11 +137,12 @@ export function TaskForm({ id }: TaskFormProps) {
               defaultContent={task?.description ?? ''}
               initialMode="visual-editor"
               placeholder="Enter task description (optional)"
-              initialTheme="dark"
-              availableModes={["visual-editor", "markdown"]}
+              initialTheme={editorTheme}
+              availableModes={['visual-editor', 'markdown']}
               slashCommandVisibility
             />
           </div>
+
           <Group justify="space-between">
             <Button variant="default" onClick={() => navigate({ to: isEdit ? ROUTES.TASK_DETAIL : ROUTES.TASKS, ...(isEdit ? { params: { id: String(id) } } : {}) })}>
               Cancel

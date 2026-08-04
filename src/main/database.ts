@@ -1,11 +1,24 @@
-import { ipcMain } from 'electron'
-import { desc, eq, sql, count, asc } from 'drizzle-orm'
-import { app } from 'electron'
+import { ipcMain, app } from 'electron'
 import { join } from 'path'
+import { desc, eq, sql, count, asc } from 'drizzle-orm'
 import { createDb } from './db'
 import { tasks, timeEntries, statuses } from './db/schema'
 
 let db: ReturnType<typeof createDb>
+
+function getDefaultStatusId(): number | undefined {
+  const defaultStatus = db.select({ id: statuses.id }).from(statuses).where(eq(statuses.is_default, true)).get()
+  if (defaultStatus) return defaultStatus.id
+  const first = db.select({ id: statuses.id }).from(statuses).orderBy(asc(statuses.position)).limit(1).get()
+  return first?.id
+}
+
+function resolveTodayDate(today?: boolean | string | null): string | null {
+  if (today === true) return new Date().toISOString().split('T')[0]
+  if (today === false || today === null) return null
+  if (typeof today === 'string') return today
+  return null
+}
 
 export type TimerChangeInfo =
   | { active: false }
@@ -45,10 +58,23 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
     return db.update(statuses).set({ name, color }).where(eq(statuses.id, id)).returning().get()
   })
 
+  ipcMain.handle('set-default-status', (_event, id: number) => {
+    db.transaction(() => {
+      db.update(statuses).set({ is_default: false }).run()
+      db.update(statuses).set({ is_default: true }).where(eq(statuses.id, id)).run()
+    })
+    return db.select().from(statuses).where(eq(statuses.id, id)).get()
+  })
+
   ipcMain.handle('delete-status', (_event, id: number) => {
-    const count = db.select({ cnt: sql<number>`count(*)` }).from(tasks).where(eq(tasks.statusId, id)).get()
-    if (count!.cnt > 0) return { success: false, reason: 'Has tasks' }
+    const taskCount = db.select({ cnt: sql<number>`count(*)` }).from(tasks).where(eq(tasks.statusId, id)).get()
+    if (taskCount!.cnt > 0) return { success: false, reason: 'Has tasks' }
+    const status = db.select({ is_default: statuses.is_default }).from(statuses).where(eq(statuses.id, id)).get()
     db.delete(statuses).where(eq(statuses.id, id)).run()
+    if (status?.is_default) {
+      const next = db.select({ id: statuses.id }).from(statuses).orderBy(asc(statuses.position)).limit(1).get()
+      if (next) db.update(statuses).set({ is_default: true }).where(eq(statuses.id, next.id)).run()
+    }
     return { success: true }
   })
 
@@ -105,12 +131,36 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
       .get()
   })
 
-  ipcMain.handle('add-task', (_event, name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => {
-    return db.insert(tasks).values({ name, description, descriptionMarkdown: description_md ?? '', descriptionHtml: description_html ?? '', statusId }).returning().get()
+  ipcMain.handle('add-task', (_event, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => {
+    const resolvedStatusId = statusId ?? getDefaultStatusId()
+    const today_date = resolveTodayDate(today)
+    return db.insert(tasks).values({
+      name,
+      description,
+      descriptionMarkdown: description_md ?? '',
+      descriptionHtml: description_html ?? '',
+      statusId: resolvedStatusId,
+      today_date,
+    }).returning().get()
   })
 
-  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number) => {
-    return db.update(tasks).set({ name, description, descriptionMarkdown: description_md ?? '', descriptionHtml: description_html ?? '', statusId }).where(eq(tasks.id, id)).returning().get()
+  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => {
+    const updates: {
+      name: string
+      description: string
+      descriptionMarkdown: string
+      descriptionHtml: string
+      statusId?: number
+      today_date?: string | null
+    } = {
+      name,
+      description,
+      descriptionMarkdown: description_md ?? '',
+      descriptionHtml: description_html ?? '',
+    }
+    if (statusId !== undefined) updates.statusId = statusId
+    if (today !== undefined) updates.today_date = resolveTodayDate(today)
+    return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
   })
 
   ipcMain.handle('delete-task', (_event, id: number) => {
