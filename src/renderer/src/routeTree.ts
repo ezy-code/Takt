@@ -36,6 +36,21 @@ const todayRoute = createRoute({
   path: ROUTES.TASKS_TODAY,
 }).lazy(() => import('./routes/today.lazy').then((d) => d.Route))
 
+const projectsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.PROJECTS,
+}).lazy(() => import('./routes/projects.lazy').then((d) => d.Route))
+
+const projectNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.PROJECTS_NEW,
+}).lazy(() => import('./routes/projects-new.lazy').then((d) => d.Route))
+
+const projectEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.PROJECT_EDIT,
+}).lazy(() => import('./routes/projects-edit.lazy').then((d) => d.Route))
+
 const timeEntriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.TIME_ENTRIES,
@@ -58,7 +73,7 @@ const indexRoute = createRoute({
   component: IndexRedirect
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, tasksRoute, tasksNewRoute, taskDetailRoute, taskEditRoute, todayRoute, timeEntriesRoute, settingsRoute])
+const routeTree = rootRoute.addChildren([indexRoute, tasksRoute, tasksNewRoute, taskDetailRoute, taskEditRoute, todayRoute, projectsRoute, projectNewRoute, projectEditRoute, timeEntriesRoute, settingsRoute])
 
 export const router = createRouter({ routeTree })
 

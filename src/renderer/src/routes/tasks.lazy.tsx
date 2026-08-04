@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
-import { Container, Title, Stack, Text, Button, Group, Tabs } from '@mantine/core'
+import { useEffect, useState } from 'react'
+import { Container, Title, Stack, Text, Button, Group, Tabs, Select } from '@mantine/core'
 import { useNavigate, createLazyRoute } from '@tanstack/react-router'
 import { IconPlus, IconList, IconColumns } from '@tabler/icons-react'
-import { useTasks, useActiveTimer } from '../api'
+import { useTasks, useActiveTimer, useProjects } from '../api'
 import { useTimerStore } from '../store/timer'
 import { TaskCard } from '../components/TaskCard'
 import { KanbanBoard } from '../components/KanbanBoard'
@@ -17,8 +17,19 @@ function TasksPage() {
   const navigate = useNavigate()
   const { tab } = Route.useSearch()
   const { data: tasks, isLoading } = useTasks()
+  const { data: projects } = useProjects()
   const { data: activeTimer } = useActiveTimer()
   const setActive = useTimerStore((s) => s.setActive)
+  const [projectFilter, setProjectFilter] = useState<string | null>(null)
+
+  const filteredTasks = (tasks ?? []).filter((t) =>
+    projectFilter == null ? t.projectId == null : t.projectId === Number(projectFilter)
+  )
+
+  const projectOptions = (projects ?? []).map((p) => ({
+    value: String(p.id),
+    label: p.name,
+  }))
 
   useEffect(() => {
     if (activeTimer) {
@@ -44,6 +55,25 @@ function TasksPage() {
         )}
       </Group>
 
+      {tab === 'list' && (
+        <Group mb="md">
+          <Select
+            label="Filter by project"
+            placeholder="All projects"
+            clearable
+            data={projectOptions}
+            value={projectFilter}
+            onChange={setProjectFilter}
+            w={280}
+          />
+          {projectFilter != null && (
+            <Button variant="default" mt={22} onClick={() => setProjectFilter(null)}>
+              Reset
+            </Button>
+          )}
+        </Group>
+      )}
+
       <Tabs value={tab} onChange={(v) => navigate({ search: { tab: v }})}>
         <Tabs.List mb="md">
           <Tabs.Tab value="list" leftSection={<IconList size={14} />}>List</Tabs.Tab>
@@ -53,11 +83,11 @@ function TasksPage() {
         <Tabs.Panel value="list">
           {isLoading ? (
             <Text c="dimmed">Loading...</Text>
-          ) : !tasks || tasks.length === 0 ? (
-            <Text c="dimmed">No tasks yet. Create one.</Text>
+          ) : filteredTasks.length === 0 ? (
+            <Text c="dimmed">{projectFilter ? 'No tasks in this project.' : 'No tasks yet. Create one.'}</Text>
           ) : (
             <Stack>
-              {tasks.map((task) => (
+              {filteredTasks.map((task) => (
                 <TaskCard key={task.id} task={task} />
               ))}
             </Stack>

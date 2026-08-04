@@ -2,7 +2,7 @@ import { ipcMain, app } from 'electron'
 import { join } from 'path'
 import { desc, eq, sql, count, asc } from 'drizzle-orm'
 import { createDb } from './db'
-import { tasks, timeEntries, statuses } from './db/schema'
+import { tasks, timeEntries, statuses, projects } from './db/schema'
 
 let db: ReturnType<typeof createDb>
 
@@ -41,6 +41,54 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
   } else {
     onTimerChange?.({ active: false })
   }
+
+  ipcMain.handle('get-projects', () => {
+    return db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        description_md: projects.descriptionMarkdown,
+        description_html: projects.descriptionHtml,
+        created_at: projects.created_at,
+      })
+      .from(projects)
+      .orderBy(desc(projects.created_at))
+      .all()
+  })
+
+  ipcMain.handle('get-project', (_event, id: number) => {
+    return db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        description_md: projects.descriptionMarkdown,
+        description_html: projects.descriptionHtml,
+        created_at: projects.created_at,
+      })
+      .from(projects)
+      .where(eq(projects.id, id))
+      .get()
+  })
+
+  ipcMain.handle('add-project', (_event, name: string, description?: string, description_md?: string, description_html?: string) => {
+    return db.insert(projects).values({
+      name,
+      description: description ?? '',
+      descriptionMarkdown: description_md ?? '',
+      descriptionHtml: description_html ?? '',
+    }).returning().get()
+  })
+
+  ipcMain.handle('update-project', (_event, id: number, name: string, description?: string, description_md?: string, description_html?: string) => {
+    return db.update(projects).set({
+      name,
+      description: description ?? '',
+      descriptionMarkdown: description_md ?? '',
+      descriptionHtml: description_html ?? '',
+    }).where(eq(projects.id, id)).returning().get()
+  })
 
   ipcMain.handle('get-statuses', () => {
     return db.select().from(statuses).orderBy(asc(statuses.position)).all()
@@ -114,6 +162,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         description_md: tasks.descriptionMarkdown,
         description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
+        projectId: tasks.projectId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
         position: tasks.position,
@@ -135,6 +184,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         description_md: tasks.descriptionMarkdown,
         description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
+        projectId: tasks.projectId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
         position: tasks.position,
@@ -147,7 +197,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
       .get()
   })
 
-  ipcMain.handle('add-task', (_event, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => {
+  ipcMain.handle('add-task', (_event, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, projectId?: number, today?: boolean | string | null) => {
     const resolvedStatusId = statusId ?? getDefaultStatusId()
     const today_date = resolveTodayDate(today)
     const maxPos = db
@@ -161,18 +211,20 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
       descriptionMarkdown: description_md ?? '',
       descriptionHtml: description_html ?? '',
       statusId: resolvedStatusId,
+      projectId,
       today_date,
       position: maxPos!.maxPos + 1,
     }).returning().get()
   })
 
-  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => {
+  ipcMain.handle('update-task', (_event, id: number, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, projectId?: number, today?: boolean | string | null) => {
     const updates: {
       name: string
       description: string
       descriptionMarkdown: string
       descriptionHtml: string
       statusId?: number
+      projectId?: number
       today_date?: string | null
     } = {
       name,
@@ -181,6 +233,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
       descriptionHtml: description_html ?? '',
     }
     if (statusId !== undefined) updates.statusId = statusId
+    if (projectId !== undefined) updates.projectId = projectId
     if (today !== undefined) updates.today_date = resolveTodayDate(today)
     return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
   })
@@ -209,6 +262,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         description_md: tasks.descriptionMarkdown,
         description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
+        projectId: tasks.projectId,
         created_at: tasks.created_at,
         position: tasks.position,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -330,6 +384,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         description_md: tasks.descriptionMarkdown,
         description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
+        projectId: tasks.projectId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
         position: tasks.position,

@@ -1,9 +1,9 @@
 import { Text, Group, Card, ActionIcon, Tooltip, Anchor, Spoiler, Menu } from '@mantine/core'
-import { IconCalendarPlus, IconCalendarCheck, IconAlertCircle, IconX, IconDots, IconEye, IconPencil, IconTrash } from '@tabler/icons-react'
+import { IconCalendarPlus, IconCalendarCheck, IconAlertCircle, IconX, IconDots, IconEye, IconPencil, IconTrash, IconFolder } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { MarkdownPreview } from './MarkdownPreview'
 import { TimerControl } from './TimerControl'
-import { useDeleteTask, useToggleToday, useClearToday, useStatuses } from '../api'
+import { useDeleteTask, useToggleToday, useClearToday, useStatuses, useProjects } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 
@@ -24,8 +24,10 @@ export function TaskCard({ task }: TaskCardProps) {
   const toggleToday = useToggleToday()
   const clearToday = useClearToday()
   const { data: statuses } = useStatuses()
+  const { data: projects } = useProjects()
 
   const status = statuses?.find((s) => s.id === task.statusId)
+  const project = projects?.find((p) => p.id === task.projectId)
   const todayState = getTodayState(task.today_date ?? null)
 
   const TodayIcon = todayState === 'today' ? IconCalendarCheck
@@ -52,6 +54,12 @@ export function TaskCard({ task }: TaskCardProps) {
               <Group gap={4}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }} />
                 <Text size="xs" c="dimmed">{status.name}</Text>
+              </Group>
+            )}
+{project && (
+              <Group gap={4}>
+                <IconFolder size={12} c="dimmed" />
+                <Text size="xs" c="dimmed">{project.name}</Text>
               </Group>
             )}
             {todayState === 'overdue' && (
