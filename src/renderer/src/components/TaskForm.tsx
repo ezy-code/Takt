@@ -88,7 +88,7 @@ export function TaskForm({ id }: TaskFormProps) {
   }))
 
   return (
-    <Container fluid py="xl">
+    <Container fluid py="xl" pb={90}>
       <Title order={1} mb="lg">{isEdit ? 'Edit Task' : 'New Task'}</Title>
       <form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
         <Stack>
@@ -143,7 +143,20 @@ export function TaskForm({ id }: TaskFormProps) {
             />
           </div>
 
-          <Group justify="space-between">
+          <Group
+            justify="space-between"
+            bg="var(--mantine-color-body)"
+            py="md"
+            px="lg"
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              borderTop: '1px solid var(--mantine-color-default-border)',
+              zIndex: 1000,
+            }}
+          >
             <Button variant="default" onClick={() => navigate({ to: isEdit ? ROUTES.TASK_DETAIL : ROUTES.TASKS, ...(isEdit ? { params: { id: String(id) } } : {}) })}>
               Cancel
             </Button>
