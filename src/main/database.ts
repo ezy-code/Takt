@@ -88,7 +88,21 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
   })
 
   ipcMain.handle('move-task', (_event, taskId: number, statusId: number) => {
-    return db.update(tasks).set({ statusId }).where(eq(tasks.id, taskId)).returning().get()
+    const maxPos = db
+      .select({ maxPos: sql<number>`coalesce(max(${tasks.position}), -1)` })
+      .from(tasks)
+      .where(eq(tasks.statusId, statusId))
+      .get()
+    return db.update(tasks).set({ statusId, position: maxPos!.maxPos + 1 }).where(eq(tasks.id, taskId)).returning().get()
+  })
+
+  ipcMain.handle('reorder-tasks', (_event, _columnId: number, orderedTaskIds: number[]) => {
+    db.transaction(() => {
+      orderedTaskIds.forEach((id, idx) => {
+        db.update(tasks).set({ position: idx }).where(eq(tasks.id, id)).run()
+      })
+    })
+    return { success: true }
   })
 
   ipcMain.handle('get-tasks', () => {
@@ -102,12 +116,13 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
+        position: tasks.position,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
       })
       .from(tasks)
       .leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
       .groupBy(tasks.id)
-      .orderBy(desc(tasks.created_at))
+      .orderBy(asc(tasks.position), desc(tasks.created_at))
       .all()
   })
 
@@ -122,6 +137,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
+        position: tasks.position,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
       })
       .from(tasks)
@@ -134,6 +150,11 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
   ipcMain.handle('add-task', (_event, name: string, description: string, description_md?: string, description_html?: string, statusId?: number, today?: boolean | string | null) => {
     const resolvedStatusId = statusId ?? getDefaultStatusId()
     const today_date = resolveTodayDate(today)
+    const maxPos = db
+      .select({ maxPos: sql<number>`coalesce(max(${tasks.position}), -1)` })
+      .from(tasks)
+      .where(eq(tasks.statusId, resolvedStatusId))
+      .get()
     return db.insert(tasks).values({
       name,
       description,
@@ -141,6 +162,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
       descriptionHtml: description_html ?? '',
       statusId: resolvedStatusId,
       today_date,
+      position: maxPos!.maxPos + 1,
     }).returning().get()
   })
 
@@ -188,6 +210,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         description_html: tasks.descriptionHtml,
         statusId: tasks.statusId,
         created_at: tasks.created_at,
+        position: tasks.position,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
       })
       .from(tasks)
@@ -309,13 +332,14 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
         statusId: tasks.statusId,
         today_date: tasks.today_date,
         created_at: tasks.created_at,
+        position: tasks.position,
         total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
       })
       .from(tasks)
       .leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
       .where(sql`${tasks.today_date} is not null`)
       .groupBy(tasks.id)
-      .orderBy(desc(tasks.created_at))
+      .orderBy(asc(tasks.position), desc(tasks.created_at))
       .all()
   })
 

@@ -1,5 +1,4 @@
-import { ActionIcon, Paper } from '@mantine/core'
-import { IconGripVertical } from '@tabler/icons-react'
+import { memo } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { TaskCard } from './TaskCard'
@@ -9,34 +8,29 @@ interface KanbanCardProps {
   task: Task
 }
 
-export function KanbanCard({ task }: KanbanCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+export const KanbanCard = memo(function KanbanCard({ task }: KanbanCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: `task-${task.id}`,
-    data: { type: 'task', taskId: task.id, statusId: task.statusId },
+    data: { type: 'task', task },
   })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
     transition,
-    position: 'relative' as const,
-  }
-
-  if (isDragging) {
-    return (
-      <div ref={setNodeRef} style={style}>
-        <Paper withBorder p="sm" radius="md" style={{ opacity: 0.3, borderStyle: 'dashed' }} />
-      </div>
-    )
+    opacity: isDragging ? 0.2 : 1,
+    userSelect: 'none',
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <div style={{ position: 'absolute', top: 4, left: 2, zIndex: 2 }} {...listeners}>
-        <ActionIcon variant="subtle" color="gray" size="sm" component="div">
-          <IconGripVertical size={14} />
-        </ActionIcon>
-      </div>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <TaskCard task={task} />
     </div>
   )
-}
+})

@@ -29,7 +29,7 @@ function TasksPage() {
   }, [activeTimer, setActive])
 
   return (
-    <Container size={tab === 'kanban' ? 'xl' : 'md'} py="xl">
+    <Container fluid py="xl">
       <Group justify="space-between" mb="lg">
         <Title order={1}>Tasks</Title>
         {tab === 'list' ? (

@@ -258,3 +258,15 @@ export function useMoveTask() {
     },
   })
 }
+
+export function useReorderTasks() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ columnId, taskIds }: { columnId: number; taskIds: number[] }) =>
+      window.api.reorderTasks(columnId, taskIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+      queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+    },
+  })
+}

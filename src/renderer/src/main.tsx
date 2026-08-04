@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import '@mantine/core/styles.css'
 import '@lyfie/luthor/styles.css'
+import './highlight.css'
 import { RouterProvider } from '@tanstack/react-router'
 import { router } from './routeTree'
 

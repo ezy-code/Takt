@@ -27,7 +27,7 @@ function SettingsPage() {
   }, [])
 
   return (
-    <Container size="sm" py="xl">
+    <Container fluid py="xl">
       <Title order={1} mb="lg">Settings</Title>
       <Stack gap="lg">
         <Group justify="space-between" w="100%">

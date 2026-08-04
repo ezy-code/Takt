@@ -1,7 +1,7 @@
-import { Text, Group, Button, Card, ActionIcon, Tooltip, Anchor } from '@mantine/core'
-import { IconCalendarPlus, IconCalendarCheck, IconAlertCircle, IconX } from '@tabler/icons-react'
+import { Text, Group, Card, ActionIcon, Tooltip, Anchor, Spoiler, Menu } from '@mantine/core'
+import { IconCalendarPlus, IconCalendarCheck, IconAlertCircle, IconX, IconDots, IconEye, IconPencil, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
-import ReactMarkdown from 'react-markdown'
+import { MarkdownPreview } from './MarkdownPreview'
 import { TimerControl } from './TimerControl'
 import { useDeleteTask, useToggleToday, useClearToday, useStatuses } from '../api'
 import { ROUTES } from '../routes'
@@ -58,15 +58,11 @@ export function TaskCard({ task }: TaskCardProps) {
               <Text size="xs" c="red">(overdue)</Text>
             )}
           </Group>
-          {task.description_md && (() => {
-            const clean = task.description_md.replace(/<!-- luthor:meta .*? -->/g, '').trim()
-            const preview = clean.length > 150 ? clean.slice(0, 150) + '…' : clean
-            return preview ? (
-              <Text size="sm" c="dimmed" component="div">
-                <ReactMarkdown>{preview}</ReactMarkdown>
-              </Text>
-            ) : null
-          })()}
+          {/* {task.description_md && (
+            <Spoiler maxHeight={80} showLabel="Show more" hideLabel="Hide">
+              <MarkdownPreview content={task.description_md} variant="preview" />
+            </Spoiler>
+          )} */}
           <Text size="xs" c="gray" mt={4}>
             {new Date(task.created_at).toLocaleString()}
           </Text>
@@ -90,9 +86,31 @@ export function TaskCard({ task }: TaskCardProps) {
               </ActionIcon>
             </Tooltip>
           )}
-          <Button variant="light" color="red" size="xs" onClick={() => deleteTask.mutate(task.id)}>
-            Delete
-          </Button>
+          <Menu shadow="md" width={200} position="bottom-end">
+            <Menu.Target>
+              <ActionIcon variant="subtle" color="gray" size="sm" aria-label="Task actions">
+                <IconDots size={16} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                leftSection={<IconEye size={14} />}
+                onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
+              >
+                View
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<IconPencil size={14} />}
+                onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task.id) } })}
+              >
+                Edit
+              </Menu.Item>
+              <Menu.Divider />
+              <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => deleteTask.mutate(task.id)}>
+                Delete
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </Group>
     </Card>

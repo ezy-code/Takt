@@ -1,8 +1,7 @@
+import { memo, useMemo } from 'react'
 import { Group, Paper, Stack, Text, Badge } from '@mantine/core'
-import { useDroppable } from '@dnd-kit/core'
-import { useSortable } from '@dnd-kit/sortable'
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { KanbanCard } from './KanbanCard'
 import type { Status, Task } from '../types'
 
@@ -11,32 +10,29 @@ interface KanbanColumnProps {
   tasks: Task[]
 }
 
-export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
+export const KanbanColumn = memo(function KanbanColumn({ status, tasks }: KanbanColumnProps) {
   const {
     attributes,
     listeners,
-    setNodeRef: setSortableRef,
+    setNodeRef,
     transform,
     transition,
-    isDragging: isColDragging,
+    isDragging,
   } = useSortable({
     id: `column-${status.id}`,
-    data: { type: 'column', statusId: status.id },
-  })
-
-  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
-    id: `col-body-${status.id}`,
-    data: { type: 'column', statusId: status.id },
+    data: { type: 'column', status },
   })
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isColDragging ? 0.5 : undefined,
+    opacity: isDragging ? 0.4 : 1,
   }
 
-  return (
-    <div ref={setSortableRef} style={style}>
+  const itemIds = useMemo(() => tasks.map((t) => `task-${t.id}`), [tasks])
+
+    return (
+    <div ref={setNodeRef} style={style}>
       <Paper
         withBorder
         p="sm"
@@ -45,7 +41,9 @@ export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
           maxWidth: 300,
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: 'calc(100vh - 140px)',
+            maxHeight: 'calc(100vh - 140px)',
+            height: '100%',
+
         }}
       >
         <Group
@@ -53,7 +51,7 @@ export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
           mb="sm"
           {...attributes}
           {...listeners}
-          style={{ cursor: 'grab' }}
+          style={{ cursor: 'grab', userSelect: 'none' }}
         >
           <Group gap="xs">
             <div
@@ -75,29 +73,30 @@ export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
         </Group>
 
         <div
-          ref={setDroppableRef}
           style={{
             flex: 1,
             overflowY: 'auto',
-            minHeight: 60,
-            outline: isOver ? '2px solid var(--mantine-color-blue-6)' : undefined,
+            minHeight: 100,
+            borderRadius: 8,
+            scrollbarGutter: 'stable',
           }}
         >
-          <SortableContext items={tasks.map((t) => `task-${t.id}`)} strategy={verticalListSortingStrategy}>
-            {tasks.length === 0 ? (
-              <Text c="dimmed" size="sm" ta="center" py="xl" style={{ pointerEvents: 'none' }}>
-                Drop tasks here
-              </Text>
-            ) : (
-              <Stack gap="xs">
-                {tasks.map((task) => (
-                  <KanbanCard key={task.id} task={task} />
-                ))}
-              </Stack>
-            )}
+          <SortableContext
+            items={itemIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <Stack gap="xs" style={{ minHeight: 100 }}>
+              {tasks.length === 0 ? (
+                <Text c="dimmed" size="sm" ta="center" py="xl" style={{ pointerEvents: 'none' }}>
+                  Drop tasks here
+                </Text>
+              ) : (
+                tasks.map((task) => <KanbanCard key={task.id} task={task} />)
+              )}
+            </Stack>
           </SortableContext>
         </div>
       </Paper>
     </div>
   )
-}
+})

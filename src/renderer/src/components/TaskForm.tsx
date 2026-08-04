@@ -79,8 +79,8 @@ export function TaskForm({ id }: TaskFormProps) {
     }
   }, [isEdit, task, form])
 
-  if (isEdit && isLoading) return <Container size="sm" py="xl"><Text c="dimmed">Loading...</Text></Container>
-  if (isEdit && !task) return <Container size="sm" py="xl"><Text c="red">Task not found</Text></Container>
+  if (isEdit && isLoading) return <Container fluid py="xl"><Text c="dimmed">Loading...</Text></Container>
+  if (isEdit && !task) return <Container fluid py="xl"><Text c="red">Task not found</Text></Container>
 
   const statusOptions = (statuses ?? []).map((s) => ({
     value: String(s.id),
@@ -88,7 +88,7 @@ export function TaskForm({ id }: TaskFormProps) {
   }))
 
   return (
-    <Container size="sm" py="xl">
+    <Container fluid py="xl">
       <Title order={1} mb="lg">{isEdit ? 'Edit Task' : 'New Task'}</Title>
       <form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
         <Stack>
