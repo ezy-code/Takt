@@ -12,10 +12,15 @@ let timerStartTime: string | null = null
 let timerTaskName: string | null = null
 let trayTimerInterval: ReturnType<typeof setInterval> | null = null
 
+function getResourcePath(rel: string): string {
+	const base = app.isPackaged ? join(process.resourcesPath, 'resources') : join(__dirname, '../../resources')
+	return join(base, rel)
+}
+
 function getTrayIcon(): string {
 	const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
 	const suffix = isTimerActive ? '-active' : ''
-	return join(__dirname, `../../resources/icon-${theme}${suffix}.png`)
+	return getResourcePath(`icon-${theme}${suffix}.png`)
 }
 
 function formatDuration(seconds: number): string {
@@ -89,7 +94,7 @@ function createWindow() {
 	mainWindow = new BrowserWindow({
 		width: 1200,
 		height: 800,
-		icon: nativeImage.createFromPath(join(__dirname, '../../resources/app-icon.png')),
+		icon: nativeImage.createFromPath(getResourcePath('app-icon.png')),
 		webPreferences: {
 			preload: join(__dirname, '../preload/index.js'),
 			contextIsolation: true,
