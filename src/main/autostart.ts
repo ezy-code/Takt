@@ -1,29 +1,29 @@
 import { app, ipcMain } from 'electron'
-import { writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs'
-import { join } from 'path'
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
+import { join } from 'path'
 
 const AUTOSTART_ARGS = ['--hidden']
 
 function getDesktopFilePath(): string {
-  const name = app.getName()
-  return join(homedir(), '.config', 'autostart', `${name}.desktop`)
+	const name = app.getName()
+	return join(homedir(), '.config', 'autostart', `${name}.desktop`)
 }
 
 function enableAutostart() {
-  if (process.platform === 'win32' || process.platform === 'darwin') {
-    app.setLoginItemSettings({
-      openAtLogin: true,
-      openAsHidden: true,
-      path: process.execPath,
-      args: AUTOSTART_ARGS,
-    })
-  } else if (process.platform === 'linux') {
-    const dir = join(homedir(), '.config', 'autostart')
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    writeFileSync(
-      getDesktopFilePath(),
-      `[Desktop Entry]
+	if (process.platform === 'win32' || process.platform === 'darwin') {
+		app.setLoginItemSettings({
+			openAtLogin: true,
+			openAsHidden: true,
+			path: process.execPath,
+			args: AUTOSTART_ARGS,
+		})
+	} else if (process.platform === 'linux') {
+		const dir = join(homedir(), '.config', 'autostart')
+		if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+		writeFileSync(
+			getDesktopFilePath(),
+			`[Desktop Entry]
 Type=Application
 Version=1.0
 Name=${app.getName()}
@@ -32,33 +32,33 @@ Exec=${process.execPath} ${AUTOSTART_ARGS.join(' ')}
 StartupNotify=false
 Terminal=false
 X-GNOME-Autostart-enabled=true`,
-      'utf-8'
-    )
-  }
+			'utf-8',
+		)
+	}
 }
 
 function disableAutostart() {
-  if (process.platform === 'win32' || process.platform === 'darwin') {
-    app.setLoginItemSettings({ openAtLogin: false })
-  } else if (process.platform === 'linux') {
-    const fp = getDesktopFilePath()
-    if (existsSync(fp)) unlinkSync(fp)
-  }
+	if (process.platform === 'win32' || process.platform === 'darwin') {
+		app.setLoginItemSettings({ openAtLogin: false })
+	} else if (process.platform === 'linux') {
+		const fp = getDesktopFilePath()
+		if (existsSync(fp)) unlinkSync(fp)
+	}
 }
 
 function isAutostartEnabled(): boolean {
-  if (process.platform === 'win32' || process.platform === 'darwin') {
-    return app.getLoginItemSettings().openAtLogin
-  } else if (process.platform === 'linux') {
-    return existsSync(getDesktopFilePath())
-  }
-  return false
+	if (process.platform === 'win32' || process.platform === 'darwin') {
+		return app.getLoginItemSettings().openAtLogin
+	} else if (process.platform === 'linux') {
+		return existsSync(getDesktopFilePath())
+	}
+	return false
 }
 
 export function initAutostart() {
-  ipcMain.handle('get-autostart', () => isAutostartEnabled())
-  ipcMain.handle('set-autostart', (_event, enabled: boolean) => {
-    if (enabled) enableAutostart()
-    else disableAutostart()
-  })
+	ipcMain.handle('get-autostart', () => isAutostartEnabled())
+	ipcMain.handle('set-autostart', (_event, enabled: boolean) => {
+		if (enabled) enableAutostart()
+		else disableAutostart()
+	})
 }
