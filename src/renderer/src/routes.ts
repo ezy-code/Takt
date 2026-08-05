@@ -1,8 +1,8 @@
 export const ROUTES = {
 	INDEX: '/',
+	MY_DAY: '/my-day',
 	TASKS: '/tasks',
 	TASKS_NEW: '/tasks/new',
-	TASKS_TODAY: '/tasks/today',
 	TASK_DETAIL: '/tasks/$id',
 	TASK_EDIT: '/tasks/$id/edit',
 	PROJECTS: '/projects',

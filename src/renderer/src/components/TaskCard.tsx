@@ -1,7 +1,7 @@
 import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
 import { IconDots, IconEye, IconFolder, IconPencil, IconSun, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
-import { useClearToday, useDeleteTask, useProjects, useStatuses, useToggleToday } from '../api'
+import { useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { MarkdownPreview } from './MarkdownPreview'
@@ -12,33 +12,33 @@ interface TaskCardProps {
 	task: Task
 }
 
-function getTodayState(todayDate: string | null | undefined): 'none' | 'today' | 'overdue' {
-	if (!todayDate) return 'none'
+function getMyDayState(myDayDate: string | null | undefined): 'none' | 'today' | 'overdue' {
+	if (!myDayDate) return 'none'
 	const today = new Date().toISOString().split('T')[0]
-	if (todayDate === today) return 'today'
+	if (myDayDate === today) return 'today'
 	return 'overdue'
 }
 
 export function TaskCard({ task }: TaskCardProps) {
 	const navigate = useNavigate()
 	const deleteTask = useDeleteTask()
-	const toggleToday = useToggleToday()
-	const clearToday = useClearToday()
+	const toggleMyDay = useToggleMyDay()
+	const clearMyDay = useClearMyDay()
 	const { data: statuses } = useStatuses()
 	const { data: projects } = useProjects()
 
 	const status = statuses?.find((s) => s.id === task.statusId)
 	const project = projects?.find((p) => p.id === task.projectId)
-	const todayState = getTodayState(task.today_date ?? null)
+	const myDayState = getMyDayState(task.my_day_date ?? null)
 
 	const handleMyDayToggle = () => {
-		if (todayState === 'none') toggleToday.mutate(task.id)
-		else clearToday.mutate(task.id)
+		if (myDayState === 'none') toggleMyDay.mutate(task.id)
+		else clearMyDay.mutate(task.id)
 	}
 
 	const menuItems = (
 		<>
-			<MyDayControl variant='menu-item' inMyDay={todayState !== 'none'} onToggle={handleMyDayToggle} />
+			<MyDayControl variant='menu-item' inMyDay={myDayState !== 'none'} onToggle={handleMyDayToggle} />
 			<Menu.Divider />
 			<Menu.Item
 				leftSection={<IconEye size={14} />}
@@ -75,7 +75,7 @@ export function TaskCard({ task }: TaskCardProps) {
 									>
 										{task.name}
 									</Anchor>
-									{todayState === 'overdue' && (
+									{myDayState === 'overdue' && (
 										<Text size='xs' c='red'>
 											overdue
 										</Text>
@@ -102,7 +102,7 @@ export function TaskCard({ task }: TaskCardProps) {
 						)} */}
 
 						<Group gap='md' align='center'>
-							{todayState !== 'none' && (
+							{myDayState !== 'none' && (
 								<Group gap={5} align='center' c='blue'>
 									<IconSun size={14} />
 									<Text size='xs'>My Day</Text>

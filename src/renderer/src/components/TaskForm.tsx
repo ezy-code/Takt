@@ -38,18 +38,18 @@ export function TaskForm({ id }: TaskFormProps) {
 
 	const [statusId, setStatusId] = useState<number | null>(null)
 	const [projectId, setProjectId] = useState<number | null>(null)
-	const [addToToday, setAddToToday] = useState(false)
+	const [addToMyDay, setAddToMyDay] = useState(false)
 
 	useEffect(() => {
 		if (isEdit && task) {
 			setStatusId(task.statusId ?? null)
 			setProjectId(task.projectId ?? null)
-			setAddToToday(!!task.today_date)
+			setAddToMyDay(!!task.my_day_date)
 		} else if (!isEdit && statuses) {
 			const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
 			setStatusId(defaultStatus?.id ?? null)
 			setProjectId(null)
-			setAddToToday(false)
+			setAddToMyDay(false)
 		}
 	}, [isEdit, task, statuses])
 
@@ -69,7 +69,7 @@ export function TaskForm({ id }: TaskFormProps) {
 				description_html,
 				statusId: statusId ?? undefined,
 				projectId: projectId ?? undefined,
-				today: addToToday,
+				myDay: addToMyDay,
 			}
 			if (isEdit) {
 				await updateTask.mutateAsync({ id, ...payload })
@@ -162,7 +162,7 @@ export function TaskForm({ id }: TaskFormProps) {
 						disabled={!projects?.length}
 					/>
 
-					<MyDayControl variant='button' inMyDay={addToToday} onToggle={() => setAddToToday((v) => !v)} />
+					<MyDayControl variant='button' inMyDay={addToMyDay} onToggle={() => setAddToMyDay((v) => !v)} />
 
 					<div>
 						<Text size='sm' fw={500} mb={4}>

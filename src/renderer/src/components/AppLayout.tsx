@@ -16,8 +16,8 @@ import { useTimerStore } from '../store/timer'
 import { TimerControl } from './TimerControl'
 
 const navItems = [
+	{ label: 'My Day', path: ROUTES.MY_DAY, icon: IconCalendarCheck },
 	{ label: 'Tasks', path: ROUTES.TASKS, icon: IconList },
-	{ label: 'Today', path: ROUTES.TASKS_TODAY, icon: IconCalendarCheck },
 	{ label: 'Projects', path: ROUTES.PROJECTS, icon: IconFolder },
 	{ label: 'Time Entries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
 	{ label: 'Settings', path: ROUTES.SETTINGS, icon: IconSettings },

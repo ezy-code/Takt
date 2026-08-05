@@ -24,7 +24,7 @@ export interface Task {
 	description_html: string
 	statusId?: number | null
 	projectId?: number | null
-	today_date?: string | null
+	my_day_date?: string | null
 	created_at: string
 	position?: number
 	total_duration?: number
@@ -67,7 +67,7 @@ export interface Api {
 		description_html?: string,
 		statusId?: number,
 		projectId?: number,
-		today?: boolean | string | null,
+		myDay?: boolean | string | null,
 	) => Promise<Task>
 	deleteTask: (id: number) => Promise<{ success: boolean }>
 	updateTask: (
@@ -78,7 +78,7 @@ export interface Api {
 		description_html?: string,
 		statusId?: number,
 		projectId?: number,
-		today?: boolean | string | null,
+		myDay?: boolean | string | null,
 	) => Promise<Task>
 	getProjects: () => Promise<Project[]>
 	getProject: (id: number) => Promise<Project | null>
@@ -102,9 +102,9 @@ export interface Api {
 	getTimeSummary: () => Promise<TimeSummary>
 	deleteTimeEntry: (id: number) => Promise<{ success: boolean }>
 	showNotification: (title: string, body: string) => Promise<void>
-	toggleTodayTask: (id: number) => Promise<{ success: boolean }>
-	getTodayTasks: () => Promise<Task[]>
-	clearTodayDate: (id: number) => Promise<{ success: boolean }>
+	toggleMyDayTask: (id: number) => Promise<{ success: boolean }>
+	getMyDayTasks: () => Promise<Task[]>
+	clearMyDayDate: (id: number) => Promise<{ success: boolean }>
 	getStatuses: () => Promise<Status[]>
 	addStatus: (name: string, color: string) => Promise<Status>
 	updateStatus: (id: number, name: string, color: string) => Promise<Status>
