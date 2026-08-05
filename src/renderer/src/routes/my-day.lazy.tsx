@@ -1,13 +1,13 @@
 import { Container, Stack, Text, Title } from '@mantine/core'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { useActiveTimer, useTodayTasks } from '../api'
+import { useActiveTimer, useMyDayTasks } from '../api'
 import { TaskCard } from '../components/TaskCard'
 import { ROUTES } from '../routes'
 import { useTimerStore } from '../store/timer'
 
-function TodayPage() {
-	const { data: todayTasks } = useTodayTasks()
+function MyDayPage() {
+	const { data: myDayTasks } = useMyDayTasks()
 	const { data: activeTimer } = useActiveTimer()
 	const setActive = useTimerStore((s) => s.setActive)
 
@@ -20,14 +20,14 @@ function TodayPage() {
 	}, [activeTimer, setActive])
 
 	const today = new Date().toISOString().split('T')[0]
-	const tasks = todayTasks ?? []
-	const overdue = tasks.filter((t) => t.today_date && t.today_date < today)
-	const current = tasks.filter((t) => t.today_date === today)
+	const tasks = myDayTasks ?? []
+	const overdue = tasks.filter((t) => t.my_day_date && t.my_day_date < today)
+	const current = tasks.filter((t) => t.my_day_date === today)
 
 	return (
 		<Container fluid py='xl'>
 			<Title order={1} mb='lg'>
-				Today
+				My Day
 			</Title>
 
 			{overdue.length > 0 && (
@@ -61,6 +61,6 @@ function TodayPage() {
 	)
 }
 
-export const Route = createLazyRoute(ROUTES.TASKS_TODAY)({
-	component: TodayPage,
+export const Route = createLazyRoute(ROUTES.MY_DAY)({
+	component: MyDayPage,
 })

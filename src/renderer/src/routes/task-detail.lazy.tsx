@@ -42,7 +42,7 @@ function TaskDetailPage() {
 						</Button>
 					</Group>
 				</Group>
-				{task.today_date && (
+				{task.my_day_date && (
 					<Group gap='xs' c='blue'>
 						<IconSun size={16} />
 						<Text size='sm'>My Day</Text>

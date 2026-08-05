@@ -25,7 +25,7 @@ export const tasks = sqliteTable('tasks', {
 	description: text('description').default(''),
 	statusId: integer('status_id').references(() => statuses.id),
 	projectId: integer('project_id').references(() => projects.id),
-	today_date: text('today_date'),
+	my_day_date: text('my_day_date'),
 	created_at: text('created_at').default(sql`(datetime('now'))`),
 	position: integer('position').notNull().default(0),
 	descriptionMarkdown: text('description_md').default(''),

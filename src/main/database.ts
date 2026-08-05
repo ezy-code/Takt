@@ -13,10 +13,10 @@ function getDefaultStatusId(): number | undefined {
 	return first?.id
 }
 
-function resolveTodayDate(today?: boolean | string | null): string | null {
-	if (today === true) return new Date().toISOString().split('T')[0]
-	if (today === false || today === null) return null
-	if (typeof today === 'string') return today
+function resolveMyDayDate(myDay?: boolean | string | null): string | null {
+	if (myDay === true) return new Date().toISOString().split('T')[0]
+	if (myDay === false || myDay === null) return null
+	if (typeof myDay === 'string') return myDay
 	return null
 }
 
@@ -180,7 +180,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				description_html: tasks.descriptionHtml,
 				statusId: tasks.statusId,
 				projectId: tasks.projectId,
-				today_date: tasks.today_date,
+				my_day_date: tasks.my_day_date,
 				created_at: tasks.created_at,
 				position: tasks.position,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -202,7 +202,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				description_html: tasks.descriptionHtml,
 				statusId: tasks.statusId,
 				projectId: tasks.projectId,
-				today_date: tasks.today_date,
+				my_day_date: tasks.my_day_date,
 				created_at: tasks.created_at,
 				position: tasks.position,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -224,10 +224,10 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			description_html?: string,
 			statusId?: number,
 			projectId?: number,
-			today?: boolean | string | null,
+			myDay?: boolean | string | null,
 		) => {
 			const resolvedStatusId = statusId ?? getDefaultStatusId()
-			const today_date = resolveTodayDate(today)
+			const my_day_date = resolveMyDayDate(myDay)
 			const maxPos = db
 				.select({ maxPos: sql<number>`coalesce(max(${tasks.position}), -1)` })
 				.from(tasks)
@@ -242,7 +242,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 					descriptionHtml: description_html ?? '',
 					statusId: resolvedStatusId,
 					projectId,
-					today_date,
+					my_day_date,
 					position: maxPos!.maxPos + 1,
 				})
 				.returning()
@@ -261,7 +261,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			description_html?: string,
 			statusId?: number,
 			projectId?: number,
-			today?: boolean | string | null,
+			myDay?: boolean | string | null,
 		) => {
 			const updates: {
 				name: string
@@ -270,7 +270,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				descriptionHtml: string
 				statusId?: number
 				projectId?: number
-				today_date?: string | null
+				my_day_date?: string | null
 			} = {
 				name,
 				description,
@@ -279,7 +279,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			}
 			if (statusId !== undefined) updates.statusId = statusId
 			if (projectId !== undefined) updates.projectId = projectId
-			if (today !== undefined) updates.today_date = resolveTodayDate(today)
+			if (myDay !== undefined) updates.my_day_date = resolveMyDayDate(myDay)
 			return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
 		},
 	)
@@ -400,15 +400,15 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
-	ipcMain.handle('toggle-today', (_event, id: number) => {
-		const task = db.select({ today_date: tasks.today_date }).from(tasks).where(eq(tasks.id, id)).get()
+	ipcMain.handle('toggle-my-day', (_event, id: number) => {
+		const task = db.select({ my_day_date: tasks.my_day_date }).from(tasks).where(eq(tasks.id, id)).get()
 		const newDate =
-			task?.today_date === new Date().toISOString().split('T')[0] ? null : new Date().toISOString().split('T')[0]
-		db.update(tasks).set({ today_date: newDate }).where(eq(tasks.id, id)).run()
+			task?.my_day_date === new Date().toISOString().split('T')[0] ? null : new Date().toISOString().split('T')[0]
+		db.update(tasks).set({ my_day_date: newDate }).where(eq(tasks.id, id)).run()
 		return { success: true }
 	})
 
-	ipcMain.handle('get-today-tasks', () => {
+	ipcMain.handle('get-my-day-tasks', () => {
 		return db
 			.select({
 				id: tasks.id,
@@ -418,21 +418,21 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				description_html: tasks.descriptionHtml,
 				statusId: tasks.statusId,
 				projectId: tasks.projectId,
-				today_date: tasks.today_date,
+				my_day_date: tasks.my_day_date,
 				created_at: tasks.created_at,
 				position: tasks.position,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
 			.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
-			.where(sql`${tasks.today_date} is not null`)
+			.where(sql`${tasks.my_day_date} is not null`)
 			.groupBy(tasks.id)
 			.orderBy(asc(tasks.position), desc(tasks.created_at))
 			.all()
 	})
 
-	ipcMain.handle('clear-today-date', (_event, id: number) => {
-		db.update(tasks).set({ today_date: null }).where(eq(tasks.id, id)).run()
+	ipcMain.handle('clear-my-day-date', (_event, id: number) => {
+		db.update(tasks).set({ my_day_date: null }).where(eq(tasks.id, id)).run()
 		return { success: true }
 	})
 }

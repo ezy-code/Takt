@@ -31,10 +31,10 @@ const taskEditRoute = createRoute({
 	path: ROUTES.TASK_EDIT,
 }).lazy(() => import('./routes/tasks-edit.lazy').then((d) => d.Route))
 
-const todayRoute = createRoute({
+const myDayRoute = createRoute({
 	getParentRoute: () => rootRoute,
-	path: ROUTES.TASKS_TODAY,
-}).lazy(() => import('./routes/today.lazy').then((d) => d.Route))
+	path: ROUTES.MY_DAY,
+}).lazy(() => import('./routes/my-day.lazy').then((d) => d.Route))
 
 const projectsRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -64,7 +64,7 @@ const settingsRoute = createRoute({
 function IndexRedirect() {
 	const navigate = useNavigate()
 	useEffect(() => {
-		navigate({ to: ROUTES.TASKS })
+		navigate({ to: ROUTES.MY_DAY })
 	}, [])
 	return null
 }
@@ -77,11 +77,11 @@ const indexRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
 	indexRoute,
+	myDayRoute,
 	tasksRoute,
 	tasksNewRoute,
 	taskDetailRoute,
 	taskEditRoute,
-	todayRoute,
 	projectsRoute,
 	projectNewRoute,
 	projectEditRoute,

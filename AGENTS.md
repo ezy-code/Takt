@@ -34,7 +34,7 @@
 - **Main process** — Node.js, has access to `better-sqlite3` and Electron APIs.
   Exposes IPC handlers: tasks (`get/update/delete-task`), projects CRUD, statuses
   (CRUD + reorder + set default), timer (`get-active/start/stop`, single active
-  session), time entries (list/summary/delete), today toggles, autostart,
+  session), time entries (list/summary/delete), my day toggles, autostart,
   notifications. Tray icon shows live timer in tooltip.
 - **Preload** — Bridge between main and renderer. Exposes `window.api` via `contextBridge`.
 - **Renderer** — React app in a sandboxed Chromium window. No Node.js access.

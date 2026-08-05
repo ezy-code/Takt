@@ -4,7 +4,7 @@ import type { StartTimerResult, Task, TimeEntry } from './types'
 
 const queryKeys = {
 	tasks: ['tasks'] as const,
-	todayTasks: ['tasks', 'today'] as const,
+	myDayTasks: ['tasks', 'my-day'] as const,
 	activeTimer: ['active-timer'] as const,
 	timeEntries: ['time-entries'] as const,
 	timeSummary: ['time-summary'] as const,
@@ -27,10 +27,10 @@ export function useTask(id: number) {
 	})
 }
 
-export function useTodayTasks() {
+export function useMyDayTasks() {
 	return useQuery({
-		queryKey: queryKeys.todayTasks,
-		queryFn: () => window.api.getTodayTasks(),
+		queryKey: queryKeys.myDayTasks,
+		queryFn: () => window.api.getMyDayTasks(),
 	})
 }
 
@@ -65,7 +65,7 @@ export function useAddTask() {
 			description_html,
 			statusId,
 			projectId,
-			today,
+			myDay,
 		}: {
 			name: string
 			description: string
@@ -73,11 +73,11 @@ export function useAddTask() {
 			description_html?: string
 			statusId?: number
 			projectId?: number
-			today?: boolean
-		}) => window.api.addTask(name, description, description_md, description_html, statusId, projectId, today),
+			myDay?: boolean
+		}) => window.api.addTask(name, description, description_md, description_html, statusId, projectId, myDay),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }
@@ -93,7 +93,7 @@ export function useUpdateTask() {
 			description_html,
 			statusId,
 			projectId,
-			today,
+			myDay,
 		}: {
 			id: number
 			name: string
@@ -102,12 +102,12 @@ export function useUpdateTask() {
 			description_html?: string
 			statusId?: number
 			projectId?: number
-			today?: boolean
-		}) => window.api.updateTask(id, name, description, description_md, description_html, statusId, projectId, today),
+			myDay?: boolean
+		}) => window.api.updateTask(id, name, description, description_md, description_html, statusId, projectId, myDay),
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }
@@ -118,29 +118,29 @@ export function useDeleteTask() {
 		mutationFn: (id: number) => window.api.deleteTask(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }
 
-export function useToggleToday() {
+export function useToggleMyDay() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (id: number) => window.api.toggleTodayTask(id),
+		mutationFn: (id: number) => window.api.toggleMyDayTask(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }
 
-export function useClearToday() {
+export function useClearMyDay() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (id: number) => window.api.clearTodayDate(id),
+		mutationFn: (id: number) => window.api.clearMyDayDate(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }
@@ -166,7 +166,7 @@ export function useStartTimer() {
 				setActive(result.entry, null)
 				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-				queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+				queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			}
 		},
 	})
@@ -187,7 +187,7 @@ export function useStopTimer() {
 					)
 				}
 				queryClient.setQueryData(queryKeys.tasks, updater)
-				queryClient.setQueryData(queryKeys.todayTasks, updater)
+				queryClient.setQueryData(queryKeys.myDayTasks, updater)
 			}
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
@@ -260,7 +260,7 @@ export function useMoveTask() {
 		mutationFn: ({ taskId, statusId }: { taskId: number; statusId: number }) => window.api.moveTask(taskId, statusId),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }
@@ -272,7 +272,7 @@ export function useReorderTasks() {
 			window.api.reorderTasks(columnId, taskIds),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.todayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }

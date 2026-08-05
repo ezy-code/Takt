@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` RENAME COLUMN "today_date" TO "my_day_date";
