@@ -3,13 +3,21 @@ import { initReactI18next } from 'react-i18next'
 import { en } from './locales/en'
 import { ru } from './locales/ru'
 
-export const LANGUAGE_KEY = 'takt-language'
+export const LANGUAGE_KEY = 'language'
 
-function getInitialLanguage(): string {
-	const saved = localStorage.getItem(LANGUAGE_KEY)
-	if (saved === 'ru' || saved === 'en') return saved
+export function detectSystemLanguage(): string {
 	const system = (navigator.language ?? '').toLowerCase()
 	return system.startsWith('ru') ? 'ru' : 'en'
+}
+
+export async function resolveLanguage(): Promise<string> {
+	const saved = await window.api.getMeta(LANGUAGE_KEY)
+	return saved === 'ru' || saved === 'en' ? saved : detectSystemLanguage()
+}
+
+export function applyLanguage(lng: string): void {
+	window.api.setMeta(LANGUAGE_KEY, lng)
+	i18n.changeLanguage(lng)
 }
 
 i18n.use(initReactI18next).init({
@@ -17,7 +25,7 @@ i18n.use(initReactI18next).init({
 		en: { translation: en },
 		ru: { translation: ru },
 	},
-	lng: getInitialLanguage(),
+	lng: detectSystemLanguage(),
 	fallbackLng: 'en',
 	interpolation: { escapeValue: false },
 })

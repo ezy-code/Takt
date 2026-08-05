@@ -3,7 +3,7 @@ import { IconDeviceDesktop, IconLanguage, IconMoon, IconPower, IconSun } from '@
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LANGUAGE_KEY } from '../i18n'
+import { applyLanguage } from '../i18n'
 import { ROUTES } from '../routes'
 
 const themeData = [
@@ -69,8 +69,7 @@ function SettingsPage() {
 						value={language}
 						onChange={(v) => {
 							setLanguage(v as 'en' | 'ru')
-							i18n.changeLanguage(v)
-							localStorage.setItem(LANGUAGE_KEY, v)
+							applyLanguage(v)
 						}}
 						data={languageData}
 					/>

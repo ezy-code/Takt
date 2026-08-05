@@ -110,4 +110,7 @@ export const ru: typeof en = {
 		nowBody: 'Уведомление сейчас!',
 		in20sBody: 'Уведомление через 20 секунд!',
 	},
+	onboarding: {
+		getStarted: 'Начать',
+	},
 }

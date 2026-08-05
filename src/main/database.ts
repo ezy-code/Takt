@@ -2,7 +2,7 @@ import { asc, count, desc, eq, sql } from 'drizzle-orm'
 import { app, ipcMain } from 'electron'
 import { join } from 'path'
 import { createDb } from './db'
-import { projects, statuses, tasks, timeEntries } from './db/schema'
+import { appMeta, projects, statuses, tasks, timeEntries } from './db/schema'
 
 let db: ReturnType<typeof createDb>
 
@@ -34,6 +34,15 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	} else {
 		onTimerChange?.({ active: false })
 	}
+
+	ipcMain.handle('get-meta', (_event, key: string) => {
+		return db.select({ value: appMeta.value }).from(appMeta).where(eq(appMeta.key, key)).get()?.value ?? null
+	})
+
+	ipcMain.handle('set-meta', (_event, key: string, value: string) => {
+		db.insert(appMeta).values({ key, value }).onConflictDoUpdate({ target: appMeta.key, set: { value } }).run()
+		return { success: true }
+	})
 
 	ipcMain.handle('get-projects', () => {
 		return db

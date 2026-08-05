@@ -1,6 +1,11 @@
 import { relations, sql } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
+export const appMeta = sqliteTable('app_meta', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull(),
+})
+
 export const statuses = sqliteTable('statuses', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
