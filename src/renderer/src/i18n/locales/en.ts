@@ -108,4 +108,7 @@ export const en = {
 		nowBody: 'Notification now!',
 		in20sBody: 'Notification in 20 seconds!',
 	},
+	onboarding: {
+		getStarted: 'Get Started',
+	},
 }

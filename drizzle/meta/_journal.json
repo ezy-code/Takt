@@ -71,6 +71,13 @@
       "when": 1785962546803,
       "tag": "0009_left_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1785973803609,
+      "tag": "0010_purple_luckman",
+      "breakpoints": true
     }
   ]
 }

@@ -61,4 +61,6 @@ contextBridge.exposeInMainWorld('api', {
 		ipcRenderer.invoke('reorder-tasks', columnId, orderedTaskIds),
 	getAutostart: () => ipcRenderer.invoke('get-autostart'),
 	setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
+	getMeta: (key: string) => ipcRenderer.invoke('get-meta', key),
+	setMeta: (key: string, value: string) => ipcRenderer.invoke('set-meta', key, value),
 })
