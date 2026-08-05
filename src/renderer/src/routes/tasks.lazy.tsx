@@ -1,11 +1,11 @@
-import { Button, Container, Group, Select, SimpleGrid, Tabs, Text, Title } from '@mantine/core'
+import { Button, Container, Group, Select, Tabs, Text, Title } from '@mantine/core'
 import { IconColumns, IconList, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useActiveTimer, useProjects, useTasks } from '../api'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { ManageStatusesModal } from '../components/ManageStatusesModal'
-import { TaskCard } from '../components/TaskCard'
+import { TaskGrid } from '../components/TaskGrid'
 import { ROUTES } from '../routes'
 import { useTimerStore } from '../store/timer'
 
@@ -85,11 +85,7 @@ function TasksPage() {
 					) : filteredTasks.length === 0 ? (
 						<Text c='dimmed'>{projectFilter ? 'No tasks in this project.' : 'No tasks yet. Create one.'}</Text>
 					) : (
-						<SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing='md'>
-							{filteredTasks.map((task) => (
-								<TaskCard key={task.id} task={task} />
-							))}
-						</SimpleGrid>
+						<TaskGrid tasks={filteredTasks} />
 					)}
 				</Tabs.Panel>
 
