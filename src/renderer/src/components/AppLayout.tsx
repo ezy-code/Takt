@@ -10,6 +10,7 @@ import {
 } from '@tabler/icons-react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect } from 'react'
+import { APP_NAME } from '../../../shared/constants'
 import { useActiveTimer } from '../api'
 import { ROUTES } from '../routes'
 import { useTimerStore } from '../store/timer'
@@ -38,12 +39,12 @@ export default function AppLayout() {
 	}, [activeTimer, setActive])
 
 	const showNotificationNow = useCallback(() => {
-		window.api.showNotification('Tact', 'Уведомление сейчас!')
+		window.api.showNotification(APP_NAME, 'Уведомление сейчас!')
 	}, [])
 
 	const showNotificationDelayed = useCallback(() => {
 		setTimeout(() => {
-			window.api.showNotification('Tact', 'Уведомление через 20 секунд!')
+			window.api.showNotification(APP_NAME, 'Уведомление через 20 секунд!')
 		}, 20000)
 	}, [])
 
@@ -51,7 +52,7 @@ export default function AppLayout() {
 		<AppShell padding='md' header={{ height: 56 }} navbar={{ width: 220, breakpoint: 0 }}>
 			<AppShell.Header p='md'>
 				<Group h='100%' gap='md'>
-					<Title order={3}>Tact</Title>
+					<Title order={3}>{APP_NAME}</Title>
 					{activeEntry && activeTask && (
 						<>
 							<Box

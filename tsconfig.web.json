@@ -15,5 +15,5 @@
 		"isolatedModules": true,
 		"lib": ["ESNext", "DOM", "DOM.Iterable"]
 	},
-	"include": ["src/renderer/**/*"]
+	"include": ["src/renderer/**/*", "src/shared/**/*"]
 }
