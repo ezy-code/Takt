@@ -1,5 +1,6 @@
 allowBuilds:
   better-sqlite3: true
+  electron-winstaller: true
   esbuild: true
 minimumReleaseAgeExclude:
   - '@biomejs/biome@2.5.7'
