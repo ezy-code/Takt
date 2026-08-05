@@ -1,9 +1,11 @@
 import { ActionIcon, Button, ColorInput, Group, Paper, Stack, Text, TextInput } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAddStatus } from '../api'
 
 export function AddStatusColumn() {
+	const { t } = useTranslation()
 	const [isOpen, setIsOpen] = useState(false)
 	const [name, setName] = useState('')
 	const [color, setColor] = useState('#868e96')
@@ -43,7 +45,7 @@ export function AddStatusColumn() {
 				<Group gap='xs'>
 					<IconPlus size={20} />
 					<Text size='sm' c='dimmed'>
-						Add Status
+						{t('statuses.addColumn')}
 					</Text>
 				</Group>
 			</Paper>
@@ -64,14 +66,14 @@ export function AddStatusColumn() {
 		>
 			<Group justify='space-between'>
 				<Text fw={600} size='sm'>
-					New Status
+					{t('statuses.newColumn')}
 				</Text>
 				<ActionIcon variant='subtle' size='sm' onClick={() => setIsOpen(false)}>
 					<IconX size={14} />
 				</ActionIcon>
 			</Group>
 			<TextInput
-				placeholder='Status name'
+				placeholder={t('statuses.namePlaceholder')}
 				value={name}
 				onChange={(e) => setName(e.currentTarget.value)}
 				size='sm'
@@ -79,7 +81,7 @@ export function AddStatusColumn() {
 			/>
 			<ColorInput size='sm' value={color} onChange={setColor} />
 			<Button size='sm' onClick={handleAdd} loading={addStatus.isPending}>
-				Add
+				{t('common.add')}
 			</Button>
 		</Paper>
 	)

@@ -1,7 +1,9 @@
 import { Container, Group, SegmentedControl, Stack, Switch, Text, Title, useMantineColorScheme } from '@mantine/core'
-import { IconDeviceDesktop, IconMoon, IconPower, IconSun } from '@tabler/icons-react'
+import { IconDeviceDesktop, IconLanguage, IconMoon, IconPower, IconSun } from '@tabler/icons-react'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { LANGUAGE_KEY } from '../i18n'
 import { ROUTES } from '../routes'
 
 const themeData = [
@@ -10,15 +12,22 @@ const themeData = [
 	{ label: 'Dark', value: 'dark', icon: IconMoon },
 ]
 
+const languageData = [
+	{ label: 'English', value: 'en' },
+	{ label: 'Русский', value: 'ru' },
+]
+
 const Route = createLazyRoute(ROUTES.SETTINGS)({
 	component: SettingsPage,
 })
 
 function SettingsPage() {
+	const { t, i18n } = useTranslation()
 	const { setColorScheme } = useMantineColorScheme()
 	const [preference, setPreference] = useState<'light' | 'dark' | 'auto'>(
 		() => (localStorage.getItem('mantine-color-scheme') as 'light' | 'dark' | 'auto' | null) ?? 'auto',
 	)
+	const [language, setLanguage] = useState(i18n.resolvedLanguage === 'ru' ? 'ru' : 'en')
 	const [autostart, setAutostart] = useState(false)
 
 	useEffect(() => {
@@ -28,11 +37,11 @@ function SettingsPage() {
 	return (
 		<Container fluid py='xl'>
 			<Title order={1} mb='lg'>
-				Settings
+				{t('settings.title')}
 			</Title>
 			<Stack gap='lg'>
 				<Group justify='space-between' w='100%'>
-					<Text fw={500}>Theme</Text>
+					<Text fw={500}>{t('settings.theme')}</Text>
 					<SegmentedControl
 						value={preference}
 						onChange={(v) => {
@@ -53,8 +62,24 @@ function SettingsPage() {
 
 				<Group justify='space-between' w='100%'>
 					<Group gap='xs'>
+						<IconLanguage size={18} />
+						<Text fw={500}>{t('settings.language')}</Text>
+					</Group>
+					<SegmentedControl
+						value={language}
+						onChange={(v) => {
+							setLanguage(v as 'en' | 'ru')
+							i18n.changeLanguage(v)
+							localStorage.setItem(LANGUAGE_KEY, v)
+						}}
+						data={languageData}
+					/>
+				</Group>
+
+				<Group justify='space-between' w='100%'>
+					<Group gap='xs'>
 						<IconPower size={18} />
-						<Text fw={500}>Launch at system startup</Text>
+						<Text fw={500}>{t('settings.launchAtStartup')}</Text>
 					</Group>
 					<Switch
 						checked={autostart}

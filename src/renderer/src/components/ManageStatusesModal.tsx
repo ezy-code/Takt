@@ -6,6 +6,7 @@ import { ActionIcon, Button, ColorInput, Group, Modal, Stack, Text, TextInput, T
 import { useDisclosure } from '@mantine/hooks'
 import { IconGripVertical, IconPlus, IconStar, IconStarFilled, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
 	useAddStatus,
 	useDeleteStatus,
@@ -24,6 +25,7 @@ interface SortableStatusItemProps {
 }
 
 function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: SortableStatusItemProps) {
+	const { t } = useTranslation()
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: `status-${status.id}`,
 	})
@@ -44,7 +46,7 @@ function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: Sortab
 				<IconGripVertical size={16} />
 			</div>
 			<div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }} />
-			<Tooltip label={status.is_default ? 'Default for new tasks' : 'Set as default for new tasks'}>
+			<Tooltip label={status.is_default ? t('statuses.defaultForNew') : t('statuses.setDefaultForNew')}>
 				<ActionIcon
 					size='sm'
 					variant={status.is_default ? 'filled' : 'subtle'}
@@ -65,7 +67,7 @@ function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: Sortab
 							setEditing(false)
 						}}
 					>
-						Save
+						{t('common.save')}
 					</Button>
 				</>
 			) : (
@@ -73,14 +75,14 @@ function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: Sortab
 					<Text style={{ flex: 1 }} size='sm'>
 						{status.name}
 					</Text>
-					<Tooltip label='Edit'>
+					<Tooltip label={t('common.edit')}>
 						<Button size='xs' variant='subtle' onClick={() => setEditing(true)} compact>
-							Edit
+							{t('common.edit')}
 						</Button>
 					</Tooltip>
 				</>
 			)}
-			<Tooltip label='Delete'>
+			<Tooltip label={t('common.delete')}>
 				<ActionIcon size='sm' color='red' variant='subtle' onClick={() => onDelete(status.id)}>
 					<IconTrash size={14} />
 				</ActionIcon>
@@ -90,6 +92,7 @@ function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: Sortab
 }
 
 export function ManageStatusesModal() {
+	const { t } = useTranslation()
 	const [opened, { open, close }] = useDisclosure(false)
 	const { data: statuses, isLoading } = useStatuses()
 	const addStatus = useAddStatus()
@@ -126,17 +129,17 @@ export function ManageStatusesModal() {
 	return (
 		<>
 			<Button onClick={open} variant='light'>
-				Manage Statuses
+				{t('statuses.manage')}
 			</Button>
 
-			<Modal opened={opened} onClose={close} title='Manage Statuses' size='md'>
+			<Modal opened={opened} onClose={close} title={t('statuses.manage')} size='md'>
 				<Stack>
 					<Text size='sm' c='dimmed'>
-						Click the star to set the default status for new tasks.
+						{t('statuses.hint')}
 					</Text>
 					<Group gap='xs'>
 						<TextInput
-							placeholder='Status name'
+							placeholder={t('statuses.namePlaceholder')}
 							value={newName}
 							onChange={(e) => setNewName(e.currentTarget.value)}
 							style={{ flex: 1 }}
@@ -144,17 +147,17 @@ export function ManageStatusesModal() {
 						/>
 						<ColorInput size='sm' value={newColor} onChange={setNewColor} style={{ width: 100 }} />
 						<Button size='sm' onClick={handleAdd} leftSection={<IconPlus size={14} />}>
-							Add
+							{t('common.add')}
 						</Button>
 					</Group>
 
 					{isLoading ? (
 						<Text c='dimmed' size='sm'>
-							Loading...
+							{t('common.loading')}
 						</Text>
 					) : !statuses || statuses.length === 0 ? (
 						<Text c='dimmed' size='sm'>
-							No statuses yet.
+							{t('statuses.none')}
 						</Text>
 					) : (
 						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

@@ -17,6 +17,7 @@ import {
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { Group, Loader, ScrollArea, Text } from '@mantine/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMoveTask, useReorderStatuses, useReorderTasks, useStatuses, useTasks } from '../api'
 import type { Status, Task } from '../types'
 import { AddStatusColumn } from './AddStatusColumn'
@@ -24,6 +25,7 @@ import { KanbanColumn } from './KanbanColumn'
 import { TaskCard } from './TaskCard'
 
 export function KanbanBoard() {
+	const { t } = useTranslation()
 	const [activeTask, setActiveTask] = useState<Task | null>(null)
 	const [activeColumn, setActiveColumn] = useState<Status | null>(null)
 	const [localStatuses, setLocalStatuses] = useState<Status[]>([])
@@ -209,7 +211,7 @@ export function KanbanBoard() {
 	if (!statuses || statuses.length === 0) {
 		return (
 			<Text c='dimmed' mt='xl'>
-				No statuses yet. Create one in Manage Statuses.
+				{t('kanban.noStatuses')}
 			</Text>
 		)
 	}

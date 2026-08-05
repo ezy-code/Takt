@@ -1,6 +1,7 @@
 import { ActionIcon, Box, Button, Group, Modal, Stack, Text } from '@mantine/core'
 import { IconPlayerPlayFilled, IconPlayerStopFilled } from '@tabler/icons-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStartTimer, useStopTimer } from '../api'
 import { formatDuration, useTimer } from '../hooks/useTimer'
 import { useTimerStore } from '../store/timer'
@@ -102,18 +103,19 @@ interface ConflictModalProps {
 }
 
 function ConflictModal({ activeTask, onClose, onStopAndStart }: ConflictModalProps) {
+	const { t } = useTranslation()
 	if (!activeTask) return null
 
 	return (
-		<Modal opened onClose={onClose} title='Timer already running' size='md'>
+		<Modal opened onClose={onClose} title={t('timer.alreadyRunning')} size='md'>
 			<Stack>
 				<TaskCard task={activeTask} />
 				<Group justify='flex-end' mt='md'>
 					<Button variant='default' onClick={onClose}>
-						Cancel
+						{t('common.cancel')}
 					</Button>
 					<Button color='red' onClick={onStopAndStart}>
-						Stop & Start New
+						{t('timer.stopAndStartNew')}
 					</Button>
 				</Group>
 			</Stack>
