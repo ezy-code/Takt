@@ -4,11 +4,11 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { join } from 'path'
 
 export function createDb(dbPath: string) {
-  const sqlite = new Database(dbPath)
-  sqlite.pragma('journal_mode = WAL')
-  const db = drizzle(sqlite)
+	const sqlite = new Database(dbPath)
+	sqlite.pragma('journal_mode = WAL')
+	const db = drizzle(sqlite)
 
-  migrate(db, { migrationsFolder: join(__dirname, '../../drizzle') })
+	migrate(db, { migrationsFolder: join(__dirname, '../../drizzle') })
 
-  return db
+	return db
 }
