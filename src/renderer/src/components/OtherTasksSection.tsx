@@ -1,6 +1,7 @@
 import { ActionIcon, Box, Group, Text, Title } from '@mantine/core'
 import { IconChevronDown } from '@tabler/icons-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Task } from '../types'
 import { TaskGrid } from './TaskGrid'
 
@@ -9,13 +10,14 @@ interface OtherTasksSectionProps {
 }
 
 export function OtherTasksSection({ tasks }: OtherTasksSectionProps) {
+	const { t } = useTranslation()
 	const [expanded, setExpanded] = useState(false)
 
 	return tasks.length > 0 ? (
 		<>
 			<Group gap='xs' mb='sm' style={{ cursor: 'pointer' }} onClick={() => setExpanded((v) => !v)}>
 				<Title order={2} size='h3'>
-					Other Tasks
+					{t('myDay.otherTasks')}
 				</Title>
 				<ActionIcon variant='subtle' color='gray' size='sm'>
 					<IconChevronDown
@@ -46,6 +48,6 @@ export function OtherTasksSection({ tasks }: OtherTasksSectionProps) {
 			</Box>
 		</>
 	) : (
-		<Text c='dimmed'>No other tasks.</Text>
+		<Text c='dimmed'>{t('myDay.noOtherTasks')}</Text>
 	)
 }

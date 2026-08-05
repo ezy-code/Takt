@@ -1,6 +1,7 @@
 import { Box, Container, Text, Title } from '@mantine/core'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useActiveTimer, useMyDayTasks, useTasks } from '../api'
 import { OtherTasksSection } from '../components/OtherTasksSection'
 import { TaskGrid } from '../components/TaskGrid'
@@ -8,6 +9,7 @@ import { ROUTES } from '../routes'
 import { useTimerStore } from '../store/timer'
 
 function MyDayPage() {
+	const { t } = useTranslation()
 	const { data: myDayTasks } = useMyDayTasks()
 	const { data: allTasks } = useTasks()
 	const { data: activeTimer } = useActiveTimer()
@@ -40,13 +42,13 @@ function MyDayPage() {
 		>
 			<Box style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
 				<Title order={1} mb='lg'>
-					My Day
+					{t('myDay.title')}
 				</Title>
 
 				{overdue.length > 0 && (
 					<>
 						<Title order={2} size='h3' c='red' mb='sm'>
-							Overdue
+							{t('myDay.overdue')}
 						</Title>
 						<Box mb='xl'>
 							<TaskGrid tasks={overdue} />
@@ -57,14 +59,14 @@ function MyDayPage() {
 				{current.length > 0 ? (
 					<>
 						<Title order={2} size='h3' c='green' mb='sm'>
-							Today
+							{t('myDay.today')}
 						</Title>
 						<Box mb='xl'>
 							<TaskGrid tasks={current} />
 						</Box>
 					</>
 				) : (
-					<Text c='dimmed'>Nothing added yet.</Text>
+					<Text c='dimmed'>{t('myDay.nothingAdded')}</Text>
 				)}
 			</Box>
 

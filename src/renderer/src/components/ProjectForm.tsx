@@ -3,6 +3,7 @@ import { Button, Container, Group, Stack, Text, TextInput, Title, useMantineColo
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAddProject, useProject, useUpdateProject } from '../api'
 import { ROUTES } from '../routes'
 
@@ -19,6 +20,7 @@ interface ProjectFormProps {
 
 export function ProjectForm({ id }: ProjectFormProps) {
 	const navigate = useNavigate()
+	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
 	const isEdit = id != null
 	const { colorScheme } = useMantineColorScheme()
@@ -66,28 +68,28 @@ export function ProjectForm({ id }: ProjectFormProps) {
 	if (isEdit && isLoading)
 		return (
 			<Container fluid py='xl'>
-				<Text c='dimmed'>Loading...</Text>
+				<Text c='dimmed'>{t('common.loading')}</Text>
 			</Container>
 		)
 	if (isEdit && !project)
 		return (
 			<Container fluid py='xl'>
-				<Text c='red'>Project not found</Text>
+				<Text c='red'>{t('projects.notFound')}</Text>
 			</Container>
 		)
 
 	return (
 		<Container fluid py='xl' pb={90}>
 			<Title order={1} mb='lg'>
-				{isEdit ? 'Edit Project' : 'New Project'}
+				{isEdit ? t('projects.editTitle') : t('projects.newTitle')}
 			</Title>
 			<form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
 				<Stack>
 					<form.Field name='name'>
 						{(field) => (
 							<TextInput
-								label='Name'
-								placeholder='Enter project name'
+								label={t('common.name')}
+								placeholder={t('projects.enterName')}
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.currentTarget.value)}
 								data-autofocus
@@ -98,13 +100,13 @@ export function ProjectForm({ id }: ProjectFormProps) {
 
 					<div>
 						<Text size='sm' fw={500} mb={4}>
-							Description
+							{t('common.description')}
 						</Text>
 						<ExtensiveEditor
 							ref={editorRef}
 							defaultContent={project?.description ?? ''}
 							initialMode='visual-editor'
-							placeholder='Enter project description (optional)'
+							placeholder={t('projects.enterDescription')}
 							initialTheme={editorTheme}
 							availableModes={['visual-editor', 'markdown']}
 							slashCommandVisibility
@@ -126,9 +128,9 @@ export function ProjectForm({ id }: ProjectFormProps) {
 						}}
 					>
 						<Button variant='default' onClick={() => navigate({ to: ROUTES.PROJECTS })}>
-							Cancel
+							{t('common.cancel')}
 						</Button>
-						<Button type='submit'>{isEdit ? 'Save' : 'Create'}</Button>
+						<Button type='submit'>{isEdit ? t('common.save') : t('common.create')}</Button>
 					</Group>
 				</Stack>
 			</form>

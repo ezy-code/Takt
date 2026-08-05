@@ -3,6 +3,7 @@ import { Button, Container, Group, Select, Stack, Text, TextInput, Title, useMan
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAddTask, useProjects, useStatuses, useTask, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
 import { MyDayControl } from './MyDayControl'
@@ -20,6 +21,7 @@ interface TaskFormProps {
 
 export function TaskForm({ id }: TaskFormProps) {
 	const navigate = useNavigate()
+	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
 	const isEdit = id != null
 	const { colorScheme } = useMantineColorScheme()
@@ -90,13 +92,13 @@ export function TaskForm({ id }: TaskFormProps) {
 	if (isEdit && isLoading)
 		return (
 			<Container fluid py='xl'>
-				<Text c='dimmed'>Loading...</Text>
+				<Text c='dimmed'>{t('common.loading')}</Text>
 			</Container>
 		)
 	if (isEdit && !task)
 		return (
 			<Container fluid py='xl'>
-				<Text c='red'>Task not found</Text>
+				<Text c='red'>{t('tasks.notFound')}</Text>
 			</Container>
 		)
 
@@ -113,15 +115,15 @@ export function TaskForm({ id }: TaskFormProps) {
 	return (
 		<Container fluid py='xl' pb={90}>
 			<Title order={1} mb='lg'>
-				{isEdit ? 'Edit Task' : 'New Task'}
+				{isEdit ? t('tasks.editTitle') : t('tasks.newTitle')}
 			</Title>
 			<form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
 				<Stack>
 					<form.Field name='name'>
 						{(field) => (
 							<TextInput
-								label='Name'
-								placeholder='Enter task name'
+								label={t('common.name')}
+								placeholder={t('tasks.enterName')}
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.currentTarget.value)}
 								data-autofocus
@@ -131,8 +133,8 @@ export function TaskForm({ id }: TaskFormProps) {
 					</form.Field>
 
 					<Select
-						label='Status'
-						placeholder='Select status'
+						label={t('tasks.status')}
+						placeholder={t('tasks.selectStatus')}
 						data={statusOptions}
 						value={statusId != null ? String(statusId) : null}
 						onChange={(value) => setStatusId(value ? Number(value) : null)}
@@ -153,8 +155,8 @@ export function TaskForm({ id }: TaskFormProps) {
 					/>
 
 					<Select
-						label='Project'
-						placeholder='Select project'
+						label={t('tasks.project')}
+						placeholder={t('tasks.selectProject')}
 						clearable
 						data={projectOptions}
 						value={projectId != null ? String(projectId) : null}
@@ -166,13 +168,13 @@ export function TaskForm({ id }: TaskFormProps) {
 
 					<div>
 						<Text size='sm' fw={500} mb={4}>
-							Description
+							{t('common.description')}
 						</Text>
 						<ExtensiveEditor
 							ref={editorRef}
 							defaultContent={task?.description ?? ''}
 							initialMode='visual-editor'
-							placeholder='Enter task description (optional)'
+							placeholder={t('tasks.enterDescription')}
 							initialTheme={editorTheme}
 							availableModes={['visual-editor', 'markdown']}
 							slashCommandVisibility
@@ -202,9 +204,9 @@ export function TaskForm({ id }: TaskFormProps) {
 								})
 							}
 						>
-							Cancel
+							{t('common.cancel')}
 						</Button>
-						<Button type='submit'>{isEdit ? 'Save' : 'Create'}</Button>
+						<Button type='submit'>{isEdit ? t('common.save') : t('common.create')}</Button>
 					</Group>
 				</Stack>
 			</form>

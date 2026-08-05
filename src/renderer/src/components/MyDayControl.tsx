@@ -1,5 +1,6 @@
 import { Button, Menu } from '@mantine/core'
 import { IconSun } from '@tabler/icons-react'
+import { useTranslation } from 'react-i18next'
 
 interface MyDayControlProps {
 	inMyDay: boolean
@@ -8,10 +9,12 @@ interface MyDayControlProps {
 }
 
 export function MyDayControl({ inMyDay, onToggle, variant }: MyDayControlProps) {
+	const { t } = useTranslation()
+	const label = inMyDay ? t('myDay.remove') : t('myDay.add')
 	if (variant === 'menu-item') {
 		return (
 			<Menu.Item leftSection={<IconSun size={14} />} onClick={onToggle} color={inMyDay ? 'red' : undefined}>
-				{inMyDay ? 'Remove from My Day' : 'Add to My Day'}
+				{label}
 			</Menu.Item>
 		)
 	}
@@ -22,7 +25,7 @@ export function MyDayControl({ inMyDay, onToggle, variant }: MyDayControlProps) 
 			leftSection={<IconSun size={16} />}
 			onClick={onToggle}
 		>
-			{inMyDay ? 'Remove from My Day' : 'Add to My Day'}
+			{label}
 		</Button>
 	)
 }

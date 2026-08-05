@@ -1,6 +1,7 @@
 import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
 import { IconDots, IconEye, IconFolder, IconPencil, IconSun, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
@@ -21,6 +22,7 @@ function getMyDayState(myDayDate: string | null | undefined): 'none' | 'today' |
 
 export function TaskCard({ task }: TaskCardProps) {
 	const navigate = useNavigate()
+	const { t } = useTranslation()
 	const deleteTask = useDeleteTask()
 	const toggleMyDay = useToggleMyDay()
 	const clearMyDay = useClearMyDay()
@@ -44,17 +46,17 @@ export function TaskCard({ task }: TaskCardProps) {
 				leftSection={<IconEye size={14} />}
 				onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
 			>
-				View
+				{t('common.view')}
 			</Menu.Item>
 			<Menu.Item
 				leftSection={<IconPencil size={14} />}
 				onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task.id) } })}
 			>
-				Edit
+				{t('common.edit')}
 			</Menu.Item>
 			<Menu.Divider />
 			<Menu.Item color='red' leftSection={<IconTrash size={14} />} onClick={() => deleteTask.mutate(task.id)}>
-				Delete
+				{t('common.delete')}
 			</Menu.Item>
 		</>
 	)
@@ -77,7 +79,7 @@ export function TaskCard({ task }: TaskCardProps) {
 									</Anchor>
 									{myDayState === 'overdue' && (
 										<Text size='xs' c='red'>
-											overdue
+											{t('tasks.overdue')}
 										</Text>
 									)}
 								</Group>
@@ -86,7 +88,7 @@ export function TaskCard({ task }: TaskCardProps) {
 								<TimerControl taskId={task.id} duration={task.total_duration} />
 								<Menu shadow='md' width={200} position='bottom-end'>
 									<Menu.Target>
-										<ActionIcon variant='subtle' color='gray' size='sm' aria-label='Task actions'>
+										<ActionIcon variant='subtle' color='gray' size='sm' aria-label={t('tasks.actions')}>
 											<IconDots size={16} />
 										</ActionIcon>
 									</Menu.Target>
@@ -105,7 +107,7 @@ export function TaskCard({ task }: TaskCardProps) {
 							{myDayState !== 'none' && (
 								<Group gap={5} align='center' c='blue'>
 									<IconSun size={14} />
-									<Text size='xs'>My Day</Text>
+									<Text size='xs'>{t('myDay.title')}</Text>
 								</Group>
 							)}
 							{status && (

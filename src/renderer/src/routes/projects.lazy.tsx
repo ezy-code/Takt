@@ -1,6 +1,7 @@
 import { ActionIcon, Anchor, Button, Card, Container, Group, Menu, Stack, Text, Title } from '@mantine/core'
 import { IconDots, IconPencil, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute, useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { useProjects } from '../api'
 import { MarkdownPreview } from '../components/MarkdownPreview'
 import { ROUTES } from '../routes'
@@ -11,21 +12,22 @@ const Route = createLazyRoute(ROUTES.PROJECTS)({
 
 function ProjectsPage() {
 	const navigate = useNavigate()
+	const { t } = useTranslation()
 	const { data: projects, isLoading } = useProjects()
 
 	return (
 		<Container fluid py='xl'>
 			<Group justify='space-between' mb='lg'>
-				<Title order={1}>Projects</Title>
+				<Title order={1}>{t('projects.title')}</Title>
 				<Button leftSection={<IconPlus size={16} />} onClick={() => navigate({ to: ROUTES.PROJECTS_NEW })}>
-					New Project
+					{t('projects.newProject')}
 				</Button>
 			</Group>
 
 			{isLoading ? (
-				<Text c='dimmed'>Loading...</Text>
+				<Text c='dimmed'>{t('common.loading')}</Text>
 			) : !projects || projects.length === 0 ? (
-				<Text c='dimmed'>No projects yet. Create one.</Text>
+				<Text c='dimmed'>{t('projects.none')}</Text>
 			) : (
 				<Stack>
 					{projects.map((project) => (
@@ -49,7 +51,7 @@ function ProjectsPage() {
 								</div>
 								<Menu shadow='md' width={200} position='bottom-end'>
 									<Menu.Target>
-										<ActionIcon variant='subtle' color='gray' size='sm' aria-label='Project actions'>
+										<ActionIcon variant='subtle' color='gray' size='sm' aria-label={t('projects.actions')}>
 											<IconDots size={16} />
 										</ActionIcon>
 									</Menu.Target>
@@ -58,7 +60,7 @@ function ProjectsPage() {
 											leftSection={<IconPencil size={14} />}
 											onClick={() => navigate({ to: ROUTES.PROJECT_EDIT, params: { id: String(project.id) } })}
 										>
-											Edit
+											{t('common.edit')}
 										</Menu.Item>
 									</Menu.Dropdown>
 								</Menu>

@@ -10,6 +10,7 @@ import {
 } from '@tabler/icons-react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
 import { useActiveTimer } from '../api'
 import { ROUTES } from '../routes'
@@ -17,16 +18,17 @@ import { useTimerStore } from '../store/timer'
 import { TimerControl } from './TimerControl'
 
 const navItems = [
-	{ label: 'My Day', path: ROUTES.MY_DAY, icon: IconCalendarCheck },
-	{ label: 'Tasks', path: ROUTES.TASKS, icon: IconList },
-	{ label: 'Projects', path: ROUTES.PROJECTS, icon: IconFolder },
-	{ label: 'Time Entries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
-	{ label: 'Settings', path: ROUTES.SETTINGS, icon: IconSettings },
-]
+	{ labelKey: 'nav.myDay', path: ROUTES.MY_DAY, icon: IconCalendarCheck },
+	{ labelKey: 'nav.tasks', path: ROUTES.TASKS, icon: IconList },
+	{ labelKey: 'nav.projects', path: ROUTES.PROJECTS, icon: IconFolder },
+	{ labelKey: 'nav.timeEntries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
+	{ labelKey: 'nav.settings', path: ROUTES.SETTINGS, icon: IconSettings },
+] as const
 
 export default function AppLayout() {
 	const navigate = useNavigate()
 	const location = useLocation()
+	const { t } = useTranslation()
 	const { activeEntry, activeTask, setActive } = useTimerStore()
 	const { data: activeTimer } = useActiveTimer()
 
@@ -39,14 +41,14 @@ export default function AppLayout() {
 	}, [activeTimer, setActive])
 
 	const showNotificationNow = useCallback(() => {
-		window.api.showNotification(APP_NAME, 'Уведомление сейчас!')
-	}, [])
+		window.api.showNotification(APP_NAME, t('notifications.nowBody'))
+	}, [t])
 
 	const showNotificationDelayed = useCallback(() => {
 		setTimeout(() => {
-			window.api.showNotification(APP_NAME, 'Уведомление через 20 секунд!')
+			window.api.showNotification(APP_NAME, t('notifications.in20sBody'))
 		}, 20000)
-	}, [])
+	}, [t])
 
 	return (
 		<AppShell padding='md' header={{ height: 56 }} navbar={{ width: 220, breakpoint: 0 }}>
@@ -77,7 +79,7 @@ export default function AppLayout() {
 							leftSection={<IconBell size={14} />}
 							onClick={showNotificationNow}
 						>
-							Сейчас
+							{t('notifications.nowButton')}
 						</Button>
 						<Button
 							variant='light'
@@ -85,7 +87,7 @@ export default function AppLayout() {
 							leftSection={<IconBell size={14} />}
 							onClick={showNotificationDelayed}
 						>
-							Через 20с
+							{t('notifications.in20sButton')}
 						</Button>
 					</Group>
 				</Group>
@@ -95,7 +97,7 @@ export default function AppLayout() {
 				{navItems.map((item) => (
 					<NavLink
 						key={item.path}
-						label={item.label}
+						label={t(item.labelKey)}
 						leftSection={item.icon && <item.icon size={16} />}
 						active={location.pathname === item.path}
 						onClick={() => navigate({ to: item.path })}
