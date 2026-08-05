@@ -22,9 +22,7 @@ function TasksPage() {
 	const setActive = useTimerStore((s) => s.setActive)
 	const [projectFilter, setProjectFilter] = useState<string | null>(null)
 
-	const filteredTasks = (tasks ?? []).filter((t) =>
-		projectFilter == null ? t.projectId == null : t.projectId === Number(projectFilter),
-	)
+	const filteredTasks = (tasks ?? []).filter((t) => projectFilter == null || t.projectId === Number(projectFilter))
 
 	const projectOptions = (projects ?? []).map((p) => ({
 		value: String(p.id),
