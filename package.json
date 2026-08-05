@@ -58,6 +58,7 @@
 	"build": {
 		"linux": {
 			"target": "AppImage",
+			"icon": "resources/app-icon.png",
 			"extraResources": [
 				"resources/**"
 			]
