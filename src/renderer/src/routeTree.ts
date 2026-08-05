@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, useNavigate } from '@tanstack/react-router'
+import { createHashHistory, createRootRoute, createRoute, createRouter, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import AppLayout from './components/AppLayout'
 
@@ -89,7 +89,7 @@ const routeTree = rootRoute.addChildren([
 	settingsRoute,
 ])
 
-export const router = createRouter({ routeTree })
+export const router = createRouter({ routeTree, history: createHashHistory() })
 
 declare module '@tanstack/react-router' {
 	interface Register {
