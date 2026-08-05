@@ -1,21 +1,11 @@
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
-import {
-	Button,
-	Container,
-	Group,
-	Select,
-	Stack,
-	Switch,
-	Text,
-	TextInput,
-	Title,
-	useMantineColorScheme,
-} from '@mantine/core'
+import { Button, Container, Group, Select, Stack, Text, TextInput, Title, useMantineColorScheme } from '@mantine/core'
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useAddTask, useProjects, useStatuses, useTask, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
+import { MyDayControl } from './MyDayControl'
 
 function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) {
 	e.preventDefault()
@@ -172,12 +162,7 @@ export function TaskForm({ id }: TaskFormProps) {
 						disabled={!projects?.length}
 					/>
 
-					<Switch
-						label='Add to Today'
-						description='Show this task on the Today page'
-						checked={addToToday}
-						onChange={(e) => setAddToToday(e.currentTarget.checked)}
-					/>
+					<MyDayControl variant='button' inMyDay={addToToday} onToggle={() => setAddToToday((v) => !v)} />
 
 					<div>
 						<Text size='sm' fw={500} mb={4}>

@@ -1,20 +1,11 @@
-import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Text, Tooltip } from '@mantine/core'
-import {
-	IconAlertCircle,
-	IconCalendarCheck,
-	IconCalendarPlus,
-	IconDots,
-	IconEye,
-	IconFolder,
-	IconPencil,
-	IconTrash,
-	IconX,
-} from '@tabler/icons-react'
+import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
+import { IconDots, IconEye, IconFolder, IconPencil, IconSun, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useClearToday, useDeleteTask, useProjects, useStatuses, useToggleToday } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { MarkdownPreview } from './MarkdownPreview'
+import { MyDayControl } from './MyDayControl'
 import { TimerControl } from './TimerControl'
 
 interface TaskCardProps {
@@ -40,106 +31,119 @@ export function TaskCard({ task }: TaskCardProps) {
 	const project = projects?.find((p) => p.id === task.projectId)
 	const todayState = getTodayState(task.today_date ?? null)
 
-	const TodayIcon =
-		todayState === 'today' ? IconCalendarCheck : todayState === 'overdue' ? IconAlertCircle : IconCalendarPlus
+	const handleMyDayToggle = () => {
+		if (todayState === 'none') toggleToday.mutate(task.id)
+		else clearToday.mutate(task.id)
+	}
 
-	const todayColor = todayState === 'today' ? 'green' : todayState === 'overdue' ? 'red' : 'gray'
-
-	const todayTooltip =
-		todayState === 'today' ? 'Remove from Today' : todayState === 'overdue' ? 'Move to Today' : 'Add to Today'
+	const menuItems = (
+		<>
+			<MyDayControl variant='menu-item' inMyDay={todayState !== 'none'} onToggle={handleMyDayToggle} />
+			<Menu.Divider />
+			<Menu.Item
+				leftSection={<IconEye size={14} />}
+				onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
+			>
+				View
+			</Menu.Item>
+			<Menu.Item
+				leftSection={<IconPencil size={14} />}
+				onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task.id) } })}
+			>
+				Edit
+			</Menu.Item>
+			<Menu.Divider />
+			<Menu.Item color='red' leftSection={<IconTrash size={14} />} onClick={() => deleteTask.mutate(task.id)}>
+				Delete
+			</Menu.Item>
+		</>
+	)
 
 	return (
 		<Card withBorder padding='sm' radius='md'>
-			<Group justify='space-between' align='flex-start'>
-				<div style={{ flex: 1 }}>
-					<Group gap='xs'>
-						<Anchor
-							component='button'
-							fw={500}
-							style={{ textAlign: 'left' }}
-							onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
-						>
-							{task.name}
-						</Anchor>
-						{status && (
-							<Group gap={4}>
-								<div
-									style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
-								/>
-								<Text size='xs' c='dimmed'>
-									{status.name}
-								</Text>
+			<Menu>
+				<Menu.ContextMenu>
+					<Stack gap={8}>
+						<Group justify='space-between' align='flex-start' gap='xs' wrap='nowrap'>
+							<div style={{ flex: 1, minWidth: 0 }}>
+								<Group gap='xs' align='center' wrap='wrap'>
+									<Anchor
+										component='button'
+										fw={500}
+										style={{ textAlign: 'left' }}
+										onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
+									>
+										{task.name}
+									</Anchor>
+									{todayState === 'overdue' && (
+										<Text size='xs' c='red'>
+											overdue
+										</Text>
+									)}
+								</Group>
+							</div>
+							<Group gap='xs' wrap='nowrap' align='center'>
+								<TimerControl taskId={task.id} duration={task.total_duration} />
+								<Menu shadow='md' width={200} position='bottom-end'>
+									<Menu.Target>
+										<ActionIcon variant='subtle' color='gray' size='sm' aria-label='Task actions'>
+											<IconDots size={16} />
+										</ActionIcon>
+									</Menu.Target>
+									<Menu.Dropdown>{menuItems}</Menu.Dropdown>
+								</Menu>
 							</Group>
-						)}
-						{project && (
-							<Group gap={4}>
-								<IconFolder size={12} c='dimmed' />
-								<Text size='xs' c='dimmed'>
-									{project.name}
-								</Text>
-							</Group>
-						)}
-						{todayState === 'overdue' && (
-							<Text size='xs' c='red'>
-								(overdue)
+						</Group>
+
+						{/* {task.description_md && (
+							<Spoiler maxHeight={80} showLabel='Show more' hideLabel='Hide'>
+								<MarkdownPreview content={task.description_md} variant='preview' />
+							</Spoiler>
+						)} */}
+
+						<Group gap='md' align='center'>
+							{todayState !== 'none' && (
+								<Group gap={5} align='center' c='blue'>
+									<IconSun size={14} />
+									<Text size='xs'>My Day</Text>
+								</Group>
+							)}
+							{status && (
+								<Group
+									gap={5}
+									align='center'
+									px={6}
+									py={2}
+									style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
+								>
+									<div
+										style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
+									/>
+									<Text size='xs'>{status.name}</Text>
+								</Group>
+							)}
+							{project && (
+								<Group
+									gap={5}
+									align='center'
+									px={6}
+									py={2}
+									style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
+								>
+									<IconFolder size={12} c='dimmed' />
+									<Text size='xs' c='dimmed'>
+										{project.name}
+									</Text>
+								</Group>
+							)}
+							<Text size='xs' c='dimmed'>
+								{new Date(task.created_at).toLocaleString()}
 							</Text>
-						)}
-					</Group>
-					{/* {task.description_md && (
-            <Spoiler maxHeight={80} showLabel="Show more" hideLabel="Hide">
-              <MarkdownPreview content={task.description_md} variant="preview" />
-            </Spoiler>
-          )} */}
-					<Text size='xs' c='gray' mt={4}>
-						{new Date(task.created_at).toLocaleString()}
-					</Text>
-				</div>
-				<Group gap='xs'>
-					<TimerControl taskId={task.id} duration={task.total_duration} />
-					<Tooltip label={todayTooltip}>
-						<ActionIcon
-							variant={todayState === 'today' ? 'filled' : 'subtle'}
-							color={todayColor}
-							size='sm'
-							onClick={() => toggleToday.mutate(task.id)}
-						>
-							<TodayIcon size={14} />
-						</ActionIcon>
-					</Tooltip>
-					{todayState === 'overdue' && (
-						<Tooltip label='Remove from list'>
-							<ActionIcon variant='subtle' color='gray' size='sm' onClick={() => clearToday.mutate(task.id)}>
-								<IconX size={14} />
-							</ActionIcon>
-						</Tooltip>
-					)}
-					<Menu shadow='md' width={200} position='bottom-end'>
-						<Menu.Target>
-							<ActionIcon variant='subtle' color='gray' size='sm' aria-label='Task actions'>
-								<IconDots size={16} />
-							</ActionIcon>
-						</Menu.Target>
-						<Menu.Dropdown>
-							<Menu.Item
-								leftSection={<IconEye size={14} />}
-								onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
-							>
-								View
-							</Menu.Item>
-							<Menu.Item
-								leftSection={<IconPencil size={14} />}
-								onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task.id) } })}
-							>
-								Edit
-							</Menu.Item>
-							<Menu.Divider />
-							<Menu.Item color='red' leftSection={<IconTrash size={14} />} onClick={() => deleteTask.mutate(task.id)}>
-								Delete
-							</Menu.Item>
-						</Menu.Dropdown>
-					</Menu>
-				</Group>
-			</Group>
+						</Group>
+					</Stack>
+				</Menu.ContextMenu>
+				<Menu.Dropdown>{menuItems}</Menu.Dropdown>
+			</Menu>
 		</Card>
 	)
 }
