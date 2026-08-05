@@ -1,5 +1,5 @@
 import { Button, Container, Group, Paper, Stack, Text, Title } from '@mantine/core'
-import { IconFolder } from '@tabler/icons-react'
+import { IconFolder, IconSun } from '@tabler/icons-react'
 import { createLazyRoute, useNavigate, useParams } from '@tanstack/react-router'
 import { useProjects, useStatuses, useTask } from '../api'
 import { MarkdownPreview } from '../components/MarkdownPreview'
@@ -42,6 +42,12 @@ function TaskDetailPage() {
 						</Button>
 					</Group>
 				</Group>
+				{task.today_date && (
+					<Group gap='xs' c='blue'>
+						<IconSun size={16} />
+						<Text size='sm'>My Day</Text>
+					</Group>
+				)}
 				{status && (
 					<Group gap='xs'>
 						<div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }} />
