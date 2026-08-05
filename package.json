@@ -1,5 +1,5 @@
 {
-	"name": "tact",
+	"name": "takt",
 	"version": "1.0.0",
 	"description": "Electron + React + TypeScript + Mantine + Zustand + TanStack Router + SQLite",
 	"main": "./out/main/index.js",
@@ -56,6 +56,7 @@
 		"zustand": "^5.0.14"
 	},
 	"build": {
+		"productName": "Takt",
 		"linux": {
 			"target": "AppImage",
 			"icon": "resources/app-icon.png",

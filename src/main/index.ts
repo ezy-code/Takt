@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu, Notification, nativeImage, nativeTheme, Tray } from 'electron'
 import { join } from 'path'
+import { APP_NAME } from '../shared/constants'
 import { initAutostart } from './autostart'
 import type { TimerChangeInfo } from './database'
 import { initDatabase } from './database'
@@ -48,7 +49,7 @@ function stopTrayTimerUpdate() {
 		clearInterval(trayTimerInterval)
 		trayTimerInterval = null
 	}
-	tray?.setToolTip('Tact')
+	tray?.setToolTip(APP_NAME)
 }
 
 function createTray() {
@@ -79,7 +80,7 @@ function createTray() {
 		},
 	])
 
-	tray.setToolTip('Tact')
+	tray.setToolTip(APP_NAME)
 	tray.setContextMenu(contextMenu)
 	tray.on('click', showWindow)
 }

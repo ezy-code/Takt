@@ -6,9 +6,12 @@ import '@mantine/core/styles.css'
 import '@lyfie/luthor/styles.css'
 import './highlight.css'
 import { RouterProvider } from '@tanstack/react-router'
+import { APP_NAME } from '../../shared/constants'
 import { router } from './routeTree'
 
 const queryClient = new QueryClient()
+
+document.title = APP_NAME
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
