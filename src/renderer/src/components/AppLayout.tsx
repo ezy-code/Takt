@@ -1,15 +1,7 @@
-import { ActionIcon, AppShell, Box, Button, Group, NavLink, Text, Title } from '@mantine/core'
-import {
-	IconBell,
-	IconCalendarCheck,
-	IconClock,
-	IconFolder,
-	IconList,
-	IconPlus,
-	IconSettings,
-} from '@tabler/icons-react'
+import { ActionIcon, AppShell, Box, Group, NavLink, Text, Title } from '@mantine/core'
+import { IconCalendarCheck, IconClock, IconFolder, IconList, IconPlus, IconSettings } from '@tabler/icons-react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
 import { useActiveTimer } from '../api'
@@ -40,15 +32,11 @@ export default function AppLayout() {
 		}
 	}, [activeTimer, setActive])
 
-	const showNotificationNow = useCallback(() => {
-		window.api.showNotification(APP_NAME, t('notifications.nowBody'))
-	}, [t])
-
-	const showNotificationDelayed = useCallback(() => {
-		setTimeout(() => {
-			window.api.showNotification(APP_NAME, t('notifications.in20sBody'))
-		}, 20000)
-	}, [t])
+	useEffect(() => {
+		return window.api.onNavigateToTask((id) => {
+			navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
+		})
+	}, [navigate])
 
 	return (
 		<AppShell padding='md' header={{ height: 56 }} navbar={{ width: 220, breakpoint: 0 }}>
@@ -72,24 +60,6 @@ export default function AppLayout() {
 							<TimerControl taskId={activeEntry.taskId} duration={activeTask.total_duration} />
 						</>
 					)}
-					<Group ml='auto' gap='xs'>
-						<Button
-							variant='light'
-							size='compact-sm'
-							leftSection={<IconBell size={14} />}
-							onClick={showNotificationNow}
-						>
-							{t('notifications.nowButton')}
-						</Button>
-						<Button
-							variant='light'
-							size='compact-sm'
-							leftSection={<IconBell size={14} />}
-							onClick={showNotificationDelayed}
-						>
-							{t('notifications.in20sButton')}
-						</Button>
-					</Group>
 				</Group>
 			</AppShell.Header>
 

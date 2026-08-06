@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
 	getTasks: () => ipcRenderer.invoke('get-tasks'),
@@ -11,7 +11,19 @@ contextBridge.exposeInMainWorld('api', {
 		statusId?: number,
 		projectId?: number,
 		myDay?: boolean | string | null,
-	) => ipcRenderer.invoke('add-task', name, description, description_md, description_html, statusId, projectId, myDay),
+		reminderAt?: string | null,
+	) =>
+		ipcRenderer.invoke(
+			'add-task',
+			name,
+			description,
+			description_md,
+			description_html,
+			statusId,
+			projectId,
+			myDay,
+			reminderAt,
+		),
 	deleteTask: (id: number) => ipcRenderer.invoke('delete-task', id),
 	updateTask: (
 		id: number,
@@ -22,6 +34,7 @@ contextBridge.exposeInMainWorld('api', {
 		statusId?: number,
 		projectId?: number,
 		myDay?: boolean | string | null,
+		reminderAt?: string | null,
 	) =>
 		ipcRenderer.invoke(
 			'update-task',
@@ -33,6 +46,7 @@ contextBridge.exposeInMainWorld('api', {
 			statusId,
 			projectId,
 			myDay,
+			reminderAt,
 		),
 	getProjects: () => ipcRenderer.invoke('get-projects'),
 	getProject: (id: number) => ipcRenderer.invoke('get-project', id),
@@ -47,6 +61,11 @@ contextBridge.exposeInMainWorld('api', {
 	getTimeSummary: () => ipcRenderer.invoke('get-time-summary'),
 	deleteTimeEntry: (id: number) => ipcRenderer.invoke('delete-time-entry', id),
 	showNotification: (title: string, body: string) => ipcRenderer.invoke('show-notification', title, body),
+	onNavigateToTask: (callback: (id: number) => void) => {
+		const listener = (_event: IpcRendererEvent, id: number) => callback(id)
+		ipcRenderer.on('navigate-to-task', listener)
+		return () => ipcRenderer.removeListener('navigate-to-task', listener)
+	},
 	toggleMyDayTask: (id: number) => ipcRenderer.invoke('toggle-my-day', id),
 	getMyDayTasks: () => ipcRenderer.invoke('get-my-day-tasks'),
 	clearMyDayDate: (id: number) => ipcRenderer.invoke('clear-my-day-date', id),

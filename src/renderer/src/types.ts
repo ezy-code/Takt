@@ -25,6 +25,7 @@ export interface Task {
 	statusId?: number | null
 	projectId?: number | null
 	my_day_date?: string | null
+	reminder_at?: string | null
 	created_at: string
 	position?: number
 	total_duration?: number
@@ -68,6 +69,7 @@ export interface Api {
 		statusId?: number,
 		projectId?: number,
 		myDay?: boolean | string | null,
+		reminderAt?: string | null,
 	) => Promise<Task>
 	deleteTask: (id: number) => Promise<{ success: boolean }>
 	updateTask: (
@@ -79,6 +81,7 @@ export interface Api {
 		statusId?: number,
 		projectId?: number,
 		myDay?: boolean | string | null,
+		reminderAt?: string | null,
 	) => Promise<Task>
 	getProjects: () => Promise<Project[]>
 	getProject: (id: number) => Promise<Project | null>
@@ -102,6 +105,7 @@ export interface Api {
 	getTimeSummary: () => Promise<TimeSummary>
 	deleteTimeEntry: (id: number) => Promise<{ success: boolean }>
 	showNotification: (title: string, body: string) => Promise<void>
+	onNavigateToTask: (callback: (id: number) => void) => () => void
 	toggleMyDayTask: (id: number) => Promise<{ success: boolean }>
 	getMyDayTasks: () => Promise<Task[]>
 	clearMyDayDate: (id: number) => Promise<{ success: boolean }>

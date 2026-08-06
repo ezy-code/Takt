@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` RENAME COLUMN "due_at" TO "reminder_at";

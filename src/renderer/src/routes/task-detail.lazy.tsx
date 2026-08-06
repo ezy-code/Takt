@@ -1,5 +1,5 @@
 import { Button, Container, Group, Paper, Stack, Text, Title } from '@mantine/core'
-import { IconFolder, IconSun } from '@tabler/icons-react'
+import { IconClock, IconFolder, IconSun } from '@tabler/icons-react'
 import { createLazyRoute, useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useProjects, useStatuses, useTask } from '../api'
@@ -16,6 +16,7 @@ function TaskDetailPage() {
 
 	const status = statuses?.find((s) => s.id === task?.statusId)
 	const project = projects?.find((p) => p.id === task?.projectId)
+	const isPast = task?.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 
 	if (isLoading)
 		return (
@@ -48,6 +49,15 @@ function TaskDetailPage() {
 					<Group gap='xs' c='blue'>
 						<IconSun size={16} />
 						<Text size='sm'>{t('myDay.title')}</Text>
+					</Group>
+				)}
+				{task.reminder_at && (
+					<Group gap='xs' c={isPast ? 'red' : 'dimmed'}>
+						<IconClock size={16} />
+						<Text size='sm'>
+							{t('tasks.reminder')}:{' '}
+							{new Date(task.reminder_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+						</Text>
 					</Group>
 				)}
 				{status && (

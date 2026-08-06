@@ -40,7 +40,8 @@ export const ru: typeof en = {
 		project: 'Проект',
 		selectProject: 'Выберите проект',
 		enterDescription: 'Введите описание задачи (необязательно)',
-		overdue: 'просрочено',
+		reminder: 'Напоминание',
+		selectReminder: 'Выберите дату и время напоминания',
 		actions: 'Действия с задачей',
 	},
 	statuses: {
@@ -105,12 +106,6 @@ export const ru: typeof en = {
 		dark: 'Тёмная',
 		launchAtStartup: 'Запуск при старте системы',
 		language: 'Язык',
-	},
-	notifications: {
-		nowButton: 'Сейчас',
-		in20sButton: 'Через 20с',
-		nowBody: 'Уведомление сейчас!',
-		in20sBody: 'Уведомление через 20 секунд!',
 	},
 	onboarding: {
 		getStarted: 'Начать',

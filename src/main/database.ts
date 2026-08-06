@@ -1,6 +1,7 @@
 import { asc, count, desc, eq, sql } from 'drizzle-orm'
-import { app, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Notification } from 'electron'
 import { join } from 'path'
+import { META_LANGUAGE_KEY } from '../shared/constants'
 import { createDb } from './db'
 import { appMeta, projects, statuses, tasks, timeEntries } from './db/schema'
 
@@ -190,6 +191,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				statusId: tasks.statusId,
 				projectId: tasks.projectId,
 				my_day_date: tasks.my_day_date,
+				reminder_at: tasks.reminderAt,
 				created_at: tasks.created_at,
 				position: tasks.position,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -212,6 +214,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				statusId: tasks.statusId,
 				projectId: tasks.projectId,
 				my_day_date: tasks.my_day_date,
+				reminder_at: tasks.reminderAt,
 				created_at: tasks.created_at,
 				position: tasks.position,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -234,6 +237,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			statusId?: number,
 			projectId?: number,
 			myDay?: boolean | string | null,
+			reminderAt?: string | null,
 		) => {
 			const resolvedStatusId = statusId ?? getDefaultStatusId()
 			if (resolvedStatusId == null) throw new Error('No statuses configured')
@@ -253,6 +257,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 					statusId: resolvedStatusId,
 					projectId,
 					my_day_date,
+					reminderAt: reminderAt ?? null,
 					position: maxPos!.maxPos + 1,
 				})
 				.returning()
@@ -272,6 +277,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			statusId?: number,
 			projectId?: number,
 			myDay?: boolean | string | null,
+			reminderAt?: string | null,
 		) => {
 			const updates: {
 				name: string
@@ -281,6 +287,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				statusId?: number
 				projectId?: number
 				my_day_date?: string | null
+				reminderAt?: string | null
 			} = {
 				name,
 				description,
@@ -290,6 +297,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			if (statusId !== undefined) updates.statusId = statusId
 			if (projectId !== undefined) updates.projectId = projectId
 			if (myDay !== undefined) updates.my_day_date = resolveMyDayDate(myDay)
+			if (reminderAt !== undefined) updates.reminderAt = reminderAt
 			return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
 		},
 	)
@@ -429,6 +437,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				statusId: tasks.statusId,
 				projectId: tasks.projectId,
 				my_day_date: tasks.my_day_date,
+				reminder_at: tasks.reminderAt,
 				created_at: tasks.created_at,
 				position: tasks.position,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
@@ -445,4 +454,46 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		db.update(tasks).set({ my_day_date: null }).where(eq(tasks.id, id)).run()
 		return { success: true }
 	})
+
+	// ponytail: in-memory notified set, resets on restart — a reminder still inside the
+	// fire window re-fires once on launch (desired). Laptop sleep through the
+	// window can skip a reminder; persist a `notified` flag in the DB if that ever matters.
+	const notifiedReminders = new Set<number>()
+	setInterval(() => {
+		const now = Date.now()
+		const reminderTasks = db
+			.select({ id: tasks.id, name: tasks.name, reminder_at: tasks.reminderAt })
+			.from(tasks)
+			.where(sql`${tasks.reminderAt} is not null`)
+			.all()
+		for (const task of reminderTasks) {
+			if (!task.reminder_at || notifiedReminders.has(task.id)) continue
+			const remindAt = new Date(task.reminder_at).getTime()
+			if (remindAt - now > 20_000 || remindAt - now <= -10_000) continue
+			notifiedReminders.add(task.id)
+			showTaskReminderNotification(task)
+		}
+	}, 20_000)
+}
+
+function showTaskReminderNotification(task: { id: number; name: string }) {
+	const savedLang = db
+		.select({ value: appMeta.value })
+		.from(appMeta)
+		.where(eq(appMeta.key, META_LANGUAGE_KEY))
+		.get()?.value
+	const isRu = savedLang === 'ru' || (!savedLang && app.getLocale().startsWith('ru'))
+	const notification = new Notification({
+		title: task.name,
+		body: isRu ? '⏰ Напоминание' : '⏰ Reminder',
+	})
+	notification.on('click', () => {
+		const win = BrowserWindow.getAllWindows()[0]
+		if (!win) return
+		if (win.isMinimized()) win.restore()
+		win.show()
+		win.focus()
+		win.webContents.send('navigate-to-task', task.id)
+	})
+	notification.show()
 }

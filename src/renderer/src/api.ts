@@ -66,6 +66,7 @@ export function useAddTask() {
 			statusId,
 			projectId,
 			myDay,
+			reminderAt,
 		}: {
 			name: string
 			description: string
@@ -74,7 +75,9 @@ export function useAddTask() {
 			statusId?: number
 			projectId?: number
 			myDay?: boolean
-		}) => window.api.addTask(name, description, description_md, description_html, statusId, projectId, myDay),
+			reminderAt?: string | null
+		}) =>
+			window.api.addTask(name, description, description_md, description_html, statusId, projectId, myDay, reminderAt),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
@@ -94,6 +97,7 @@ export function useUpdateTask() {
 			statusId,
 			projectId,
 			myDay,
+			reminderAt,
 		}: {
 			id: number
 			name: string
@@ -103,7 +107,19 @@ export function useUpdateTask() {
 			statusId?: number
 			projectId?: number
 			myDay?: boolean
-		}) => window.api.updateTask(id, name, description, description_md, description_html, statusId, projectId, myDay),
+			reminderAt?: string | null
+		}) =>
+			window.api.updateTask(
+				id,
+				name,
+				description,
+				description_md,
+				description_html,
+				statusId,
+				projectId,
+				myDay,
+				reminderAt,
+			),
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })

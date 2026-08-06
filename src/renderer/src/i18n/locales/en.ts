@@ -38,7 +38,8 @@ export const en = {
 		project: 'Project',
 		selectProject: 'Select project',
 		enterDescription: 'Enter task description (optional)',
-		overdue: 'overdue',
+		reminder: 'Reminder',
+		selectReminder: 'Pick reminder date and time',
 		actions: 'Task actions',
 	},
 	statuses: {
@@ -103,12 +104,6 @@ export const en = {
 		dark: 'Dark',
 		launchAtStartup: 'Launch at system startup',
 		language: 'Language',
-	},
-	notifications: {
-		nowButton: 'Notify now',
-		in20sButton: 'In 20s',
-		nowBody: 'Notification now!',
-		in20sBody: 'Notification in 20 seconds!',
 	},
 	onboarding: {
 		getStarted: 'Get Started',

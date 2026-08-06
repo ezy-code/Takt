@@ -1,5 +1,14 @@
 import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text, Tooltip } from '@mantine/core'
-import { IconDots, IconEye, IconFolder, IconPencil, IconRefresh, IconSun, IconTrash } from '@tabler/icons-react'
+import {
+	IconClock,
+	IconDots,
+	IconEye,
+	IconFolder,
+	IconPencil,
+	IconRefresh,
+	IconSun,
+	IconTrash,
+} from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
@@ -32,6 +41,7 @@ export function TaskCard({ task }: TaskCardProps) {
 	const status = statuses?.find((s) => s.id === task.statusId)
 	const project = projects?.find((p) => p.id === task.projectId)
 	const myDayState = getMyDayState(task.my_day_date ?? null)
+	const isPast = task.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 
 	const handleMyDayToggle = () => {
 		if (myDayState === 'none') toggleMyDay.mutate(task.id)
@@ -142,6 +152,23 @@ export function TaskCard({ task }: TaskCardProps) {
 									<IconFolder size={12} color='var(--mantine-color-dimmed)' />
 									<Text size='xs' c='dimmed'>
 										{project.name}
+									</Text>
+								</Group>
+							)}
+							{task.reminder_at && (
+								<Group
+									gap={5}
+									align='center'
+									px={6}
+									py={2}
+									style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
+								>
+									<IconClock size={12} color={isPast ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-dimmed)'} />
+									<Text size='xs' c={isPast ? 'red' : 'dimmed'}>
+										{new Date(task.reminder_at).toLocaleString(undefined, {
+											dateStyle: 'short',
+											timeStyle: 'short',
+										})}
 									</Text>
 								</Group>
 							)}
