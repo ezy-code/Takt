@@ -236,6 +236,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			myDay?: boolean | string | null,
 		) => {
 			const resolvedStatusId = statusId ?? getDefaultStatusId()
+			if (resolvedStatusId == null) throw new Error('No statuses configured')
 			const my_day_date = resolveMyDayDate(myDay)
 			const maxPos = db
 				.select({ maxPos: sql<number>`coalesce(max(${tasks.position}), -1)` })

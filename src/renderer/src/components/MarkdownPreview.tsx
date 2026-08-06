@@ -18,8 +18,8 @@ function applyHljsTheme(colorScheme: string) {
 		colorScheme === 'light'
 			? hljsThemes['../../../../node_modules/highlight.js/styles/github.css']
 			: hljsThemes['../../../../node_modules/highlight.js/styles/github-dark.css']
-	loader().then((m) => {
-		if (themeLink) themeLink.href = m.default
+	loader().then((url) => {
+		if (themeLink) themeLink.href = url
 	})
 }
 

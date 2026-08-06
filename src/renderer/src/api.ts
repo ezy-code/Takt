@@ -183,7 +183,7 @@ export function useStopTimer() {
 				const updater = (tasks: Task[] | undefined) => {
 					if (!tasks) return tasks
 					return tasks.map((t) =>
-						t.id === taskId ? { ...t, total_duration: (t.total_duration ?? 0) + result.duration } : t,
+						t.id === taskId ? { ...t, total_duration: (t.total_duration ?? 0) + (result.duration ?? 0) } : t,
 					)
 				}
 				queryClient.setQueryData(queryKeys.tasks, updater)

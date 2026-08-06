@@ -1,6 +1,6 @@
 import { Button, Container, Group, Select, Tabs, Text, Title } from '@mantine/core'
 import { IconColumns, IconList, IconPlus } from '@tabler/icons-react'
-import { createLazyRoute, useNavigate } from '@tanstack/react-router'
+import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveTimer, useProjects, useTasks } from '../api'
@@ -15,7 +15,7 @@ const Route = createLazyRoute(ROUTES.TASKS)({
 })
 
 function TasksPage() {
-	const navigate = useNavigate()
+	const navigate = Route.useNavigate()
 	const { t } = useTranslation()
 	const { tab } = Route.useSearch()
 	const { data: tasks, isLoading } = useTasks()
@@ -71,7 +71,7 @@ function TasksPage() {
 				</Group>
 			)}
 
-			<Tabs value={tab} onChange={(v) => navigate({ search: { tab: v } })}>
+			<Tabs value={tab} onChange={(v) => navigate({ search: (prev) => ({ ...prev, tab: v ?? 'list' }) })}>
 				<Tabs.List mb='md'>
 					<Tabs.Tab value='list' leftSection={<IconList size={14} />}>
 						{t('tasks.list')}

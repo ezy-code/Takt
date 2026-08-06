@@ -107,7 +107,7 @@ function createWindow() {
 	mainWindow.on('close', (event) => {
 		if (!isQuitting) {
 			event.preventDefault()
-			mainWindow.hide()
+			mainWindow?.hide()
 		}
 	})
 

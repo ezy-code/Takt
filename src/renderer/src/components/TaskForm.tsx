@@ -78,7 +78,7 @@ export function TaskForm({ id }: TaskFormProps) {
 				navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
 			} else {
 				await addTask.mutateAsync(payload)
-				navigate({ to: ROUTES.TASKS })
+				navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })
 			}
 		},
 	})
@@ -177,7 +177,6 @@ export function TaskForm({ id }: TaskFormProps) {
 							placeholder={t('tasks.enterDescription')}
 							initialTheme={editorTheme}
 							availableModes={['visual-editor', 'markdown']}
-							slashCommandVisibility
 						/>
 					</div>
 
