@@ -125,6 +125,8 @@ ipcMain.handle('show-notification', (_event, title: string, body: string) => {
 	new Notification({ title, body }).show()
 })
 
+app.commandLine.appendSwitch('in-process-gpu')
+
 app.whenReady().then(() => {
 	initAutostart()
 	initDatabase((info: TimerChangeInfo) => {
