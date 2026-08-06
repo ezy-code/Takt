@@ -61,6 +61,8 @@ export const en = {
 		remove: 'Remove from My Day',
 		overdue: 'Overdue',
 		today: 'Today',
+		open: 'Open My Day',
+		moveToToday: 'Move to today',
 		nothingAdded: 'Nothing added yet.',
 		otherTasks: 'Other Tasks',
 		noOtherTasks: 'No other tasks.',

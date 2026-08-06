@@ -1,5 +1,5 @@
-import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
-import { IconDots, IconEye, IconFolder, IconPencil, IconSun, IconTrash } from '@tabler/icons-react'
+import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text, Tooltip } from '@mantine/core'
+import { IconDots, IconEye, IconFolder, IconPencil, IconRefresh, IconSun, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
@@ -77,11 +77,6 @@ export function TaskCard({ task }: TaskCardProps) {
 									>
 										{task.name}
 									</Anchor>
-									{myDayState === 'overdue' && (
-										<Text size='xs' c='red'>
-											{t('tasks.overdue')}
-										</Text>
-									)}
 								</Group>
 							</div>
 							<Group gap='xs' wrap='nowrap' align='center'>
@@ -105,10 +100,22 @@ export function TaskCard({ task }: TaskCardProps) {
 
 						<Group gap='md' align='center'>
 							{myDayState !== 'none' && (
-								<Group gap={5} align='center' c='blue'>
-									<IconSun size={14} />
-									<Text size='xs'>{t('myDay.title')}</Text>
-								</Group>
+								<Tooltip label={myDayState === 'overdue' ? t('myDay.moveToToday') : t('myDay.open')} withArrow fz='xs'>
+									<Group
+										onClick={() => {
+											if (myDayState === 'overdue') toggleMyDay.mutate(task.id)
+											else navigate({ to: ROUTES.MY_DAY, params: { id: String(task.id) } })
+										}}
+										gap={5}
+										align='center'
+										c={myDayState === 'today' ? 'blue' : 'red'}
+										style={{ cursor: 'pointer' }}
+									>
+										<IconSun size={14} />
+										<Text size='xs'>{t('myDay.title')}</Text>
+										{myDayState === 'overdue' && <IconRefresh size={12} />}
+									</Group>
+								</Tooltip>
 							)}
 							{status && (
 								<Group
