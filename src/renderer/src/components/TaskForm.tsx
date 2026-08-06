@@ -1,7 +1,9 @@
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
 import { Button, Container, Group, Select, Stack, Text, TextInput, Title, useMantineColorScheme } from '@mantine/core'
+import { DateTimePicker } from '@mantine/dates'
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
+import dayjs from 'dayjs'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAddTask, useProjects, useStatuses, useTask, useUpdateTask } from '../api'
@@ -41,17 +43,20 @@ export function TaskForm({ id }: TaskFormProps) {
 	const [statusId, setStatusId] = useState<number | null>(null)
 	const [projectId, setProjectId] = useState<number | null>(null)
 	const [addToMyDay, setAddToMyDay] = useState(false)
+	const [reminderAt, setReminderAt] = useState<string | null>(null)
 
 	useEffect(() => {
 		if (isEdit && task) {
 			setStatusId(task.statusId ?? null)
 			setProjectId(task.projectId ?? null)
 			setAddToMyDay(!!task.my_day_date)
+			setReminderAt(task.reminder_at ? dayjs(task.reminder_at).format('YYYY-MM-DD HH:mm:ss') : null)
 		} else if (!isEdit && statuses) {
 			const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
 			setStatusId(defaultStatus?.id ?? null)
 			setProjectId(null)
 			setAddToMyDay(false)
+			setReminderAt(null)
 		}
 	}, [isEdit, task, statuses])
 
@@ -72,6 +77,7 @@ export function TaskForm({ id }: TaskFormProps) {
 				statusId: statusId ?? undefined,
 				projectId: projectId ?? undefined,
 				myDay: addToMyDay,
+				reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
 			}
 			if (isEdit) {
 				await updateTask.mutateAsync({ id, ...payload })
@@ -165,6 +171,15 @@ export function TaskForm({ id }: TaskFormProps) {
 					/>
 
 					<MyDayControl variant='button' inMyDay={addToMyDay} onToggle={() => setAddToMyDay((v) => !v)} />
+
+					<DateTimePicker
+						label={t('tasks.reminder')}
+						placeholder={t('tasks.selectReminder')}
+						value={reminderAt}
+						onChange={setReminderAt}
+						valueFormat='DD.MM.YYYY HH:mm'
+						clearable
+					/>
 
 					<div>
 						<Text size='sm' fw={500} mb={4}>

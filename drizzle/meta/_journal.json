@@ -78,6 +78,20 @@
       "when": 1785973803609,
       "tag": "0010_purple_luckman",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1786051944086,
+      "tag": "0011_sour_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1786053961488,
+      "tag": "0012_luxuriant_runaways",
+      "breakpoints": true
     }
   ]
 }

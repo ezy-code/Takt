@@ -1,9 +1,8 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import { META_LANGUAGE_KEY } from '../../../shared/constants'
 import { en } from './locales/en'
 import { ru } from './locales/ru'
-
-export const LANGUAGE_KEY = 'language'
 
 export function detectSystemLanguage(): string {
 	const system = (navigator.language ?? '').toLowerCase()
@@ -11,12 +10,12 @@ export function detectSystemLanguage(): string {
 }
 
 export async function resolveLanguage(): Promise<string> {
-	const saved = await window.api.getMeta(LANGUAGE_KEY)
+	const saved = await window.api.getMeta(META_LANGUAGE_KEY)
 	return saved === 'ru' || saved === 'en' ? saved : detectSystemLanguage()
 }
 
 export function applyLanguage(lng: string): void {
-	window.api.setMeta(LANGUAGE_KEY, lng)
+	window.api.setMeta(META_LANGUAGE_KEY, lng)
 	i18n.changeLanguage(lng)
 }
 
