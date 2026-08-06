@@ -39,7 +39,7 @@ function TaskDetailPage() {
 						<Button variant='default' onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id } })}>
 							{t('common.edit')}
 						</Button>
-						<Button variant='default' onClick={() => navigate({ to: ROUTES.TASKS })}>
+						<Button variant='default' onClick={() => navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })}>
 							{t('common.back')}
 						</Button>
 					</Group>
@@ -58,7 +58,7 @@ function TaskDetailPage() {
 				)}
 				{project && (
 					<Group gap='xs'>
-						<IconFolder size={16} c='dimmed' />
+						<IconFolder size={16} color='var(--mantine-color-dimmed)' />
 						<Text size='sm'>{project.name}</Text>
 					</Group>
 				)}

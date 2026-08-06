@@ -109,7 +109,6 @@ export function ProjectForm({ id }: ProjectFormProps) {
 							placeholder={t('projects.enterDescription')}
 							initialTheme={editorTheme}
 							availableModes={['visual-editor', 'markdown']}
-							slashCommandVisibility
 						/>
 					</div>
 

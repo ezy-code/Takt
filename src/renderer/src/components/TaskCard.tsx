@@ -132,7 +132,7 @@ export function TaskCard({ task }: TaskCardProps) {
 									py={2}
 									style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
 								>
-									<IconFolder size={12} c='dimmed' />
+									<IconFolder size={12} color='var(--mantine-color-dimmed)' />
 									<Text size='xs' c='dimmed'>
 										{project.name}
 									</Text>

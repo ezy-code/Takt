@@ -76,7 +76,7 @@ function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: Sortab
 						{status.name}
 					</Text>
 					<Tooltip label={t('common.edit')}>
-						<Button size='xs' variant='subtle' onClick={() => setEditing(true)} compact>
+						<Button size='compact-xs' variant='subtle' onClick={() => setEditing(true)}>
 							{t('common.edit')}
 						</Button>
 					</Tooltip>

@@ -37,7 +37,7 @@ export function KanbanBoard() {
 	const reorderStatuses = useReorderStatuses()
 	const reorderTasks = useReorderTasks()
 
-	const dragOrigin = useRef<{ taskId: number; statusId: number } | null>(null)
+	const dragOrigin = useRef<{ taskId: number; statusId: number | null } | null>(null)
 	const isDraggingRef = useRef(false)
 	isDraggingRef.current = activeTask != null
 
@@ -101,7 +101,7 @@ export function KanbanBoard() {
 		if (data?.type === 'task') {
 			const task = data.task as Task
 			setActiveTask(task)
-			dragOrigin.current = { taskId: task.id, statusId: task.statusId }
+			dragOrigin.current = { taskId: task.id, statusId: task.statusId ?? null }
 		} else if (data?.type === 'column') {
 			setActiveColumn(data.status as Status)
 		}
