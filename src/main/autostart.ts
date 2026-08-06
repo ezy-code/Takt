@@ -21,6 +21,7 @@ function enableAutostart() {
 	} else if (process.platform === 'linux') {
 		const dir = join(homedir(), '.config', 'autostart')
 		if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+		const execPath = process.env.APPIMAGE || process.execPath
 		writeFileSync(
 			getDesktopFilePath(),
 			`[Desktop Entry]
@@ -28,7 +29,7 @@ Type=Application
 Version=1.0
 Name=${app.getName()}
 Comment=Autostart for ${app.getName()}
-Exec=${process.execPath} ${AUTOSTART_ARGS.join(' ')}
+Exec=${execPath} ${AUTOSTART_ARGS.join(' ')}
 StartupNotify=false
 Terminal=false
 X-GNOME-Autostart-enabled=true`,
