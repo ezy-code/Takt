@@ -63,6 +63,8 @@ export const ru: typeof en = {
 		remove: 'Убрать из «Моего дня»',
 		overdue: 'Просрочено',
 		today: 'Сегодня',
+		open: 'Открыть «Мой день»',
+		moveToToday: 'Перенести на сегодня',
 		nothingAdded: 'Пока ничего не добавлено.',
 		otherTasks: 'Другие задачи',
 		noOtherTasks: 'Других задач нет.',
