@@ -62,10 +62,10 @@ export function TaskCard({ task }: TaskCardProps) {
 	)
 
 	return (
-		<Card withBorder padding='sm' radius='md'>
+		<Card withBorder padding='sm' radius='md' h='100%'>
 			<Menu>
 				<Menu.ContextMenu>
-					<Stack gap={8}>
+					<Stack gap={8} h='100%' justify='space-between'>
 						<Group justify='space-between' align='flex-start' gap='xs' wrap='nowrap'>
 							<div style={{ flex: 1, minWidth: 0 }}>
 								<Group gap='xs' align='center' wrap='wrap'>
@@ -146,7 +146,7 @@ export function TaskCard({ task }: TaskCardProps) {
 								</Group>
 							)}
 							<Text size='xs' c='dimmed'>
-								{new Date(task.created_at).toLocaleString()}
+								{new Date(task.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
 							</Text>
 						</Group>
 					</Stack>
