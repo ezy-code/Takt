@@ -1,8 +1,9 @@
 {
 	"name": "takt",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "Electron + React + TypeScript + Mantine + Zustand + TanStack Router + SQLite",
 	"main": "./out/main/index.js",
+	"repository": "github:ezy-code/takt",
 	"scripts": {
 		"dev": "electron-vite dev",
 		"build": "electron-vite build",
@@ -22,11 +23,13 @@
 		"@electron-toolkit/preload": "^3.0.2",
 		"@electron-toolkit/utils": "^4.0.0",
 		"@lyfie/luthor": "^2.9.0",
+		"@mantine/dates": "^9.5.1",
 		"@tabler/icons-react": "^3.46.0",
 		"@tanstack/react-form": "^1.33.3",
 		"@tanstack/react-query": "^5.101.4",
 		"better-sqlite3": "^12.11.1",
 		"clsx": "^2.1.1",
+		"dayjs": "^1.11.21",
 		"drizzle-orm": "^0.45.2",
 		"highlight.js": "^11.11.1",
 		"i18next": "^26.3.6",
@@ -66,6 +69,9 @@
 				"resources/**"
 			]
 		}
+	},
+	"engines": {
+		"node": "^24.0.0"
 	},
 	"lint-staged": {
 		"*.{ts,tsx,js,json}": "biome check --write"
