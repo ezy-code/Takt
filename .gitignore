@@ -3,3 +3,4 @@ dist
 out
 tsconfig.node.tsbuildinfo
 tsconfig.web.tsbuildinfo
+*.tgz
