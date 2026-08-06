@@ -92,6 +92,9 @@ function updateTrayIcon() {
 }
 
 function createWindow() {
+	if (!process.env['ELECTRON_RENDERER_URL']) {
+		Menu.setApplicationMenu(null)
+	}
 	mainWindow = new BrowserWindow({
 		width: 1200,
 		height: 800,
