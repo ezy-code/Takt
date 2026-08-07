@@ -4,6 +4,7 @@ import { APP_NAME } from '../shared/constants'
 import { initAutostart } from './autostart'
 import type { TimerChangeInfo } from './database'
 import { initDatabase } from './database'
+import { initUpdater } from './updater'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null

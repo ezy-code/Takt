@@ -1,3 +1,5 @@
+import type { UpdaterState } from '../../shared/updater'
+
 export interface Status {
 	id: number
 	name: string
@@ -121,6 +123,11 @@ export interface Api {
 	setAutostart: (enabled: boolean) => Promise<void>
 	getMeta: (key: string) => Promise<string | null>
 	setMeta: (key: string, value: string) => Promise<{ success: boolean }>
+	getUpdaterState: () => Promise<UpdaterState>
+	checkForUpdates: () => Promise<UpdaterState>
+	downloadUpdate: () => Promise<UpdaterState>
+	installUpdate: () => Promise<{ success: boolean }>
+	onUpdaterStatus: (callback: (state: UpdaterState) => void) => () => void
 }
 
 declare global {

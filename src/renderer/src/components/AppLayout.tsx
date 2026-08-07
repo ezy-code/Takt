@@ -8,6 +8,7 @@ import { useActiveTimer } from '../api'
 import { ROUTES } from '../routes'
 import { useTimerStore } from '../store/timer'
 import { TimerControl } from './TimerControl'
+import UpdateSection from './UpdateSection'
 
 const navItems = [
 	{ labelKey: 'nav.myDay', path: ROUTES.MY_DAY, icon: IconCalendarCheck },
@@ -63,31 +64,34 @@ export default function AppLayout() {
 				</Group>
 			</AppShell.Header>
 
-			<AppShell.Navbar p='xs'>
-				{navItems.map((item) => (
-					<NavLink
-						key={item.path}
-						label={t(item.labelKey)}
-						leftSection={item.icon && <item.icon size={16} />}
-						active={location.pathname === item.path}
-						onClick={() => navigate({ to: item.path })}
-						rightSection={
-							item.path === ROUTES.TASKS ? (
-								<ActionIcon
-									variant='subtle'
-									color='gray'
-									size='sm'
-									onClick={(e) => {
-										e.stopPropagation()
-										navigate({ to: ROUTES.TASKS_NEW })
-									}}
-								>
-									<IconPlus size={14} />
-								</ActionIcon>
-							) : undefined
-						}
-					/>
-				))}
+			<AppShell.Navbar p='xs' style={{ display: 'flex', flexDirection: 'column' }}>
+				<Box style={{ flex: 1 }}>
+					{navItems.map((item) => (
+						<NavLink
+							key={item.path}
+							label={t(item.labelKey)}
+							leftSection={item.icon && <item.icon size={16} />}
+							active={location.pathname === item.path}
+							onClick={() => navigate({ to: item.path })}
+							rightSection={
+								item.path === ROUTES.TASKS ? (
+									<ActionIcon
+										variant='subtle'
+										color='gray'
+										size='sm'
+										onClick={(e) => {
+											e.stopPropagation()
+											navigate({ to: ROUTES.TASKS_NEW })
+										}}
+									>
+										<IconPlus size={14} />
+									</ActionIcon>
+								) : undefined
+							}
+						/>
+					))}
+				</Box>
+				<UpdateSection />
 			</AppShell.Navbar>
 
 			<AppShell.Main>

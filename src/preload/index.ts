@@ -1,4 +1,5 @@
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron'
+import type { UpdaterState } from '../shared/updater'
 
 contextBridge.exposeInMainWorld('api', {
 	getTasks: () => ipcRenderer.invoke('get-tasks'),
@@ -82,4 +83,13 @@ contextBridge.exposeInMainWorld('api', {
 	setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
 	getMeta: (key: string) => ipcRenderer.invoke('get-meta', key),
 	setMeta: (key: string, value: string) => ipcRenderer.invoke('set-meta', key, value),
+	getUpdaterState: () => ipcRenderer.invoke('updater:get-state'),
+	checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+	downloadUpdate: () => ipcRenderer.invoke('updater:download'),
+	installUpdate: () => ipcRenderer.invoke('updater:install'),
+	onUpdaterStatus: (callback: (state: UpdaterState) => void) => {
+		const listener = (_event: IpcRendererEvent, state: UpdaterState) => callback(state)
+		ipcRenderer.on('updater:status', listener)
+		return () => ipcRenderer.removeListener('updater:status', listener)
+	},
 })
