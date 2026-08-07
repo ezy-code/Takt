@@ -1,5 +1,6 @@
 {
 	"name": "takt",
+	"productName": "Takt",
 	"version": "0.1.0",
 	"description": "Electron + React + TypeScript + Mantine + Zustand + TanStack Router + SQLite",
 	"main": "./out/main/index.js",
