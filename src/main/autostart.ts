@@ -1,14 +1,6 @@
 import { app, ipcMain } from 'electron'
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
-import { homedir } from 'os'
-import { join } from 'path'
-
-const AUTOSTART_ARGS = ['--hidden']
-
-function getDesktopFilePath(): string {
-	const name = app.getName()
-	return join(homedir(), '.config', 'autostart', `${name}.desktop`)
-}
+import { AUTOSTART_ARG } from '../shared/constants'
+import { createLinuxAutostartEntry, deleteLinuxAutostartEntry, isLinuxAutostartEnabled } from './linuxDesktopEntry'
 
 function enableAutostart() {
 	if (process.platform === 'win32' || process.platform === 'darwin') {
@@ -16,25 +8,10 @@ function enableAutostart() {
 			openAtLogin: true,
 			openAsHidden: true,
 			path: process.execPath,
-			args: AUTOSTART_ARGS,
+			args: [AUTOSTART_ARG],
 		})
 	} else if (process.platform === 'linux') {
-		const dir = join(homedir(), '.config', 'autostart')
-		if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-		const execPath = process.env.APPIMAGE || process.execPath
-		writeFileSync(
-			getDesktopFilePath(),
-			`[Desktop Entry]
-Type=Application
-Version=1.0
-Name=${app.getName()}
-Comment=Autostart for ${app.getName()}
-Exec=${execPath} ${AUTOSTART_ARGS.join(' ')}
-StartupNotify=false
-Terminal=false
-X-GNOME-Autostart-enabled=true`,
-			'utf-8',
-		)
+		createLinuxAutostartEntry()
 	}
 }
 
@@ -42,18 +19,15 @@ function disableAutostart() {
 	if (process.platform === 'win32' || process.platform === 'darwin') {
 		app.setLoginItemSettings({ openAtLogin: false })
 	} else if (process.platform === 'linux') {
-		const fp = getDesktopFilePath()
-		if (existsSync(fp)) unlinkSync(fp)
+		deleteLinuxAutostartEntry()
 	}
 }
 
 function isAutostartEnabled(): boolean {
 	if (process.platform === 'win32' || process.platform === 'darwin') {
 		return app.getLoginItemSettings().openAtLogin
-	} else if (process.platform === 'linux') {
-		return existsSync(getDesktopFilePath())
 	}
-	return false
+	return isLinuxAutostartEnabled()
 }
 
 export function initAutostart() {

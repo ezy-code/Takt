@@ -21,6 +21,7 @@ export const ru: typeof en = {
 		name: 'Название',
 		description: 'Описание',
 		view: 'Просмотр',
+		later: 'Позже',
 	},
 	tasks: {
 		title: 'Задачи',
@@ -105,6 +106,8 @@ export const ru: typeof en = {
 		system: 'Системная',
 		dark: 'Тёмная',
 		launchAtStartup: 'Запуск при старте системы',
+		desktopShortcut: 'Ярлык в приложениях',
+		desktopShortcutHint: 'Добавить Takt в меню приложений',
 		language: 'Язык',
 		updates: 'Обновления',
 		version: 'Версия: {{version}}',
@@ -116,6 +119,9 @@ export const ru: typeof en = {
 		downloading: 'Загрузка обновления {{version}}...',
 		updateReady: 'Обновление до {{version}} готово.',
 		updateError: 'Ошибка обновления: {{error}}',
+	},
+	header: {
+		addDesktop: 'Добавить иконку в список приложений?',
 	},
 	updater: {
 		available: 'Доступно обновление до {{version}}',

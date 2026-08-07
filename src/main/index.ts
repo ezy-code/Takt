@@ -1,9 +1,11 @@
 import { app, BrowserWindow, ipcMain, Menu, Notification, nativeImage, nativeTheme, Tray } from 'electron'
 import { join } from 'path'
-import { APP_NAME } from '../shared/constants'
+import { APP_NAME, AUTOSTART_ARG } from '../shared/constants'
 import { initAutostart } from './autostart'
 import type { TimerChangeInfo } from './database'
 import { initDatabase } from './database'
+import { getResourcePath } from './helpers'
+import { initAppImageDesktopEntry } from './linuxDesktopEntry'
 import { initUpdater } from './updater'
 
 let mainWindow: BrowserWindow | null = null
@@ -20,7 +22,7 @@ if (!gotTheLock) {
 	app.exit(0)
 } else {
 	app.on('second-instance', (_event, commandLine) => {
-		if (commandLine.includes('--hidden')) {
+		if (commandLine.includes(AUTOSTART_ARG)) {
 			return
 		}
 
@@ -57,8 +59,9 @@ if (!gotTheLock) {
 			}
 			updateTrayIcon()
 		})
+		initAppImageDesktopEntry()
 		createWindow()
-		if (process.argv.includes('--hidden')) mainWindow?.hide()
+		if (process.argv.includes(AUTOSTART_ARG)) mainWindow?.hide()
 		createTray()
 
 		nativeTheme.on('updated', updateTrayIcon)
@@ -72,11 +75,6 @@ if (!gotTheLock) {
 			}
 		})
 	})
-}
-
-function getResourcePath(rel: string): string {
-	const base = app.isPackaged ? join(process.resourcesPath, 'resources') : join(__dirname, '../../resources')
-	return join(base, rel)
 }
 
 function getTrayIcon(): string {

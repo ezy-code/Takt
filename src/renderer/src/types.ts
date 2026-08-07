@@ -121,6 +121,8 @@ export interface Api {
 	reorderTasks: (columnId: number, orderedTaskIds: number[]) => Promise<{ success: boolean }>
 	getAutostart: () => Promise<boolean>
 	setAutostart: (enabled: boolean) => Promise<void>
+	getAppImageDesktopEntryStatus: () => Promise<{ supported: boolean; enabled: boolean | null }>
+	setAppImageDesktopEntry: (enabled: boolean) => Promise<{ success: boolean }>
 	getMeta: (key: string) => Promise<string | null>
 	setMeta: (key: string, value: string) => Promise<{ success: boolean }>
 	getUpdaterState: () => Promise<UpdaterState>

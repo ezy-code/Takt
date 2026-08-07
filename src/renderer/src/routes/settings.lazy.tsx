@@ -41,11 +41,17 @@ function SettingsPage() {
 	)
 	const [language, setLanguage] = useState(i18n.resolvedLanguage === 'ru' ? 'ru' : 'en')
 	const [autostart, setAutostart] = useState(false)
+	const [appImageDesktopSupported, setAppImageDesktopSupported] = useState(false)
+	const [appImageDesktopEnabled, setAppImageDesktopEnabled] = useState(false)
 	const updater = useUpdater()
 	const hasUpdate = ['available', 'downloading', 'downloaded'].includes(updater.state.status)
 
 	useEffect(() => {
 		window.api.getAutostart().then(setAutostart)
+		window.api.getAppImageDesktopEntryStatus().then((status) => {
+			setAppImageDesktopSupported(status.supported)
+			setAppImageDesktopEnabled(status.enabled === true)
+		})
 	}, [])
 
 	return (
@@ -103,6 +109,28 @@ function SettingsPage() {
 						}}
 					/>
 				</Group>
+
+				{appImageDesktopSupported && (
+					<Group justify='space-between' w='100%'>
+						<Group gap='xs'>
+							<IconDeviceDesktop size={18} />
+							<Stack gap={0}>
+								<Text fw={500}>{t('settings.desktopShortcut')}</Text>
+								<Text size='xs' c='dimmed'>
+									{t('settings.desktopShortcutHint')}
+								</Text>
+							</Stack>
+						</Group>
+						<Switch
+							checked={appImageDesktopEnabled}
+							onChange={(e) => {
+								const val = e.currentTarget.checked
+								setAppImageDesktopEnabled(val)
+								window.api.setAppImageDesktopEntry(val)
+							}}
+						/>
+					</Group>
+				)}
 
 				<Stack gap='xs'>
 					<Group justify='space-between' w='100%'>

@@ -81,6 +81,8 @@ contextBridge.exposeInMainWorld('api', {
 		ipcRenderer.invoke('reorder-tasks', columnId, orderedTaskIds),
 	getAutostart: () => ipcRenderer.invoke('get-autostart'),
 	setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
+	getAppImageDesktopEntryStatus: () => ipcRenderer.invoke('appimage:get-desktop-entry-status'),
+	setAppImageDesktopEntry: (enabled: boolean) => ipcRenderer.invoke('appimage:set-desktop-entry', enabled),
 	getMeta: (key: string) => ipcRenderer.invoke('get-meta', key),
 	setMeta: (key: string, value: string) => ipcRenderer.invoke('set-meta', key, value),
 	getUpdaterState: () => ipcRenderer.invoke('updater:get-state'),
