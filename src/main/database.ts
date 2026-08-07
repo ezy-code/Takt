@@ -23,6 +23,14 @@ function resolveMyDayDate(myDay?: boolean | string | null): string | null {
 
 export type TimerChangeInfo = { active: false } | { active: true; startTime: string; taskName: string }
 
+export function getMeta(key: string): string | null {
+	return db.select({ value: appMeta.value }).from(appMeta).where(eq(appMeta.key, key)).get()?.value ?? null
+}
+
+export function setMeta(key: string, value: string): void {
+	db.insert(appMeta).values({ key, value }).onConflictDoUpdate({ target: appMeta.key, set: { value } }).run()
+}
+
 export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	const dbPath = join(app.getPath('userData'), 'tasks.db')
 	db = createDb(dbPath)
@@ -36,12 +44,10 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		onTimerChange?.({ active: false })
 	}
 
-	ipcMain.handle('get-meta', (_event, key: string) => {
-		return db.select({ value: appMeta.value }).from(appMeta).where(eq(appMeta.key, key)).get()?.value ?? null
-	})
+	ipcMain.handle('get-meta', (_event, key: string) => getMeta(key))
 
 	ipcMain.handle('set-meta', (_event, key: string, value: string) => {
-		db.insert(appMeta).values({ key, value }).onConflictDoUpdate({ target: appMeta.key, set: { value } }).run()
+		setMeta(key, value)
 		return { success: true }
 	})
 

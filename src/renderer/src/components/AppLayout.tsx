@@ -1,7 +1,7 @@
-import { ActionIcon, AppShell, Box, Group, NavLink, Text, Title } from '@mantine/core'
+import { ActionIcon, Alert, AppShell, Box, Button, Group, NavLink, Text, Title } from '@mantine/core'
 import { IconCalendarCheck, IconClock, IconFolder, IconList, IconPlus, IconSettings } from '@tabler/icons-react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
 import { useActiveTimer } from '../api'
@@ -24,6 +24,20 @@ export default function AppLayout() {
 	const { t } = useTranslation()
 	const { activeEntry, activeTask, setActive } = useTimerStore()
 	const { data: activeTimer } = useActiveTimer()
+	const [appImageDesktop, setAppImageDesktop] = useState<{ supported: boolean; enabled: boolean | null } | null>(null)
+
+	useEffect(() => {
+		window.api.getAppImageDesktopEntryStatus().then(setAppImageDesktop)
+	}, [])
+
+	const showAppImageDesktopBanner = appImageDesktop?.supported === true && appImageDesktop.enabled === null
+
+	const applyAppImageDesktop = (enabled: boolean) => {
+		if (appImageDesktop) {
+			setAppImageDesktop({ ...appImageDesktop, enabled })
+			window.api.setAppImageDesktopEntry(enabled)
+		}
+	}
 
 	useEffect(() => {
 		if (activeTimer) {
@@ -91,6 +105,19 @@ export default function AppLayout() {
 						/>
 					))}
 				</Box>
+				{showAppImageDesktopBanner && (
+					<Alert variant='outline' color='red' px='xs' py='xs' mb='xs'>
+						<Text size='xs'>{t('header.addDesktop')}</Text>
+						<Group justify='flex-end' gap='xs' mt={6}>
+							<Button size='compact-xs' variant='light' color='blue' onClick={() => applyAppImageDesktop(true)}>
+								{t('common.add')}
+							</Button>
+							<Button size='compact-xs' variant='outline' color='gray' onClick={() => applyAppImageDesktop(false)}>
+								{t('common.later')}
+							</Button>
+						</Group>
+					</Alert>
+				)}
 				<UpdateSection />
 			</AppShell.Navbar>
 

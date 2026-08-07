@@ -19,6 +19,7 @@ export const en = {
 		name: 'Name',
 		description: 'Description',
 		view: 'View',
+		later: 'Later',
 	},
 	tasks: {
 		title: 'Tasks',
@@ -103,6 +104,8 @@ export const en = {
 		system: 'System',
 		dark: 'Dark',
 		launchAtStartup: 'Launch at system startup',
+		desktopShortcut: 'Desktop shortcut',
+		desktopShortcutHint: 'Add Takt to the application menu',
 		language: 'Language',
 		updates: 'Updates',
 		version: 'Version: {{version}}',
@@ -114,6 +117,9 @@ export const en = {
 		downloading: 'Downloading update {{version}}...',
 		updateReady: 'Update to {{version}} is ready.',
 		updateError: 'Update failed: {{error}}',
+	},
+	header: {
+		addDesktop: 'Add an icon to the applications list?',
 	},
 	updater: {
 		available: 'Update to {{version}} available',
