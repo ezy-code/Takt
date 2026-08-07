@@ -14,6 +14,66 @@ let timerStartTime: string | null = null
 let timerTaskName: string | null = null
 let trayTimerInterval: ReturnType<typeof setInterval> | null = null
 
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+	app.exit(0)
+} else {
+	app.on('second-instance', (_event, commandLine) => {
+		if (commandLine.includes('--hidden')) {
+			return
+		}
+
+		if (mainWindow) {
+			if (mainWindow.isMinimized()) {
+				mainWindow.restore()
+			}
+
+			mainWindow.show()
+			mainWindow.focus()
+		}
+	})
+
+	app.whenReady().then(() => {
+		initAutostart()
+
+		if (process.platform === 'linux') {
+			app.setDesktopName(app.getName() + '.desktop')
+		}
+
+		initUpdater({ checkOnStart: app.isPackaged })
+
+		initDatabase((info: TimerChangeInfo) => {
+			if (info.active) {
+				isTimerActive = true
+				timerStartTime = info.startTime
+				timerTaskName = info.taskName
+				startTrayTimerUpdate()
+			} else {
+				isTimerActive = false
+				timerStartTime = null
+				timerTaskName = null
+				stopTrayTimerUpdate()
+			}
+			updateTrayIcon()
+		})
+		createWindow()
+		if (process.argv.includes('--hidden')) mainWindow?.hide()
+		createTray()
+
+		nativeTheme.on('updated', updateTrayIcon)
+
+		app.on('activate', () => {
+			if (!mainWindow) {
+				createWindow()
+			} else {
+				mainWindow.show()
+				mainWindow.focus()
+			}
+		})
+	})
+}
+
 function getResourcePath(rel: string): string {
 	const base = app.isPackaged ? join(process.resourcesPath, 'resources') : join(__dirname, '../../resources')
 	return join(base, rel)
@@ -127,35 +187,6 @@ ipcMain.handle('show-notification', (_event, title: string, body: string) => {
 })
 
 app.commandLine.appendSwitch('in-process-gpu')
-
-app.whenReady().then(() => {
-	initAutostart()
-	initDatabase((info: TimerChangeInfo) => {
-		if (info.active) {
-			isTimerActive = true
-			timerStartTime = info.startTime
-			timerTaskName = info.taskName
-			startTrayTimerUpdate()
-		} else {
-			isTimerActive = false
-			timerStartTime = null
-			timerTaskName = null
-			stopTrayTimerUpdate()
-		}
-		updateTrayIcon()
-	})
-	createWindow()
-	if (process.argv.includes('--hidden')) mainWindow?.hide()
-	createTray()
-
-	nativeTheme.on('updated', updateTrayIcon)
-
-	app.on('activate', () => {
-		if (BrowserWindow.getAllWindows().length === 0) {
-			createWindow()
-		}
-	})
-})
 
 app.on('before-quit', () => {
 	isQuitting = true
