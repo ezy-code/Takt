@@ -12,7 +12,11 @@ import Onboarding from './components/Onboarding'
 import i18n, { resolveLanguage } from './i18n'
 import { router } from './routeTree'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: { staleTime: Infinity },
+	},
+})
 
 document.title = APP_NAME
 document.documentElement.lang = i18n.resolvedLanguage ?? 'en'

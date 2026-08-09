@@ -143,7 +143,8 @@ export function useToggleMyDay() {
 	const queryClient = useQueryClient()
 	return useMutation({
 		mutationFn: (id: number) => window.api.toggleMyDayTask(id),
-		onSuccess: () => {
+		onSuccess: (_data, id) => {
+			queryClient.invalidateQueries({ queryKey: ['tasks', id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
@@ -154,7 +155,8 @@ export function useClearMyDay() {
 	const queryClient = useQueryClient()
 	return useMutation({
 		mutationFn: (id: number) => window.api.clearMyDayDate(id),
-		onSuccess: () => {
+		onSuccess: (_data, id) => {
+			queryClient.invalidateQueries({ queryKey: ['tasks', id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
@@ -205,6 +207,7 @@ export function useStopTimer() {
 				queryClient.setQueryData(queryKeys.tasks, updater)
 				queryClient.setQueryData(queryKeys.myDayTasks, updater)
 			}
+			queryClient.invalidateQueries({ queryKey: ['tasks', taskId] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
@@ -274,7 +277,8 @@ export function useMoveTask() {
 	const queryClient = useQueryClient()
 	return useMutation({
 		mutationFn: ({ taskId, statusId }: { taskId: number; statusId: number }) => window.api.moveTask(taskId, statusId),
-		onSuccess: () => {
+		onSuccess: (_data, { taskId }) => {
+			queryClient.invalidateQueries({ queryKey: ['tasks', taskId] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},

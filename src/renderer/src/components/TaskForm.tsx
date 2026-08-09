@@ -1,14 +1,27 @@
-import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
-import { Button, Container, Group, Select, Stack, Text, TextInput, Title, useMantineColorScheme } from '@mantine/core'
+import type { ExtensiveEditorRef } from '@lyfie/luthor'
+import {
+	Button,
+	Container,
+	Group,
+	Select,
+	Skeleton,
+	Stack,
+	Text,
+	TextInput,
+	Title,
+	useMantineColorScheme,
+} from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import dayjs from 'dayjs'
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAddTask, useProjects, useStatuses, useTask, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
 import { MyDayControl } from './MyDayControl'
+
+const ExtensiveEditor = lazy(() => import('@lyfie/luthor').then((m) => ({ default: m.ExtensiveEditor })))
 
 function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) {
 	e.preventDefault()
@@ -26,6 +39,7 @@ export function TaskForm({ id }: TaskFormProps) {
 	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
 	const isEdit = id != null
+	const [editorReady, setEditorReady] = useState(false)
 	const { colorScheme } = useMantineColorScheme()
 	const editorTheme =
 		colorScheme === 'auto'
@@ -59,6 +73,12 @@ export function TaskForm({ id }: TaskFormProps) {
 			setReminderAt(null)
 		}
 	}, [isEdit, task, statuses])
+
+	useEffect(() => {
+		if (isEdit && task && editorReady) {
+			editorRef.current?.injectJSON(task.description ?? '')
+		}
+	}, [isEdit, task, editorReady])
 
 	const form = useForm({
 		defaultValues: { name: '' },
@@ -95,13 +115,7 @@ export function TaskForm({ id }: TaskFormProps) {
 		}
 	}, [isEdit, task, form])
 
-	if (isEdit && isLoading)
-		return (
-			<Container fluid py='xl'>
-				<Text c='dimmed'>{t('common.loading')}</Text>
-			</Container>
-		)
-	if (isEdit && !task)
+	if (isEdit && !isLoading && !task)
 		return (
 			<Container fluid py='xl'>
 				<Text c='red'>{t('tasks.notFound')}</Text>
@@ -185,14 +199,16 @@ export function TaskForm({ id }: TaskFormProps) {
 						<Text size='sm' fw={500} mb={4}>
 							{t('common.description')}
 						</Text>
-						<ExtensiveEditor
-							ref={editorRef}
-							defaultContent={task?.description ?? ''}
-							initialMode='visual-editor'
-							placeholder={t('tasks.enterDescription')}
-							initialTheme={editorTheme}
-							availableModes={['visual-editor', 'markdown']}
-						/>
+						<Suspense fallback={<Skeleton height={200} />}>
+							<ExtensiveEditor
+								ref={editorRef}
+								onReady={() => setEditorReady(true)}
+								initialMode='visual-editor'
+								placeholder={t('tasks.enterDescription')}
+								initialTheme={editorTheme}
+								availableModes={['visual-editor', 'markdown']}
+							/>
+						</Suspense>
 					</div>
 
 					<Group
