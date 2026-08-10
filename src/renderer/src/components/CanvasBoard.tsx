@@ -17,7 +17,7 @@ import { useUpdateCanvasPosition } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { CanvasTaskNode, type CanvasTaskNodeType } from './CanvasTaskNode'
-import { TaskForm } from './TaskForm'
+import { TaskPage } from './TaskPage'
 
 const nodeTypes = { canvasTask: CanvasTaskNode }
 
@@ -120,7 +120,8 @@ function CanvasInner({ tasks }: { tasks: Task[] }) {
 			</Button>
 
 			<Modal opened={createOpen} onClose={() => setCreateOpen(false)} title={t('tasks.newTitle')} size='xl' centered>
-				<TaskForm
+				<TaskPage
+					mode='create'
 					onCancel={() => setCreateOpen(false)}
 					onCreated={(task) => {
 						updateCanvasPosition.mutate({ id: task.id, x: NEW_NOTE_POS.x, y: NEW_NOTE_POS.y })

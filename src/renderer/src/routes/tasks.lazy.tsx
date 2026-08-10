@@ -1,7 +1,7 @@
 import { Button, Container, Group, Select, Tabs, Text, Title } from '@mantine/core'
 import { IconColumns, IconLayoutBoard, IconList, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProjects, useTasks } from '../api'
 import { CanvasBoard } from '../components/CanvasBoard'
@@ -10,6 +10,7 @@ import { ManageStatusesModal } from '../components/ManageStatusesModal'
 import { TaskGrid } from '../components/TaskGrid'
 import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
 import { ROUTES } from '../routes'
+import { setLastTasksTab } from '../store/lastTasksTab'
 
 const Route = createLazyRoute(ROUTES.TASKS)({
 	component: TasksPage,
@@ -30,6 +31,10 @@ function TasksPage() {
 		value: String(p.id),
 		label: p.name,
 	}))
+
+	useEffect(() => {
+		setLastTasksTab(tab ?? 'list')
+	}, [tab])
 
 	return (
 		<Container fluid py='xl'>

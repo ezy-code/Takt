@@ -1,14 +1,26 @@
 import type { ExtensiveEditorRef } from '@lyfie/luthor'
 import { Button, Container, Group, Modal, Select, Stack, Text, TextInput, Title } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
-import { IconClock, IconFolder } from '@tabler/icons-react'
+import { useMediaQuery } from '@mantine/hooks'
+import { IconClock, IconFolder, IconTrash } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useBlocker, useNavigate } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAddTask, useClearMyDay, useProjects, useStatuses, useTask, useToggleMyDay, useUpdateTask } from '../api'
+import {
+	useAddTask,
+	useClearMyDay,
+	useDeleteTask,
+	useProjects,
+	useStatuses,
+	useTask,
+	useToggleMyDay,
+	useUpdateTask,
+} from '../api'
 import { ROUTES } from '../routes'
+import { lastTasksTab } from '../store/lastTasksTab'
+import type { Task } from '../types'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
@@ -26,6 +38,8 @@ function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) 
 interface TaskPageProps {
 	id?: number
 	mode: 'view' | 'edit' | 'create'
+	onCreated?: (task: Task) => void
+	onCancel?: () => void
 }
 
 interface TaskSnapshot {
@@ -47,12 +61,13 @@ const FIELD_TEXT_STYLE = {
 	cursor: 'pointer',
 } as const
 
-export function TaskPage({ id, mode }: TaskPageProps) {
+export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
 	const editable = mode !== 'view'
 	const isEdit = mode === 'edit'
+	const isModal = onCreated != null
 	const [editorReady, setEditorReady] = useState(false)
 
 	const { data: task, isLoading } = useTask(id ?? 0)
@@ -62,12 +77,15 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 	const updateTask = useUpdateTask()
 	const toggleMyDay = useToggleMyDay()
 	const clearMyDay = useClearMyDay()
+	const deleteTask = useDeleteTask()
 
 	const [statusId, setStatusId] = useState<number | null>(null)
 	const [projectId, setProjectId] = useState<number | null>(null)
 	const [addToMyDay, setAddToMyDay] = useState(false)
 	const [reminderAt, setReminderAt] = useState<string | null>(null)
 	const [showTimeEntries, setShowTimeEntries] = useState(false)
+	const [confirmDelete, setConfirmDelete] = useState(false)
+	const compact = useMediaQuery('(max-width: 900px)')
 	const initialRef = useRef<TaskSnapshot | null>(null)
 	const savedRef = useRef(false)
 
@@ -116,9 +134,10 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 				savedRef.current = true
 				navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
 			} else if (mode === 'create') {
-				await addTask.mutateAsync(payload)
+				const created = await addTask.mutateAsync(payload)
 				savedRef.current = true
-				navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })
+				if (onCreated) onCreated(created)
+				else navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(created.id) } })
 			}
 		},
 	})
@@ -165,7 +184,8 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 	}
 
 	const blocker = useBlocker({
-		shouldBlockFn: ({ current, next }) => !savedRef.current && isDirty() && current.pathname !== next.pathname,
+		shouldBlockFn: ({ current, next }) =>
+			!isModal && !savedRef.current && isDirty() && current.pathname !== next.pathname,
 		enableBeforeUnload: false,
 		withResolver: true,
 	})
@@ -199,12 +219,13 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 	}))
 
 	const goBack = () => {
-		if (isEdit) navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
-		else navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })
+		if (onCancel) onCancel()
+		else if (isEdit) navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
+		else navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })
 	}
 
 	return (
-		<Container fluid pt='md' pb={64}>
+		<Container fluid pt='md' pb={isModal ? 0 : 64}>
 			<form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
 				<Stack>
 					<Group justify='space-between'>
@@ -238,32 +259,45 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 								task!.name
 							)}
 						</Title>
-						<Group>
-							{mode === 'view' ? (
-								<>
-									<Button
-										variant='default'
-										onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task!.id) } })}
-									>
-										{t('common.edit')}
-									</Button>
-									<Button variant='default' onClick={() => navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })}>
-										{t('common.back')}
-									</Button>
-								</>
-							) : (
-								<>
-									<Button variant='default' onClick={goBack}>
-										{t('common.cancel')}
-									</Button>
-									<Button type='submit'>{isEdit ? t('common.save') : t('common.create')}</Button>
-								</>
-							)}
-						</Group>
+						{!isModal && (
+							<Group>
+								{mode === 'view' ? (
+									<>
+										<Button
+											variant='default'
+											onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task!.id) } })}
+										>
+											{t('common.edit')}
+										</Button>
+										<Button
+											variant='default'
+											onClick={() => navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })}
+										>
+											{t('common.back')}
+										</Button>
+										<Button
+											variant='light'
+											color='red'
+											leftSection={<IconTrash size={16} />}
+											onClick={() => setConfirmDelete(true)}
+										>
+											{t('common.delete')}
+										</Button>
+									</>
+								) : (
+									<>
+										<Button variant='default' onClick={goBack}>
+											{t('common.cancel')}
+										</Button>
+										<Button type='submit'>{isEdit ? t('common.save') : t('common.create')}</Button>
+									</>
+								)}
+							</Group>
+						)}
 					</Group>
 
-					<Group align='flex-start' wrap='nowrap' gap='lg'>
-						<div style={{ flex: 1, minWidth: 0 }}>
+					<Group align='flex-start' wrap={compact ? 'wrap' : 'nowrap'} gap='lg'>
+						<div style={{ flex: 1, minWidth: 0, width: compact ? '100%' : undefined }}>
 							{mode === 'view' ? (
 								task!.description_md && <MarkdownPreview content={task!.description_md} variant='full' />
 							) : (
@@ -278,7 +312,7 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 							align='flex-start'
 							gap='sm'
 							style={{
-								width: '25%',
+								width: compact ? '100%' : '25%',
 								flexShrink: 0,
 								border: '1px solid var(--mantine-color-default-border)',
 								borderRadius: 'var(--mantine-radius-md)',
@@ -381,6 +415,14 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 							)}
 						</Stack>
 					</Group>
+					{isModal && (
+						<Group justify='flex-end' mt='lg'>
+							<Button variant='default' onClick={goBack}>
+								{t('common.cancel')}
+							</Button>
+							<Button type='submit'>{t('common.create')}</Button>
+						</Group>
+					)}
 				</Stack>
 			</form>
 
@@ -416,6 +458,28 @@ export function TaskPage({ id, mode }: TaskPageProps) {
 							}}
 						>
 							{t('common.save')}
+						</Button>
+					</Group>
+				</Modal>
+			)}
+
+			{confirmDelete && task && (
+				<Modal opened={confirmDelete} onClose={() => setConfirmDelete(false)} title={t('tasks.deleteTitle')} centered>
+					<Text>{t('tasks.deleteBody')}</Text>
+					<Group justify='flex-end' mt='lg'>
+						<Button variant='default' onClick={() => setConfirmDelete(false)}>
+							{t('common.cancel')}
+						</Button>
+						<Button
+							color='red'
+							onClick={() => {
+								setConfirmDelete(false)
+								deleteTask.mutate(task.id, {
+									onSuccess: () => navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } }),
+								})
+							}}
+						>
+							{t('common.delete')}
 						</Button>
 					</Group>
 				</Modal>

@@ -45,6 +45,8 @@ export const en = {
 		reminder: 'Reminder',
 		selectReminder: 'Pick reminder date and time',
 		actions: 'Task actions',
+		deleteTitle: 'Delete task?',
+		deleteBody: 'This will permanently delete the task and its time entries.',
 		unsavedTitle: 'Unsaved changes',
 		unsavedBody: 'You have unsaved changes. Do you want to save, discard, or continue editing?',
 	},
