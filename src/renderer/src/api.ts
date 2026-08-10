@@ -309,6 +309,21 @@ export function useReorderTasks() {
 	})
 }
 
+export function useUpdateCanvasPosition() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: ({ id, x, y }: { id: number; x: number; y: number }) => window.api.updateTaskCanvasPosition(id, x, y),
+		onSuccess: (_data, { id, x, y }) => {
+			const updater = (tasks: Task[] | undefined) => {
+				if (!tasks) return tasks
+				return tasks.map((t) => (t.id === id ? { ...t, canvasX: x, canvasY: y } : t))
+			}
+			queryClient.setQueryData(queryKeys.tasks, updater)
+			queryClient.setQueryData(queryKeys.myDayTasks, updater)
+		},
+	})
+}
+
 export function useProjects() {
 	return useQuery({
 		queryKey: queryKeys.projects,

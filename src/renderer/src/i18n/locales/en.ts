@@ -29,6 +29,8 @@ export const en = {
 		allProjects: 'All projects',
 		list: 'List',
 		kanban: 'Kanban',
+		canvas: 'Canvas',
+		newCanvasTask: 'New canvas note',
 		noTasksInProject: 'No tasks in this project.',
 		noTasksYet: 'No tasks yet. Create one.',
 		notFound: 'Task not found',

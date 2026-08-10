@@ -19,6 +19,7 @@ import { type FormEvent, lazy, Suspense, useEffect, useRef, useState } from 'rea
 import { useTranslation } from 'react-i18next'
 import { useAddTask, useProjects, useStatuses, useTask, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
+import type { Task } from '../types'
 import { MyDayControl } from './MyDayControl'
 
 const ExtensiveEditor = lazy(() => import('@lyfie/luthor').then((m) => ({ default: m.ExtensiveEditor })))
@@ -32,13 +33,18 @@ function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) 
 
 interface TaskFormProps {
 	id?: number
+	onCreated?: (task: Task) => void
+	onCancel?: () => void
 }
 
-export function TaskForm({ id }: TaskFormProps) {
+export function TaskForm({ id, onCreated, onCancel }: TaskFormProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
 	const isEdit = id != null
+	// When `onCreated` is provided the form is used as an embedded create modal
+	// (e.g. the New canvas note flow) instead of a standalone page.
+	const isModal = onCreated != null
 	const [editorReady, setEditorReady] = useState(false)
 	const { colorScheme } = useMantineColorScheme()
 	const editorTheme =
@@ -103,11 +109,26 @@ export function TaskForm({ id }: TaskFormProps) {
 				await updateTask.mutateAsync({ id, ...payload })
 				navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
 			} else {
-				await addTask.mutateAsync(payload)
-				navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })
+				const created = await addTask.mutateAsync(payload)
+				if (onCreated) {
+					onCreated(created)
+				} else {
+					navigate({ to: ROUTES.TASKS, search: { tab: 'list' } })
+				}
 			}
 		},
 	})
+
+	const handleCancel = () => {
+		if (onCancel) {
+			onCancel()
+		} else {
+			navigate({
+				to: isEdit ? ROUTES.TASK_DETAIL : ROUTES.TASKS,
+				...(isEdit ? { params: { id: String(id) } } : {}),
+			})
+		}
+	}
 
 	useEffect(() => {
 		if (isEdit && task) {
@@ -133,10 +154,12 @@ export function TaskForm({ id }: TaskFormProps) {
 	}))
 
 	return (
-		<Container fluid py='xl' pb={90}>
-			<Title order={1} mb='lg'>
-				{isEdit ? t('tasks.editTitle') : t('tasks.newTitle')}
-			</Title>
+		<Container fluid py='xl' pb={isModal ? 0 : 90}>
+			{!isModal && (
+				<Title order={1} mb='lg'>
+					{isEdit ? t('tasks.editTitle') : t('tasks.newTitle')}
+				</Title>
+			)}
 			<form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
 				<Stack>
 					<form.Field name='name'>
@@ -212,28 +235,24 @@ export function TaskForm({ id }: TaskFormProps) {
 					</div>
 
 					<Group
-						justify='space-between'
-						bg='var(--mantine-color-body)'
-						py='md'
-						px='lg'
-						style={{
-							position: 'fixed',
-							bottom: 0,
-							left: 0,
-							right: 0,
-							borderTop: '1px solid var(--mantine-color-default-border)',
-							zIndex: 1000,
-						}}
+						justify={isModal ? 'flex-end' : 'space-between'}
+						{...(isModal
+							? { mt: 'lg' }
+							: {
+									bg: 'var(--mantine-color-body)',
+									py: 'md',
+									px: 'lg',
+									style: {
+										position: 'fixed',
+										bottom: 0,
+										left: 0,
+										right: 0,
+										borderTop: '1px solid var(--mantine-color-default-border)',
+										zIndex: 1000,
+									},
+								})}
 					>
-						<Button
-							variant='default'
-							onClick={() =>
-								navigate({
-									to: isEdit ? ROUTES.TASK_DETAIL : ROUTES.TASKS,
-									...(isEdit ? { params: { id: String(id) } } : {}),
-								})
-							}
-						>
+						<Button variant='default' onClick={handleCancel}>
 							{t('common.cancel')}
 						</Button>
 						<Button type='submit'>{isEdit ? t('common.save') : t('common.create')}</Button>

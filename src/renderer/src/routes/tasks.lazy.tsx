@@ -1,9 +1,10 @@
 import { Button, Container, Group, Select, Tabs, Text, Title } from '@mantine/core'
-import { IconColumns, IconList, IconPlus } from '@tabler/icons-react'
+import { IconColumns, IconLayoutBoard, IconList, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveTimer, useProjects, useTasks } from '../api'
+import { CanvasBoard } from '../components/CanvasBoard'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { ManageStatusesModal } from '../components/ManageStatusesModal'
 import { TaskGrid } from '../components/TaskGrid'
@@ -47,12 +48,12 @@ function TasksPage() {
 					<Button leftSection={<IconPlus size={16} />} onClick={() => navigate({ to: ROUTES.TASKS_NEW })}>
 						{t('tasks.newTask')}
 					</Button>
-				) : (
+				) : tab === 'kanban' ? (
 					<ManageStatusesModal />
-				)}
+				) : null}
 			</Group>
 
-			{tab === 'list' && (
+			{(tab === 'list' || tab === 'canvas') && (
 				<Group mb='md'>
 					<Select
 						label={t('tasks.filterByProject')}
@@ -79,6 +80,9 @@ function TasksPage() {
 					<Tabs.Tab value='kanban' leftSection={<IconColumns size={14} />}>
 						{t('tasks.kanban')}
 					</Tabs.Tab>
+					<Tabs.Tab value='canvas' leftSection={<IconLayoutBoard size={14} />}>
+						{t('tasks.canvas')}
+					</Tabs.Tab>
 				</Tabs.List>
 
 				<Tabs.Panel value='list'>
@@ -93,6 +97,10 @@ function TasksPage() {
 
 				<Tabs.Panel value='kanban'>
 					<KanbanBoard />
+				</Tabs.Panel>
+
+				<Tabs.Panel value='canvas'>
+					<CanvasBoard tasks={filteredTasks} />
 				</Tabs.Panel>
 			</Tabs>
 		</Container>

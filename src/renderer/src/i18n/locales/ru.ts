@@ -31,6 +31,8 @@ export const ru: typeof en = {
 		allProjects: 'Все проекты',
 		list: 'Список',
 		kanban: 'Канбан',
+		canvas: 'Холст',
+		newCanvasTask: 'Новая заметка на холсте',
 		noTasksInProject: 'В этом проекте нет задач.',
 		noTasksYet: 'Пока нет задач. Создайте первую.',
 		notFound: 'Задача не найдена',

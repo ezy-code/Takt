@@ -80,6 +80,8 @@ contextBridge.exposeInMainWorld('api', {
 	moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke('move-task', taskId, statusId),
 	reorderTasks: (columnId: number, orderedTaskIds: number[]) =>
 		ipcRenderer.invoke('reorder-tasks', columnId, orderedTaskIds),
+	updateTaskCanvasPosition: (id: number, x: number, y: number) =>
+		ipcRenderer.invoke('update-task-canvas-position', id, x, y),
 	getAutostart: () => ipcRenderer.invoke('get-autostart'),
 	setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
 	getAppImageDesktopEntryStatus: () => ipcRenderer.invoke('appimage:get-desktop-entry-status'),

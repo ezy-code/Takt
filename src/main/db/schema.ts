@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm'
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const appMeta = sqliteTable('app_meta', {
 	key: text('key').primaryKey(),
@@ -36,6 +36,8 @@ export const tasks = sqliteTable('tasks', {
 	position: integer('position').notNull().default(0),
 	descriptionMarkdown: text('description_md').default(''),
 	descriptionHtml: text('description_html').default(''),
+	canvasX: real('canvas_x'),
+	canvasY: real('canvas_y'),
 })
 
 export const timeEntries = sqliteTable('time_entries', {

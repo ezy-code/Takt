@@ -31,6 +31,8 @@ export interface Task {
 	created_at: string
 	position?: number
 	total_duration?: number
+	canvasX?: number | null
+	canvasY?: number | null
 }
 
 export interface TimeEntry {
@@ -120,6 +122,7 @@ export interface Api {
 	setDefaultStatus: (id: number) => Promise<Status>
 	moveTask: (taskId: number, statusId: number) => Promise<Task>
 	reorderTasks: (columnId: number, orderedTaskIds: number[]) => Promise<{ success: boolean }>
+	updateTaskCanvasPosition: (id: number, x: number, y: number) => Promise<Task>
 	getAutostart: () => Promise<boolean>
 	setAutostart: (enabled: boolean) => Promise<void>
 	getAppImageDesktopEntryStatus: () => Promise<{ supported: boolean; enabled: boolean | null }>

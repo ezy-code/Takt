@@ -186,6 +186,10 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
+	ipcMain.handle('update-task-canvas-position', (_event, id: number, x: number, y: number) => {
+		return db.update(tasks).set({ canvasX: x, canvasY: y }).where(eq(tasks.id, id)).returning().get()
+	})
+
 	ipcMain.handle('get-tasks', () => {
 		return db
 			.select({
@@ -200,6 +204,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				reminder_at: tasks.reminderAt,
 				created_at: tasks.created_at,
 				position: tasks.position,
+				canvasX: tasks.canvasX,
+				canvasY: tasks.canvasY,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
@@ -223,6 +229,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				reminder_at: tasks.reminderAt,
 				created_at: tasks.created_at,
 				position: tasks.position,
+				canvasX: tasks.canvasX,
+				canvasY: tasks.canvasY,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
@@ -326,6 +334,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				projectId: tasks.projectId,
 				created_at: tasks.created_at,
 				position: tasks.position,
+				canvasX: tasks.canvasX,
+				canvasY: tasks.canvasY,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
@@ -461,6 +471,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				reminder_at: tasks.reminderAt,
 				created_at: tasks.created_at,
 				position: tasks.position,
+				canvasX: tasks.canvasX,
+				canvasY: tasks.canvasY,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
