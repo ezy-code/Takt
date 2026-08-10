@@ -2,6 +2,7 @@ import { asc, count, desc, eq, sql } from 'drizzle-orm'
 import { app, BrowserWindow, ipcMain, Notification } from 'electron'
 import { join } from 'path'
 import { META_LANGUAGE_KEY } from '../shared/constants'
+import { IPC } from '../shared/ipc'
 import { createDb } from './db'
 import { appMeta, projects, statuses, tasks, timeEntries } from './db/schema'
 
@@ -44,14 +45,14 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		onTimerChange?.({ active: false })
 	}
 
-	ipcMain.handle('get-meta', (_event, key: string) => getMeta(key))
+	ipcMain.handle(IPC.GET_META, (_event, key: string) => getMeta(key))
 
-	ipcMain.handle('set-meta', (_event, key: string, value: string) => {
+	ipcMain.handle(IPC.SET_META, (_event, key: string, value: string) => {
 		setMeta(key, value)
 		return { success: true }
 	})
 
-	ipcMain.handle('get-projects', () => {
+	ipcMain.handle(IPC.GET_PROJECTS, () => {
 		return db
 			.select({
 				id: projects.id,
@@ -66,7 +67,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.all()
 	})
 
-	ipcMain.handle('get-project', (_event, id: number) => {
+	ipcMain.handle(IPC.GET_PROJECT, (_event, id: number) => {
 		return db
 			.select({
 				id: projects.id,
@@ -82,7 +83,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	})
 
 	ipcMain.handle(
-		'add-project',
+		IPC.ADD_PROJECT,
 		(_event, name: string, description?: string, description_md?: string, description_html?: string) => {
 			return db
 				.insert(projects)
@@ -98,7 +99,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	)
 
 	ipcMain.handle(
-		'update-project',
+		IPC.UPDATE_PROJECT,
 		(_event, id: number, name: string, description?: string, description_md?: string, description_html?: string) => {
 			return db
 				.update(projects)
@@ -114,11 +115,11 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		},
 	)
 
-	ipcMain.handle('get-statuses', () => {
+	ipcMain.handle(IPC.GET_STATUSES, () => {
 		return db.select().from(statuses).orderBy(asc(statuses.position)).all()
 	})
 
-	ipcMain.handle('add-status', (_event, name: string, color: string) => {
+	ipcMain.handle(IPC.ADD_STATUS, (_event, name: string, color: string) => {
 		const maxPos = db
 			.select({ maxPos: sql<number>`coalesce(max(${statuses.position}), -1)` })
 			.from(statuses)
@@ -130,11 +131,11 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.get()
 	})
 
-	ipcMain.handle('update-status', (_event, id: number, name: string, color: string) => {
+	ipcMain.handle(IPC.UPDATE_STATUS, (_event, id: number, name: string, color: string) => {
 		return db.update(statuses).set({ name, color }).where(eq(statuses.id, id)).returning().get()
 	})
 
-	ipcMain.handle('set-default-status', (_event, id: number) => {
+	ipcMain.handle(IPC.SET_DEFAULT_STATUS, (_event, id: number) => {
 		db.transaction(() => {
 			db.update(statuses).set({ is_default: false }).run()
 			db.update(statuses).set({ is_default: true }).where(eq(statuses.id, id)).run()
@@ -142,7 +143,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return db.select().from(statuses).where(eq(statuses.id, id)).get()
 	})
 
-	ipcMain.handle('delete-status', (_event, id: number) => {
+	ipcMain.handle(IPC.DELETE_STATUS, (_event, id: number) => {
 		const taskCount = db.select({ cnt: sql<number>`count(*)` }).from(tasks).where(eq(tasks.statusId, id)).get()
 		if (taskCount!.cnt > 0) return { success: false, reason: 'Has tasks' }
 		const status = db.select({ is_default: statuses.is_default }).from(statuses).where(eq(statuses.id, id)).get()
@@ -154,7 +155,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
-	ipcMain.handle('reorder-statuses', (_event, ids: number[]) => {
+	ipcMain.handle(IPC.REORDER_STATUSES, (_event, ids: number[]) => {
 		db.transaction(() => {
 			ids.forEach((id, idx) => {
 				db.update(statuses).set({ position: idx }).where(eq(statuses.id, id)).run()
@@ -163,7 +164,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
-	ipcMain.handle('move-task', (_event, taskId: number, statusId: number) => {
+	ipcMain.handle(IPC.MOVE_TASK, (_event, taskId: number, statusId: number) => {
 		const maxPos = db
 			.select({ maxPos: sql<number>`coalesce(max(${tasks.position}), -1)` })
 			.from(tasks)
@@ -177,7 +178,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.get()
 	})
 
-	ipcMain.handle('reorder-tasks', (_event, _columnId: number, orderedTaskIds: number[]) => {
+	ipcMain.handle(IPC.REORDER_TASKS, (_event, _columnId: number, orderedTaskIds: number[]) => {
 		db.transaction(() => {
 			orderedTaskIds.forEach((id, idx) => {
 				db.update(tasks).set({ position: idx }).where(eq(tasks.id, id)).run()
@@ -186,11 +187,11 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
-	ipcMain.handle('update-task-canvas-position', (_event, id: number, x: number, y: number) => {
+	ipcMain.handle(IPC.UPDATE_TASK_CANVAS_POSITION, (_event, id: number, x: number, y: number) => {
 		return db.update(tasks).set({ canvasX: x, canvasY: y }).where(eq(tasks.id, id)).returning().get()
 	})
 
-	ipcMain.handle('get-tasks', () => {
+	ipcMain.handle(IPC.GET_TASKS, () => {
 		return db
 			.select({
 				id: tasks.id,
@@ -215,7 +216,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.all()
 	})
 
-	ipcMain.handle('get-task', (_event, id: number) => {
+	ipcMain.handle(IPC.GET_TASK, (_event, id: number) => {
 		return db
 			.select({
 				id: tasks.id,
@@ -241,7 +242,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	})
 
 	ipcMain.handle(
-		'add-task',
+		IPC.ADD_TASK,
 		(
 			_event,
 			name: string,
@@ -280,7 +281,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	)
 
 	ipcMain.handle(
-		'update-task',
+		IPC.UPDATE_TASK,
 		(
 			_event,
 			id: number,
@@ -316,7 +317,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		},
 	)
 
-	ipcMain.handle('delete-task', (_event, id: number) => {
+	ipcMain.handle(IPC.DELETE_TASK, (_event, id: number) => {
 		db.delete(timeEntries).where(eq(timeEntries.taskId, id)).run()
 		db.delete(tasks).where(eq(tasks.id, id)).run()
 		return { success: true }
@@ -345,7 +346,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.get()
 	}
 
-	ipcMain.handle('get-active-timer', () => {
+	ipcMain.handle(IPC.GET_ACTIVE_TIMER, () => {
 		const entry = db.select().from(timeEntries).where(sql`${timeEntries.stopTime} is null`).limit(1).all()[0]
 
 		if (!entry) return null
@@ -355,7 +356,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { entry, task }
 	})
 
-	ipcMain.handle('get-last-timer', () => {
+	ipcMain.handle(IPC.GET_LAST_TIMER, () => {
 		const entry = db.select().from(timeEntries).orderBy(desc(timeEntries.startTime)).limit(1).all()[0]
 
 		if (!entry) return null
@@ -366,7 +367,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { entry, task }
 	})
 
-	ipcMain.handle('start-timer', (_event, taskId: number) => {
+	ipcMain.handle(IPC.START_TIMER, (_event, taskId: number) => {
 		const active = db.select().from(timeEntries).where(sql`${timeEntries.stopTime} is null`).limit(1).all()[0]
 
 		if (active) {
@@ -382,7 +383,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { conflict: false, entry }
 	})
 
-	ipcMain.handle('stop-timer', (_event, taskId: number) => {
+	ipcMain.handle(IPC.STOP_TIMER, (_event, taskId: number) => {
 		const active = db
 			.select()
 			.from(timeEntries)
@@ -408,7 +409,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return entry
 	})
 
-	ipcMain.handle('get-all-time-entries', () => {
+	ipcMain.handle(IPC.GET_ALL_TIME_ENTRIES, () => {
 		return db
 			.select({
 				id: timeEntries.id,
@@ -424,7 +425,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.all()
 	})
 
-	ipcMain.handle('get-time-summary', () => {
+	ipcMain.handle(IPC.GET_TIME_SUMMARY, () => {
 		const total = db
 			.select({
 				totalSessions: count(),
@@ -444,12 +445,12 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { ...total, ...today }
 	})
 
-	ipcMain.handle('delete-time-entry', (_event, id: number) => {
+	ipcMain.handle(IPC.DELETE_TIME_ENTRY, (_event, id: number) => {
 		db.delete(timeEntries).where(eq(timeEntries.id, id)).run()
 		return { success: true }
 	})
 
-	ipcMain.handle('toggle-my-day', (_event, id: number) => {
+	ipcMain.handle(IPC.TOGGLE_MY_DAY, (_event, id: number) => {
 		const task = db.select({ my_day_date: tasks.my_day_date }).from(tasks).where(eq(tasks.id, id)).get()
 		const newDate =
 			task?.my_day_date === new Date().toISOString().split('T')[0] ? null : new Date().toISOString().split('T')[0]
@@ -457,7 +458,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
-	ipcMain.handle('get-my-day-tasks', () => {
+	ipcMain.handle(IPC.GET_MY_DAY_TASKS, () => {
 		return db
 			.select({
 				id: tasks.id,
@@ -483,7 +484,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.all()
 	})
 
-	ipcMain.handle('clear-my-day-date', (_event, id: number) => {
+	ipcMain.handle(IPC.CLEAR_MY_DAY, (_event, id: number) => {
 		db.update(tasks).set({ my_day_date: null }).where(eq(tasks.id, id)).run()
 		return { success: true }
 	})
@@ -526,7 +527,7 @@ function showTaskReminderNotification(task: { id: number; name: string }) {
 		if (win.isMinimized()) win.restore()
 		win.show()
 		win.focus()
-		win.webContents.send('navigate-to-task', task.id)
+		win.webContents.send(IPC.NAVIGATE_TO_TASK, task.id)
 	})
 	notification.show()
 }

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import log from 'electron-log/main'
 import { autoUpdater, type ProgressInfo, type UpdateInfo } from 'electron-updater'
+import { IPC } from '../shared/ipc'
 import type { UpdaterState } from '../shared/updater'
 
 let state: UpdaterState = {
@@ -10,7 +11,7 @@ let state: UpdaterState = {
 
 function broadcast(): void {
 	for (const win of BrowserWindow.getAllWindows()) {
-		win.webContents.send('updater:status', state)
+		win.webContents.send(IPC.UPDATER_STATUS, state)
 	}
 }
 
@@ -50,9 +51,9 @@ export function initUpdater({ checkOnStart = false }: { checkOnStart?: boolean }
 
 	autoUpdater.on('error', (err: Error) => setState({ status: 'error', error: err.message }))
 
-	ipcMain.handle('updater:get-state', () => state)
+	ipcMain.handle(IPC.UPDATER_GET_STATE, () => state)
 
-	ipcMain.handle('updater:check', () => {
+	ipcMain.handle(IPC.UPDATER_CHECK, () => {
 		if (!app.isPackaged) {
 			return setState({ status: 'error', error: 'Updates are only available in packaged builds' })
 		}
@@ -63,7 +64,7 @@ export function initUpdater({ checkOnStart = false }: { checkOnStart?: boolean }
 		return state
 	})
 
-	ipcMain.handle('updater:download', () => {
+	ipcMain.handle(IPC.UPDATER_DOWNLOAD, () => {
 		if (state.status === 'available') {
 			setState({ status: 'downloading', progress: { percent: 0, transferred: 0, total: 0, bytesPerSecond: 0 } })
 			autoUpdater.downloadUpdate().catch(() => {})
@@ -71,7 +72,7 @@ export function initUpdater({ checkOnStart = false }: { checkOnStart?: boolean }
 		return state
 	})
 
-	ipcMain.handle('updater:install', () => {
+	ipcMain.handle(IPC.UPDATER_INSTALL, () => {
 		autoUpdater.quitAndInstall()
 		return { success: true }
 	})

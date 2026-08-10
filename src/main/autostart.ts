@@ -1,5 +1,6 @@
 import { app, ipcMain } from 'electron'
 import { AUTOSTART_ARG } from '../shared/constants'
+import { IPC } from '../shared/ipc'
 import { createLinuxAutostartEntry, deleteLinuxAutostartEntry, isLinuxAutostartEnabled } from './linuxDesktopEntry'
 
 function enableAutostart() {
@@ -31,8 +32,8 @@ function isAutostartEnabled(): boolean {
 }
 
 export function initAutostart() {
-	ipcMain.handle('get-autostart', () => isAutostartEnabled())
-	ipcMain.handle('set-autostart', (_event, enabled: boolean) => {
+	ipcMain.handle(IPC.GET_AUTOSTART, () => isAutostartEnabled())
+	ipcMain.handle(IPC.SET_AUTOSTART, (_event, enabled: boolean) => {
 		if (enabled) enableAutostart()
 		else disableAutostart()
 	})

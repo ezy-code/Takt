@@ -15,6 +15,7 @@
 		"dist:linux": "pnpm build && electron-builder --linux",
 		"format": "biome check --write .",
 		"format:check": "biome check .",
+		"typecheck": "tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.node.json",
 		"prepare": "husky"
 	},
 	"dependencies": {

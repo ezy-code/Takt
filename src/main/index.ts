@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, Notification, nativeImage, nativeThe
 import { join } from 'path'
 import { APP_NAME, AUTOSTART_ARG } from '../shared/constants'
 import { formatDuration } from '../shared/formatDuration'
+import { IPC } from '../shared/ipc'
 import { initAutostart } from './autostart'
 import type { TimerChangeInfo } from './database'
 import { initDatabase } from './database'
@@ -172,7 +173,7 @@ function createWindow() {
 	}
 }
 
-ipcMain.handle('show-notification', (_event, title: string, body: string) => {
+ipcMain.handle(IPC.SHOW_NOTIFICATION, (_event, title: string, body: string) => {
 	new Notification({ title, body }).show()
 })
 

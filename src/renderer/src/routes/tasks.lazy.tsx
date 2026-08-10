@@ -1,15 +1,15 @@
 import { Button, Container, Group, Select, Tabs, Text, Title } from '@mantine/core'
 import { IconColumns, IconLayoutBoard, IconList, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useActiveTimer, useProjects, useTasks } from '../api'
+import { useProjects, useTasks } from '../api'
 import { CanvasBoard } from '../components/CanvasBoard'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { ManageStatusesModal } from '../components/ManageStatusesModal'
 import { TaskGrid } from '../components/TaskGrid'
+import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
 import { ROUTES } from '../routes'
-import { useTimerStore } from '../store/timer'
 
 const Route = createLazyRoute(ROUTES.TASKS)({
 	component: TasksPage,
@@ -21,8 +21,7 @@ function TasksPage() {
 	const { tab } = Route.useSearch()
 	const { data: tasks, isLoading } = useTasks()
 	const { data: projects } = useProjects()
-	const { data: activeTimer } = useActiveTimer()
-	const setActive = useTimerStore((s) => s.setActive)
+	useSyncActiveTimer()
 	const [projectFilter, setProjectFilter] = useState<string | null>(null)
 
 	const filteredTasks = (tasks ?? []).filter((t) => projectFilter == null || t.projectId === Number(projectFilter))
@@ -31,14 +30,6 @@ function TasksPage() {
 		value: String(p.id),
 		label: p.name,
 	}))
-
-	useEffect(() => {
-		if (activeTimer) {
-			setActive(activeTimer.entry, activeTimer.task)
-		} else {
-			setActive(null, null)
-		}
-	}, [activeTimer, setActive])
 
 	return (
 		<Container fluid py='xl'>

@@ -4,9 +4,9 @@ import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
-import { useActiveTimer, useLastTimer } from '../api'
+import { useLastTimer } from '../api'
+import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
 import { ROUTES } from '../routes'
-import { useTimerStore } from '../store/timer'
 import { TimerControl } from './TimerControl'
 import UpdateSection from './UpdateSection'
 
@@ -22,8 +22,7 @@ export default function AppLayout() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { t } = useTranslation()
-	const { setActive } = useTimerStore()
-	const { data: activeTimer } = useActiveTimer()
+	const activeTimer = useSyncActiveTimer()
 	const { data: lastTimer } = useLastTimer()
 	const [appImageDesktop, setAppImageDesktop] = useState<{ supported: boolean; enabled: boolean | null } | null>(null)
 
@@ -39,14 +38,6 @@ export default function AppLayout() {
 			window.api.setAppImageDesktopEntry(enabled)
 		}
 	}
-
-	useEffect(() => {
-		if (activeTimer) {
-			setActive(activeTimer.entry, activeTimer.task)
-		} else {
-			setActive(null, null)
-		}
-	}, [activeTimer, setActive])
 
 	useEffect(() => {
 		return window.api.onNavigateToTask((id) => {

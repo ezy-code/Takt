@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { app, ipcMain } from 'electron'
 import { AUTOSTART_ARG, META_APPIMAGE_DESKTOP_KEY } from '../shared/constants'
+import { IPC } from '../shared/ipc'
 import { getMeta, setMeta } from './database'
 import { getResourcePath } from './helpers'
 
@@ -119,9 +120,9 @@ function ensureAppImageDesktopEntryUpToDate(): void {
 }
 
 export function initAppImageDesktopEntry(): void {
-	ipcMain.handle('appimage:get-desktop-entry-status', () => getAppImageDesktopEntryStatus())
+	ipcMain.handle(IPC.APPIMAGE_GET_DESKTOP_ENTRY_STATUS, () => getAppImageDesktopEntryStatus())
 
-	ipcMain.handle('appimage:set-desktop-entry', (_event, enabled: boolean) => {
+	ipcMain.handle(IPC.APPIMAGE_SET_DESKTOP_ENTRY, (_event, enabled: boolean) => {
 		if (!isAppImage()) return { success: false }
 		setMeta(META_APPIMAGE_DESKTOP_KEY, enabled ? '1' : '0')
 		return { success: enabled ? createAppImageDesktopEntry() : deleteAppImageDesktopEntry() }

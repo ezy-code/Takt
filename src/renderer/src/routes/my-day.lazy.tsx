@@ -1,27 +1,17 @@
 import { Box, Container, Text, Title } from '@mantine/core'
 import { createLazyRoute } from '@tanstack/react-router'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useActiveTimer, useMyDayTasks, useTasks } from '../api'
+import { useMyDayTasks, useTasks } from '../api'
 import { OtherTasksSection } from '../components/OtherTasksSection'
 import { TaskGrid } from '../components/TaskGrid'
+import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
 import { ROUTES } from '../routes'
-import { useTimerStore } from '../store/timer'
 
 function MyDayPage() {
 	const { t } = useTranslation()
 	const { data: myDayTasks } = useMyDayTasks()
 	const { data: allTasks } = useTasks()
-	const { data: activeTimer } = useActiveTimer()
-	const setActive = useTimerStore((s) => s.setActive)
-
-	useEffect(() => {
-		if (activeTimer) {
-			setActive(activeTimer.entry, activeTimer.task)
-		} else {
-			setActive(null, null)
-		}
-	}, [activeTimer, setActive])
+	useSyncActiveTimer()
 
 	const today = new Date().toISOString().split('T')[0]
 	const tasks = myDayTasks ?? []

@@ -1,21 +1,14 @@
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron'
+import type { Api } from '../shared/api'
+import { IPC } from '../shared/ipc'
 import type { UpdaterState } from '../shared/updater'
 
-contextBridge.exposeInMainWorld('api', {
-	getTasks: () => ipcRenderer.invoke('get-tasks'),
-	getTask: (id: number) => ipcRenderer.invoke('get-task', id),
-	addTask: (
-		name: string,
-		description: string,
-		description_md?: string,
-		description_html?: string,
-		statusId?: number,
-		projectId?: number,
-		myDay?: boolean | string | null,
-		reminderAt?: string | null,
-	) =>
+const api: Api = {
+	getTasks: () => ipcRenderer.invoke(IPC.GET_TASKS),
+	getTask: (id: number) => ipcRenderer.invoke(IPC.GET_TASK, id),
+	addTask: (name, description, description_md, description_html, statusId, projectId, myDay, reminderAt) =>
 		ipcRenderer.invoke(
-			'add-task',
+			IPC.ADD_TASK,
 			name,
 			description,
 			description_md,
@@ -25,20 +18,10 @@ contextBridge.exposeInMainWorld('api', {
 			myDay,
 			reminderAt,
 		),
-	deleteTask: (id: number) => ipcRenderer.invoke('delete-task', id),
-	updateTask: (
-		id: number,
-		name: string,
-		description: string,
-		description_md?: string,
-		description_html?: string,
-		statusId?: number,
-		projectId?: number,
-		myDay?: boolean | string | null,
-		reminderAt?: string | null,
-	) =>
+	deleteTask: (id: number) => ipcRenderer.invoke(IPC.DELETE_TASK, id),
+	updateTask: (id, name, description, description_md, description_html, statusId, projectId, myDay, reminderAt) =>
 		ipcRenderer.invoke(
-			'update-task',
+			IPC.UPDATE_TASK,
 			id,
 			name,
 			description,
@@ -49,52 +32,54 @@ contextBridge.exposeInMainWorld('api', {
 			myDay,
 			reminderAt,
 		),
-	getProjects: () => ipcRenderer.invoke('get-projects'),
-	getProject: (id: number) => ipcRenderer.invoke('get-project', id),
-	addProject: (name: string, description?: string, description_md?: string, description_html?: string) =>
-		ipcRenderer.invoke('add-project', name, description, description_md, description_html),
-	updateProject: (id: number, name: string, description?: string, description_md?: string, description_html?: string) =>
-		ipcRenderer.invoke('update-project', id, name, description, description_md, description_html),
-	getActiveTimer: () => ipcRenderer.invoke('get-active-timer'),
-	getLastTimer: () => ipcRenderer.invoke('get-last-timer'),
-	startTimer: (taskId: number) => ipcRenderer.invoke('start-timer', taskId),
-	stopTimer: (taskId: number) => ipcRenderer.invoke('stop-timer', taskId),
-	getAllTimeEntries: () => ipcRenderer.invoke('get-all-time-entries'),
-	getTimeSummary: () => ipcRenderer.invoke('get-time-summary'),
-	deleteTimeEntry: (id: number) => ipcRenderer.invoke('delete-time-entry', id),
-	showNotification: (title: string, body: string) => ipcRenderer.invoke('show-notification', title, body),
+	getProjects: () => ipcRenderer.invoke(IPC.GET_PROJECTS),
+	getProject: (id: number) => ipcRenderer.invoke(IPC.GET_PROJECT, id),
+	addProject: (name, description, description_md, description_html) =>
+		ipcRenderer.invoke(IPC.ADD_PROJECT, name, description, description_md, description_html),
+	updateProject: (id, name, description, description_md, description_html) =>
+		ipcRenderer.invoke(IPC.UPDATE_PROJECT, id, name, description, description_md, description_html),
+	getActiveTimer: () => ipcRenderer.invoke(IPC.GET_ACTIVE_TIMER),
+	getLastTimer: () => ipcRenderer.invoke(IPC.GET_LAST_TIMER),
+	startTimer: (taskId: number) => ipcRenderer.invoke(IPC.START_TIMER, taskId),
+	stopTimer: (taskId: number) => ipcRenderer.invoke(IPC.STOP_TIMER, taskId),
+	getAllTimeEntries: () => ipcRenderer.invoke(IPC.GET_ALL_TIME_ENTRIES),
+	getTimeSummary: () => ipcRenderer.invoke(IPC.GET_TIME_SUMMARY),
+	deleteTimeEntry: (id: number) => ipcRenderer.invoke(IPC.DELETE_TIME_ENTRY, id),
+	showNotification: (title, body) => ipcRenderer.invoke(IPC.SHOW_NOTIFICATION, title, body),
 	onNavigateToTask: (callback: (id: number) => void) => {
 		const listener = (_event: IpcRendererEvent, id: number) => callback(id)
-		ipcRenderer.on('navigate-to-task', listener)
-		return () => ipcRenderer.removeListener('navigate-to-task', listener)
+		ipcRenderer.on(IPC.NAVIGATE_TO_TASK, listener)
+		return () => ipcRenderer.removeListener(IPC.NAVIGATE_TO_TASK, listener)
 	},
-	toggleMyDayTask: (id: number) => ipcRenderer.invoke('toggle-my-day', id),
-	getMyDayTasks: () => ipcRenderer.invoke('get-my-day-tasks'),
-	clearMyDayDate: (id: number) => ipcRenderer.invoke('clear-my-day-date', id),
-	getStatuses: () => ipcRenderer.invoke('get-statuses'),
-	addStatus: (name: string, color: string) => ipcRenderer.invoke('add-status', name, color),
-	updateStatus: (id: number, name: string, color: string) => ipcRenderer.invoke('update-status', id, name, color),
-	deleteStatus: (id: number) => ipcRenderer.invoke('delete-status', id),
-	reorderStatuses: (ids: number[]) => ipcRenderer.invoke('reorder-statuses', ids),
-	setDefaultStatus: (id: number) => ipcRenderer.invoke('set-default-status', id),
-	moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke('move-task', taskId, statusId),
+	toggleMyDayTask: (id: number) => ipcRenderer.invoke(IPC.TOGGLE_MY_DAY, id),
+	getMyDayTasks: () => ipcRenderer.invoke(IPC.GET_MY_DAY_TASKS),
+	clearMyDayDate: (id: number) => ipcRenderer.invoke(IPC.CLEAR_MY_DAY, id),
+	getStatuses: () => ipcRenderer.invoke(IPC.GET_STATUSES),
+	addStatus: (name, color) => ipcRenderer.invoke(IPC.ADD_STATUS, name, color),
+	updateStatus: (id, name, color) => ipcRenderer.invoke(IPC.UPDATE_STATUS, id, name, color),
+	deleteStatus: (id: number) => ipcRenderer.invoke(IPC.DELETE_STATUS, id),
+	reorderStatuses: (ids: number[]) => ipcRenderer.invoke(IPC.REORDER_STATUSES, ids),
+	setDefaultStatus: (id: number) => ipcRenderer.invoke(IPC.SET_DEFAULT_STATUS, id),
+	moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke(IPC.MOVE_TASK, taskId, statusId),
 	reorderTasks: (columnId: number, orderedTaskIds: number[]) =>
-		ipcRenderer.invoke('reorder-tasks', columnId, orderedTaskIds),
+		ipcRenderer.invoke(IPC.REORDER_TASKS, columnId, orderedTaskIds),
 	updateTaskCanvasPosition: (id: number, x: number, y: number) =>
-		ipcRenderer.invoke('update-task-canvas-position', id, x, y),
-	getAutostart: () => ipcRenderer.invoke('get-autostart'),
-	setAutostart: (enabled: boolean) => ipcRenderer.invoke('set-autostart', enabled),
-	getAppImageDesktopEntryStatus: () => ipcRenderer.invoke('appimage:get-desktop-entry-status'),
-	setAppImageDesktopEntry: (enabled: boolean) => ipcRenderer.invoke('appimage:set-desktop-entry', enabled),
-	getMeta: (key: string) => ipcRenderer.invoke('get-meta', key),
-	setMeta: (key: string, value: string) => ipcRenderer.invoke('set-meta', key, value),
-	getUpdaterState: () => ipcRenderer.invoke('updater:get-state'),
-	checkForUpdates: () => ipcRenderer.invoke('updater:check'),
-	downloadUpdate: () => ipcRenderer.invoke('updater:download'),
-	installUpdate: () => ipcRenderer.invoke('updater:install'),
+		ipcRenderer.invoke(IPC.UPDATE_TASK_CANVAS_POSITION, id, x, y),
+	getAutostart: () => ipcRenderer.invoke(IPC.GET_AUTOSTART),
+	setAutostart: (enabled: boolean) => ipcRenderer.invoke(IPC.SET_AUTOSTART, enabled),
+	getAppImageDesktopEntryStatus: () => ipcRenderer.invoke(IPC.APPIMAGE_GET_DESKTOP_ENTRY_STATUS),
+	setAppImageDesktopEntry: (enabled: boolean) => ipcRenderer.invoke(IPC.APPIMAGE_SET_DESKTOP_ENTRY, enabled),
+	getMeta: (key: string) => ipcRenderer.invoke(IPC.GET_META, key),
+	setMeta: (key: string, value: string) => ipcRenderer.invoke(IPC.SET_META, key, value),
+	getUpdaterState: () => ipcRenderer.invoke(IPC.UPDATER_GET_STATE),
+	checkForUpdates: () => ipcRenderer.invoke(IPC.UPDATER_CHECK),
+	downloadUpdate: () => ipcRenderer.invoke(IPC.UPDATER_DOWNLOAD),
+	installUpdate: () => ipcRenderer.invoke(IPC.UPDATER_INSTALL),
 	onUpdaterStatus: (callback: (state: UpdaterState) => void) => {
 		const listener = (_event: IpcRendererEvent, state: UpdaterState) => callback(state)
-		ipcRenderer.on('updater:status', listener)
-		return () => ipcRenderer.removeListener('updater:status', listener)
+		ipcRenderer.on(IPC.UPDATER_STATUS, listener)
+		return () => ipcRenderer.removeListener(IPC.UPDATER_STATUS, listener)
 	},
-})
+}
+
+contextBridge.exposeInMainWorld('api', api)
