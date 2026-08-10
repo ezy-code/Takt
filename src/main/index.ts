@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, Notification, nativeImage, nativeTheme, Tray } from 'electron'
 import { join } from 'path'
 import { APP_NAME, AUTOSTART_ARG } from '../shared/constants'
+import { formatDuration } from '../shared/formatDuration'
 import { initAutostart } from './autostart'
 import type { TimerChangeInfo } from './database'
 import { initDatabase } from './database'
@@ -81,15 +82,6 @@ function getTrayIcon(): string {
 	const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
 	const suffix = isTimerActive ? '-active' : ''
 	return getResourcePath(`icon-${theme}${suffix}.png`)
-}
-
-function formatDuration(seconds: number): string {
-	if (seconds <= 0) return '0:00'
-	const h = Math.floor(seconds / 3600)
-	const m = Math.floor((seconds % 3600) / 60)
-	const s = seconds % 60
-	if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-	return `${m}:${String(s).padStart(2, '0')}`
 }
 
 function startTrayTimerUpdate() {
