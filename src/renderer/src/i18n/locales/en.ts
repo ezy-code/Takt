@@ -95,6 +95,8 @@ export const en = {
 		stop: 'Stop',
 		duration: 'Duration',
 		inProgress: 'In progress',
+		deleteTitle: 'Delete time entry?',
+		deleteBody: 'This will permanently delete the time entry.',
 	},
 	settings: {
 		title: 'Settings',

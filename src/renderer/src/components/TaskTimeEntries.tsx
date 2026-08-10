@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useDeleteTimeEntry } from '../api'
 import { formatDuration } from '../hooks/useTimer'
 import type { TimeEntryWithTask } from '../types'
+import { useConfirmDelete } from './ConfirmDeleteModal'
 import { TimerControl } from './TimerControl'
 
 interface TaskTimeEntriesProps {
@@ -18,6 +19,7 @@ interface TaskTimeEntriesProps {
 export function TaskTimeEntries({ taskName, entries, expanded, onToggle, defaultOpen = false }: TaskTimeEntriesProps) {
 	const { t } = useTranslation()
 	const deleteTimeEntry = useDeleteTimeEntry()
+	const [confirmDeleteModal, confirmDelete] = useConfirmDelete()
 	const [internalOpen, setInternalOpen] = useState(defaultOpen)
 
 	const isControlled = expanded !== undefined
@@ -72,10 +74,16 @@ export function TaskTimeEntries({ taskName, entries, expanded, onToggle, default
 										taskId={entry.taskId}
 										duration={entry.duration}
 										startTime={entry.stopTime ? null : entry.startTime}
+										isActiveEntry={entry.stopTime === null}
 									/>
 								</Table.Td>
 								<Table.Td>
-									<Button variant='light' color='red' size='xs' onClick={() => deleteTimeEntry.mutate(entry.id)}>
+									<Button
+										variant='light'
+										color='red'
+										size='xs'
+										onClick={() => confirmDelete(() => deleteTimeEntry.mutate(entry.id))}
+									>
 										{t('common.delete')}
 									</Button>
 								</Table.Td>
@@ -84,6 +92,7 @@ export function TaskTimeEntries({ taskName, entries, expanded, onToggle, default
 					</Table.Tbody>
 				</Table>
 			</Collapse>
+			{confirmDeleteModal}
 		</Card>
 	)
 }

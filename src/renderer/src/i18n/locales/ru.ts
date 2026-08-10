@@ -97,6 +97,8 @@ export const ru: typeof en = {
 		stop: 'Конец',
 		duration: 'Длительность',
 		inProgress: 'Идёт',
+		deleteTitle: 'Удалить запись времени?',
+		deleteBody: 'Запись времени будет удалена безвозвратно.',
 	},
 	settings: {
 		title: 'Настройки',

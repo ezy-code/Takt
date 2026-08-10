@@ -16,6 +16,7 @@ import {
 	useUpdateStatus,
 } from '../api'
 import type { Status } from '../types'
+import { useConfirmDelete } from './ConfirmDeleteModal'
 
 interface SortableStatusItemProps {
 	status: Status
@@ -100,6 +101,7 @@ export function ManageStatusesModal() {
 	const deleteStatus = useDeleteStatus()
 	const reorderStatuses = useReorderStatuses()
 	const setDefaultStatus = useSetDefaultStatus()
+	const [confirmDeleteModal, confirmDelete] = useConfirmDelete()
 
 	const [newName, setNewName] = useState('')
 	const [newColor, setNewColor] = useState('#868e96')
@@ -168,7 +170,7 @@ export function ManageStatusesModal() {
 											key={status.id}
 											status={status}
 											onUpdate={(id, name, color) => updateStatus.mutate({ id, name, color })}
-											onDelete={(id) => deleteStatus.mutate(id)}
+											onDelete={(id) => confirmDelete(() => deleteStatus.mutate(id))}
 											onSetDefault={(id) => setDefaultStatus.mutate(id)}
 										/>
 									))}
@@ -178,6 +180,7 @@ export function ManageStatusesModal() {
 					)}
 				</Stack>
 			</Modal>
+			{confirmDeleteModal}
 		</>
 	)
 }

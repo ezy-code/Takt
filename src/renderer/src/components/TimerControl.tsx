@@ -9,15 +9,16 @@ interface TimerControlProps {
 	taskId?: number | null
 	duration?: number | null
 	startTime?: string | null
+	isActiveEntry?: boolean
 }
 
-export function TimerControl({ taskId, duration, startTime }: TimerControlProps) {
+export function TimerControl({ taskId, duration, startTime, isActiveEntry }: TimerControlProps) {
 	const { activeEntry } = useTimerStore()
 	const stopTimer = useStopTimer()
 	const { start, switchingId } = useTimerActions()
 
-	const isActive = taskId != null && activeEntry?.taskId === taskId
-	const tickingStart = isActive ? activeEntry!.startTime : (startTime ?? null)
+	const isActive = taskId != null && (isActiveEntry ?? activeEntry?.taskId === taskId)
+	const tickingStart = (isActive ? (activeEntry?.startTime ?? startTime) : startTime) ?? null
 	const { elapsed } = useTimer(tickingStart)
 	const shown = formatDuration((duration ?? 0) + elapsed)
 

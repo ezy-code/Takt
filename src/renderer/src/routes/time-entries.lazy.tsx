@@ -2,7 +2,7 @@ import { Button, Card, Container, SimpleGrid, Table, Text, Title } from '@mantin
 import { createLazyRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useDeleteTimeEntry, useTimeEntries, useTimeSummary } from '../api'
-import { TimerControl } from '../components/TimerControl'
+import { useConfirmDelete } from '../components/ConfirmDeleteModal'
 import { formatDuration } from '../hooks/useTimer'
 import { ROUTES } from '../routes'
 
@@ -11,8 +11,10 @@ function TimeEntriesPage() {
 	const { data: entries = [] } = useTimeEntries()
 	const { data: summary } = useTimeSummary()
 	const deleteTimeEntry = useDeleteTimeEntry()
-
-	const handleDelete = (id: number) => deleteTimeEntry.mutate(id)
+	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
+		title: t('timeEntries.deleteTitle'),
+		message: t('timeEntries.deleteBody'),
+	})
 
 	return (
 		<Container fluid py='xl'>
@@ -75,14 +77,19 @@ function TimeEntriesPage() {
 									)}
 								</Table.Td>
 								<Table.Td>
-									<TimerControl
-										taskId={entry.taskId}
-										duration={entry.duration}
-										startTime={entry.stopTime ? null : entry.startTime}
-									/>
+									{entry.stopTime === null ? (
+										<Text c='green'>{t('timeEntries.inProgress')}</Text>
+									) : (
+										formatDuration(entry.duration ?? 0)
+									)}
 								</Table.Td>
 								<Table.Td>
-									<Button variant='light' color='red' size='xs' onClick={() => handleDelete(entry.id)}>
+									<Button
+										variant='light'
+										color='red'
+										size='xs'
+										onClick={() => confirmDelete(() => deleteTimeEntry.mutate(entry.id))}
+									>
 										{t('common.delete')}
 									</Button>
 								</Table.Td>
@@ -91,6 +98,7 @@ function TimeEntriesPage() {
 					</Table.Tbody>
 				</Table>
 			)}
+			{confirmDeleteModal}
 		</Container>
 	)
 }

@@ -21,6 +21,7 @@ import {
 import { ROUTES } from '../routes'
 import { lastTasksTab } from '../store/lastTasksTab'
 import type { Task } from '../types'
+import { useConfirmDelete } from './ConfirmDeleteModal'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
@@ -84,7 +85,10 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 	const [addToMyDay, setAddToMyDay] = useState(false)
 	const [reminderAt, setReminderAt] = useState<string | null>(null)
 	const [showTimeEntries, setShowTimeEntries] = useState(false)
-	const [confirmDelete, setConfirmDelete] = useState(false)
+	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
+		title: t('tasks.deleteTitle'),
+		message: t('tasks.deleteBody'),
+	})
 	const compact = useMediaQuery('(max-width: 900px)')
 	const initialRef = useRef<TaskSnapshot | null>(null)
 	const savedRef = useRef(false)
@@ -279,7 +283,13 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 											variant='light'
 											color='red'
 											leftSection={<IconTrash size={16} />}
-											onClick={() => setConfirmDelete(true)}
+											onClick={() =>
+												confirmDelete(() =>
+													deleteTask.mutate(task!.id, {
+														onSuccess: () => navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } }),
+													}),
+												)
+											}
 										>
 											{t('common.delete')}
 										</Button>
@@ -463,27 +473,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 				</Modal>
 			)}
 
-			{confirmDelete && task && (
-				<Modal opened={confirmDelete} onClose={() => setConfirmDelete(false)} title={t('tasks.deleteTitle')} centered>
-					<Text>{t('tasks.deleteBody')}</Text>
-					<Group justify='flex-end' mt='lg'>
-						<Button variant='default' onClick={() => setConfirmDelete(false)}>
-							{t('common.cancel')}
-						</Button>
-						<Button
-							color='red'
-							onClick={() => {
-								setConfirmDelete(false)
-								deleteTask.mutate(task.id, {
-									onSuccess: () => navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } }),
-								})
-							}}
-						>
-							{t('common.delete')}
-						</Button>
-					</Group>
-				</Modal>
-			)}
+			{confirmDeleteModal}
 
 			{showTimeEntries && task && <TaskTimeEntriesModal task={task} onClose={() => setShowTimeEntries(false)} />}
 		</Container>

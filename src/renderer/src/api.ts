@@ -196,6 +196,8 @@ export function useStartTimer() {
 				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 				queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+				queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+				queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 			}
 		},
 	})
