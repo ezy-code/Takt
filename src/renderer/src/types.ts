@@ -101,6 +101,7 @@ export interface Api {
 		description_html?: string,
 	) => Promise<Project>
 	getActiveTimer: () => Promise<ActiveTimerInfo | null>
+	getLastTimer: () => Promise<ActiveTimerInfo | null>
 	startTimer: (taskId: number) => Promise<StartTimerResult>
 	stopTimer: (taskId: number) => Promise<TimeEntry | null>
 	getAllTimeEntries: () => Promise<TimeEntryWithTask[]>

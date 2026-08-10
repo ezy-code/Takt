@@ -20,6 +20,7 @@ export const en = {
 		description: 'Description',
 		view: 'View',
 		later: 'Later',
+		discard: 'Discard',
 	},
 	tasks: {
 		title: 'Tasks',
@@ -42,6 +43,8 @@ export const en = {
 		reminder: 'Reminder',
 		selectReminder: 'Pick reminder date and time',
 		actions: 'Task actions',
+		unsavedTitle: 'Unsaved changes',
+		unsavedBody: 'You have unsaved changes. Do you want to save, discard, or continue editing?',
 	},
 	statuses: {
 		manage: 'Manage Statuses',
@@ -59,19 +62,11 @@ export const en = {
 	},
 	myDay: {
 		title: 'My Day',
-		add: 'Add to My Day',
-		remove: 'Remove from My Day',
 		overdue: 'Overdue',
 		today: 'Today',
-		open: 'Open My Day',
-		moveToToday: 'Move to today',
 		nothingAdded: 'Nothing added yet.',
 		otherTasks: 'Other Tasks',
 		noOtherTasks: 'No other tasks.',
-	},
-	timer: {
-		alreadyRunning: 'Timer already running',
-		stopAndStartNew: 'Stop & Start New',
 	},
 	projects: {
 		title: 'Projects',

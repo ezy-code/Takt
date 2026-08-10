@@ -56,6 +56,7 @@ contextBridge.exposeInMainWorld('api', {
 	updateProject: (id: number, name: string, description?: string, description_md?: string, description_html?: string) =>
 		ipcRenderer.invoke('update-project', id, name, description, description_md, description_html),
 	getActiveTimer: () => ipcRenderer.invoke('get-active-timer'),
+	getLastTimer: () => ipcRenderer.invoke('get-last-timer'),
 	startTimer: (taskId: number) => ipcRenderer.invoke('start-timer', taskId),
 	stopTimer: (taskId: number) => ipcRenderer.invoke('stop-timer', taskId),
 	getAllTimeEntries: () => ipcRenderer.invoke('get-all-time-entries'),

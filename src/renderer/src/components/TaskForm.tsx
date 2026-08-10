@@ -184,7 +184,7 @@ export function TaskForm({ id }: TaskFormProps) {
 						disabled={!projects?.length}
 					/>
 
-					<MyDayControl variant='button' inMyDay={addToMyDay} onToggle={() => setAddToMyDay((v) => !v)} />
+					<MyDayControl inMyDay={addToMyDay} onToggle={() => setAddToMyDay((v) => !v)} />
 
 					<DateTimePicker
 						label={t('tasks.reminder')}

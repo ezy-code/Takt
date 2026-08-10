@@ -314,12 +314,8 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return { success: true }
 	})
 
-	ipcMain.handle('get-active-timer', () => {
-		const entry = db.select().from(timeEntries).where(sql`${timeEntries.stopTime} is null`).limit(1).all()[0]
-
-		if (!entry) return null
-
-		const task = db
+	function selectTimerTask(taskId: number) {
+		return db
 			.select({
 				id: tasks.id,
 				name: tasks.name,
@@ -334,9 +330,28 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			})
 			.from(tasks)
 			.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
-			.where(eq(tasks.id, entry.taskId))
+			.where(eq(tasks.id, taskId))
 			.groupBy(tasks.id)
 			.get()
+	}
+
+	ipcMain.handle('get-active-timer', () => {
+		const entry = db.select().from(timeEntries).where(sql`${timeEntries.stopTime} is null`).limit(1).all()[0]
+
+		if (!entry) return null
+
+		const task = selectTimerTask(entry.taskId)
+
+		return { entry, task }
+	})
+
+	ipcMain.handle('get-last-timer', () => {
+		const entry = db.select().from(timeEntries).orderBy(desc(timeEntries.startTime)).limit(1).all()[0]
+
+		if (!entry) return null
+
+		const task = selectTimerTask(entry.taskId)
+		if (!task) return null
 
 		return { entry, task }
 	})

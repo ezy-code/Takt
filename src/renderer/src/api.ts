@@ -6,6 +6,7 @@ const queryKeys = {
 	tasks: ['tasks'] as const,
 	myDayTasks: ['tasks', 'my-day'] as const,
 	activeTimer: ['active-timer'] as const,
+	lastTimer: ['last-timer'] as const,
 	timeEntries: ['time-entries'] as const,
 	timeSummary: ['time-summary'] as const,
 	statuses: ['statuses'] as const,
@@ -38,6 +39,13 @@ export function useActiveTimer() {
 	return useQuery({
 		queryKey: queryKeys.activeTimer,
 		queryFn: () => window.api.getActiveTimer(),
+	})
+}
+
+export function useLastTimer() {
+	return useQuery({
+		queryKey: queryKeys.lastTimer,
+		queryFn: () => window.api.getLastTimer(),
 	})
 }
 
@@ -135,6 +143,7 @@ export function useDeleteTask() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 		},
 	})
 }
@@ -170,6 +179,7 @@ export function useDeleteTimeEntry() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 		},
 	})
 }
@@ -183,6 +193,7 @@ export function useStartTimer() {
 			if (!result.conflict) {
 				setActive(result.entry, null)
 				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
+				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 				queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			}
@@ -209,6 +220,7 @@ export function useStopTimer() {
 			}
 			queryClient.invalidateQueries({ queryKey: ['tasks', taskId] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
+			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},

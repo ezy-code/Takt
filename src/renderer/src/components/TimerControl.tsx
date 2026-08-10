@@ -1,124 +1,57 @@
-import { ActionIcon, Box, Button, Group, Modal, Stack, Text } from '@mantine/core'
+import { Chip } from '@mantine/core'
 import { IconPlayerPlayFilled, IconPlayerStopFilled } from '@tabler/icons-react'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useStartTimer, useStopTimer } from '../api'
+import { useStopTimer } from '../api'
 import { formatDuration, useTimer } from '../hooks/useTimer'
+import { useTimerActions } from '../hooks/useTimerActions'
 import { useTimerStore } from '../store/timer'
-import type { Task } from '../types'
-import { TaskCard } from './TaskCard'
 
 interface TimerControlProps {
-	taskId?: number
+	taskId?: number | null
 	duration?: number | null
 	startTime?: string | null
 }
 
-function TimerDot() {
-	return (
-		<Box
-			style={{
-				width: 4,
-				height: 4,
-				borderRadius: '50%',
-				backgroundColor: 'var(--mantine-color-green-6)',
-				flexShrink: 0,
-			}}
-		/>
-	)
-}
-
-export function TimerControl({ taskId, duration, startTime: propStartTime }: TimerControlProps) {
-	const { activeEntry, activeTask } = useTimerStore()
-	const startTimer = useStartTimer()
+export function TimerControl({ taskId, duration, startTime }: TimerControlProps) {
+	const { activeEntry } = useTimerStore()
 	const stopTimer = useStopTimer()
-	const [conflict, setConflict] = useState(false)
+	const { start, switchingId } = useTimerActions()
 
-	const isActive = taskId ? activeEntry?.taskId === taskId : false
-	const liveStartTime = isActive ? activeEntry!.startTime : (propStartTime ?? null)
-	const { display, elapsed } = useTimer(liveStartTime)
+	const isActive = taskId != null && activeEntry?.taskId === taskId
+	const tickingStart = isActive ? activeEntry!.startTime : (startTime ?? null)
+	const { elapsed } = useTimer(tickingStart)
+	const shown = formatDuration((duration ?? 0) + elapsed)
 
-	if (!taskId) {
-		return (
-			<Group gap={6} wrap='nowrap' align='center'>
-				{propStartTime && <TimerDot />}
-				<Text size='sm' fw={700} c={propStartTime ? 'green' : 'blue'} style={{ fontVariantNumeric: 'tabular-nums' }}>
-					{propStartTime ? display : formatDuration(duration ?? 0)}
-				</Text>
-			</Group>
-		)
-	}
-
-	if (isActive) {
-		return (
-			<Group gap={6} wrap='nowrap'>
-				<TimerDot />
-				<Text size='sm' fw={700} c='green' style={{ fontVariantNumeric: 'tabular-nums' }}>
-					{formatDuration((duration ?? 0) + elapsed)}
-				</Text>
-				<ActionIcon color='red' variant='filled' size='sm' onClick={() => stopTimer.mutate(taskId)}>
-					<IconPlayerStopFilled size={14} />
-				</ActionIcon>
-			</Group>
-		)
-	}
-
-	const handleStart = async () => {
-		if (activeEntry) {
-			setConflict(true)
-			return
-		}
-		await startTimer.mutateAsync(taskId)
-	}
-
-	const handleStopAndStart = async () => {
-		if (!activeEntry) return
-		await stopTimer.mutateAsync(activeEntry.taskId)
-		await startTimer.mutateAsync(taskId)
-		setConflict(false)
+	const toggle = () => {
+		if (taskId == null) return
+		if (isActive) stopTimer.mutate(taskId)
+		else start(taskId)
 	}
 
 	return (
-		<>
-			<Group gap={6} wrap='nowrap'>
-				<Text size='sm' c='blue' style={{ fontVariantNumeric: 'tabular-nums' }}>
-					{formatDuration(duration ?? 0)}
-				</Text>
-				<ActionIcon color='green' variant='filled' size='sm' onClick={handleStart}>
-					<IconPlayerPlayFilled size={14} />
-				</ActionIcon>
-			</Group>
-
-			{conflict && activeEntry && (
-				<ConflictModal activeTask={activeTask} onClose={() => setConflict(false)} onStopAndStart={handleStopAndStart} />
-			)}
-		</>
-	)
-}
-
-interface ConflictModalProps {
-	activeTask: Task | null
-	onClose: () => void
-	onStopAndStart: () => Promise<void>
-}
-
-function ConflictModal({ activeTask, onClose, onStopAndStart }: ConflictModalProps) {
-	const { t } = useTranslation()
-	if (!activeTask) return null
-
-	return (
-		<Modal opened onClose={onClose} title={t('timer.alreadyRunning')} size='md'>
-			<Stack>
-				<TaskCard task={activeTask} />
-				<Group justify='flex-end' mt='md'>
-					<Button variant='default' onClick={onClose}>
-						{t('common.cancel')}
-					</Button>
-					<Button color='red' onClick={onStopAndStart}>
-						{t('timer.stopAndStartNew')}
-					</Button>
-				</Group>
-			</Stack>
-		</Modal>
+		<Chip
+			size='xs'
+			variant='filled'
+			color='green'
+			checked={isActive}
+			onChange={toggle}
+			disabled={!taskId || switchingId === taskId}
+			icon={false}
+			styles={{
+				label: {
+					fontVariantNumeric: 'tabular-nums',
+					paddingInline: 'var(--chip-checked-padding)',
+				},
+			}}
+		>
+			<span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}>
+				{taskId != null &&
+					(isActive ? (
+						<IconPlayerStopFilled size={12} style={{ marginRight: 3 }} />
+					) : (
+						<IconPlayerPlayFilled size={12} style={{ marginRight: 3 }} />
+					))}
+				{shown}
+			</span>
+		</Chip>
 	)
 }

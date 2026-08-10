@@ -75,7 +75,11 @@ function TimeEntriesPage() {
 									)}
 								</Table.Td>
 								<Table.Td>
-									<TimerControl startTime={entry.stopTime ? null : entry.startTime} duration={entry.duration} />
+									<TimerControl
+										taskId={entry.taskId}
+										duration={entry.duration}
+										startTime={entry.stopTime ? null : entry.startTime}
+									/>
 								</Table.Td>
 								<Table.Td>
 									<Button variant='light' color='red' size='xs' onClick={() => handleDelete(entry.id)}>

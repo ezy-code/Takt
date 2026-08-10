@@ -1,10 +1,10 @@
-import { ActionIcon, Alert, AppShell, Box, Button, Group, NavLink, Text, Title } from '@mantine/core'
+import { ActionIcon, Alert, Anchor, AppShell, Box, Button, Group, NavLink, Text, Title } from '@mantine/core'
 import { IconCalendarCheck, IconClock, IconFolder, IconList, IconPlus, IconSettings } from '@tabler/icons-react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
-import { useActiveTimer } from '../api'
+import { useActiveTimer, useLastTimer } from '../api'
 import { ROUTES } from '../routes'
 import { useTimerStore } from '../store/timer'
 import { TimerControl } from './TimerControl'
@@ -22,8 +22,9 @@ export default function AppLayout() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { t } = useTranslation()
-	const { activeEntry, activeTask, setActive } = useTimerStore()
+	const { setActive } = useTimerStore()
 	const { data: activeTimer } = useActiveTimer()
+	const { data: lastTimer } = useLastTimer()
 	const [appImageDesktop, setAppImageDesktop] = useState<{ supported: boolean; enabled: boolean | null } | null>(null)
 
 	useEffect(() => {
@@ -53,27 +54,33 @@ export default function AppLayout() {
 		})
 	}, [navigate])
 
+	const timer = activeTimer ?? lastTimer
+
 	return (
 		<AppShell padding='md' header={{ height: 56 }} navbar={{ width: 220, breakpoint: 0 }}>
 			<AppShell.Header p='md'>
-				<Group h='100%' gap='md'>
-					<Title order={3}>{APP_NAME}</Title>
-					{activeEntry && activeTask && (
-						<>
-							<Box
-								style={{
-									width: 4,
-									height: 4,
-									borderRadius: '50%',
-									backgroundColor: 'var(--mantine-color-green-6)',
-									flexShrink: 0,
-								}}
+				<Group h='100%' justify='space-between'>
+					<Anchor component='button' underline='never' onClick={() => navigate({ to: ROUTES.MY_DAY })}>
+						<Title order={3}>{APP_NAME}</Title>
+					</Anchor>
+					{timer && (
+						<Group gap='sm' wrap='nowrap'>
+							<Anchor
+								component='button'
+								underline='never'
+								c='var(--mantine-color-text)'
+								onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(timer.task.id) } })}
+							>
+								<Text size='sm' fw={500}>
+									{timer.task.name}
+								</Text>
+							</Anchor>
+							<TimerControl
+								taskId={timer.entry.taskId}
+								duration={activeTimer ? timer.task.total_duration : timer.entry.duration}
+								startTime={activeTimer ? timer.entry.startTime : null}
 							/>
-							<Text size='sm' fw={500} c='green'>
-								{activeTask.name}
-							</Text>
-							<TimerControl taskId={activeEntry.taskId} duration={activeTask.total_duration} />
-						</>
+						</Group>
 					)}
 				</Group>
 			</AppShell.Header>
@@ -85,7 +92,7 @@ export default function AppLayout() {
 							key={item.path}
 							label={t(item.labelKey)}
 							leftSection={item.icon && <item.icon size={16} />}
-							active={location.pathname === item.path}
+							active={location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)}
 							onClick={() => navigate({ to: item.path })}
 							rightSection={
 								item.path === ROUTES.TASKS ? (

@@ -22,6 +22,7 @@ export const ru: typeof en = {
 		description: 'Описание',
 		view: 'Просмотр',
 		later: 'Позже',
+		discard: 'Отменить изменения',
 	},
 	tasks: {
 		title: 'Задачи',
@@ -44,6 +45,8 @@ export const ru: typeof en = {
 		reminder: 'Напоминание',
 		selectReminder: 'Выберите дату и время напоминания',
 		actions: 'Действия с задачей',
+		unsavedTitle: 'Несохранённые изменения',
+		unsavedBody: 'У вас есть несохранённые изменения. Сохранить, отменить или продолжить редактирование?',
 	},
 	statuses: {
 		manage: 'Управление статусами',
@@ -61,19 +64,11 @@ export const ru: typeof en = {
 	},
 	myDay: {
 		title: 'Мой день',
-		add: 'Добавить в «Мой день»',
-		remove: 'Убрать из «Моего дня»',
 		overdue: 'Просрочено',
 		today: 'Сегодня',
-		open: 'Открыть «Мой день»',
-		moveToToday: 'Перенести на сегодня',
 		nothingAdded: 'Пока ничего не добавлено.',
 		otherTasks: 'Другие задачи',
 		noOtherTasks: 'Других задач нет.',
-	},
-	timer: {
-		alreadyRunning: 'Таймер уже запущен',
-		stopAndStartNew: 'Остановить и запустить новую',
 	},
 	projects: {
 		title: 'Проекты',

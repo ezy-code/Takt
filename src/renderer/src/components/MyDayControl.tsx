@@ -1,31 +1,37 @@
-import { Button, Menu } from '@mantine/core'
+import { Group, Menu, Text } from '@mantine/core'
 import { IconSun } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 
 interface MyDayControlProps {
 	inMyDay: boolean
 	onToggle: () => void
-	variant: 'menu-item' | 'button'
+	variant?: 'menu-item' | 'button'
+	fullWidth?: boolean
 }
 
-export function MyDayControl({ inMyDay, onToggle, variant }: MyDayControlProps) {
+export function MyDayControl({ inMyDay, onToggle, variant = 'button', fullWidth }: MyDayControlProps) {
 	const { t } = useTranslation()
-	const label = inMyDay ? t('myDay.remove') : t('myDay.add')
+	const color = inMyDay ? 'blue' : 'dimmed'
 	if (variant === 'menu-item') {
 		return (
-			<Menu.Item leftSection={<IconSun size={14} />} onClick={onToggle} color={inMyDay ? 'red' : undefined}>
-				{label}
+			<Menu.Item leftSection={<IconSun size={14} />} color={color} onClick={onToggle}>
+				{t('myDay.title')}
 			</Menu.Item>
 		)
 	}
 	return (
-		<Button
-			variant={inMyDay ? 'light' : 'filled'}
-			color={inMyDay ? 'red' : undefined}
-			leftSection={<IconSun size={16} />}
+		<Group
+			gap={5}
+			align='center'
+			px={6}
+			py={2}
+			w={fullWidth ? '100%' : undefined}
+			c={color}
 			onClick={onToggle}
+			style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)', cursor: 'pointer' }}
 		>
-			{label}
-		</Button>
+			<IconSun size={14} />
+			<Text size='xs'>{t('myDay.title')}</Text>
+		</Group>
 	)
 }
