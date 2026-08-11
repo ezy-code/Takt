@@ -9,6 +9,8 @@ export interface Status {
 	created_at: string
 }
 
+export type RateSource = 'task' | 'project' | 'default'
+
 export interface Project {
 	id: number
 	name: string
@@ -16,6 +18,7 @@ export interface Project {
 	description_md: string
 	description_html: string
 	created_at: string
+	hourly_rate?: number | null
 }
 
 export interface Task {
@@ -33,6 +36,10 @@ export interface Task {
 	total_duration?: number
 	canvasX?: number | null
 	canvasY?: number | null
+	hourly_rate?: number | null
+	rate?: number | null
+	rateSource?: RateSource
+	cost?: number
 }
 
 export interface TimeEntry {
@@ -45,12 +52,19 @@ export interface TimeEntry {
 
 export interface TimeEntryWithTask extends TimeEntry {
 	taskName: string
+	projectId?: number | null
+	projectName?: string | null
+	rate?: number | null
+	rateSource?: RateSource
+	cost?: number
 }
 
 export interface TimeSummary {
 	totalSessions: number
 	totalDuration: number
 	todayDuration: number
+	totalCost: number
+	todayCost: number
 }
 
 export interface ActiveTimerInfo {
@@ -59,8 +73,17 @@ export interface ActiveTimerInfo {
 }
 
 export type StartTimerResult =
-	| { conflict: false; entry: TimeEntry }
+	| { conflict: false; entry: TimeEntry; task: Task }
 	| { conflict: true; activeEntry: TimeEntry; activeTask: Task }
+
+export type StopTimerResult = { entry: TimeEntry; task: Task } | null
+
+export interface TaskLink {
+	id: number
+	sourceTaskId: number
+	targetTaskId: number
+	created_at?: string | null
+}
 
 export interface Api {
 	getTasks: () => Promise<Task[]>
@@ -74,6 +97,7 @@ export interface Api {
 		projectId?: number,
 		myDay?: boolean | string | null,
 		reminderAt?: string | null,
+		hourlyRate?: number | null,
 	) => Promise<Task>
 	deleteTask: (id: number) => Promise<{ success: boolean }>
 	updateTask: (
@@ -86,6 +110,7 @@ export interface Api {
 		projectId?: number,
 		myDay?: boolean | string | null,
 		reminderAt?: string | null,
+		hourlyRate?: number | null,
 	) => Promise<Task>
 	getProjects: () => Promise<Project[]>
 	getProject: (id: number) => Promise<Project | null>
@@ -94,6 +119,7 @@ export interface Api {
 		description?: string,
 		description_md?: string,
 		description_html?: string,
+		hourlyRate?: number | null,
 	) => Promise<Project>
 	updateProject: (
 		id: number,
@@ -101,11 +127,12 @@ export interface Api {
 		description?: string,
 		description_md?: string,
 		description_html?: string,
+		hourlyRate?: number | null,
 	) => Promise<Project>
 	getActiveTimer: () => Promise<ActiveTimerInfo | null>
 	getLastTimer: () => Promise<ActiveTimerInfo | null>
 	startTimer: (taskId: number) => Promise<StartTimerResult>
-	stopTimer: (taskId: number) => Promise<TimeEntry | null>
+	stopTimer: (taskId: number) => Promise<StopTimerResult>
 	getAllTimeEntries: () => Promise<TimeEntryWithTask[]>
 	getTimeSummary: () => Promise<TimeSummary>
 	deleteTimeEntry: (id: number) => Promise<{ success: boolean }>
@@ -123,6 +150,9 @@ export interface Api {
 	moveTask: (taskId: number, statusId: number) => Promise<Task>
 	reorderTasks: (columnId: number, orderedTaskIds: number[]) => Promise<{ success: boolean }>
 	updateTaskCanvasPosition: (id: number, x: number, y: number) => Promise<Task>
+	getTaskLinks: () => Promise<TaskLink[]>
+	addTaskLink: (sourceTaskId: number, targetTaskId: number) => Promise<TaskLink>
+	deleteTaskLink: (id: number) => Promise<{ success: boolean }>
 	getAutostart: () => Promise<boolean>
 	setAutostart: (enabled: boolean) => Promise<void>
 	getAppImageDesktopEntryStatus: () => Promise<{ supported: boolean; enabled: boolean | null }>

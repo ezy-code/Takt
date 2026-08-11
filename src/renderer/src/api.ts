@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
+import { costOf } from '../../shared/cost'
 import { useTimerStore } from './store/timer'
-import type { StartTimerResult, Task, TimeEntry } from './types'
+import type { StartTimerResult, Task } from './types'
 
 const queryKeys = {
 	tasks: ['tasks'] as const,
 	myDayTasks: ['tasks', 'my-day'] as const,
+	taskLinks: ['task-links'] as const,
 	activeTimer: ['active-timer'] as const,
 	lastTimer: ['last-timer'] as const,
 	timeEntries: ['time-entries'] as const,
@@ -75,6 +78,7 @@ export function useAddTask() {
 			projectId,
 			myDay,
 			reminderAt,
+			hourlyRate,
 		}: {
 			name: string
 			description: string
@@ -84,11 +88,24 @@ export function useAddTask() {
 			projectId?: number
 			myDay?: boolean
 			reminderAt?: string | null
+			hourlyRate?: number | null
 		}) =>
-			window.api.addTask(name, description, description_md, description_html, statusId, projectId, myDay, reminderAt),
+			window.api.addTask(
+				name,
+				description,
+				description_md,
+				description_html,
+				statusId,
+				projectId,
+				myDay,
+				reminderAt,
+				hourlyRate,
+			),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
 	})
 }
@@ -106,6 +123,7 @@ export function useUpdateTask() {
 			projectId,
 			myDay,
 			reminderAt,
+			hourlyRate,
 		}: {
 			id: number
 			name: string
@@ -116,6 +134,7 @@ export function useUpdateTask() {
 			projectId?: number
 			myDay?: boolean
 			reminderAt?: string | null
+			hourlyRate?: number | null
 		}) =>
 			window.api.updateTask(
 				id,
@@ -127,11 +146,14 @@ export function useUpdateTask() {
 				projectId,
 				myDay,
 				reminderAt,
+				hourlyRate,
 			),
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
 	})
 }
@@ -144,6 +166,8 @@ export function useDeleteTask() {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
 	})
 }
@@ -191,7 +215,8 @@ export function useStartTimer() {
 		mutationFn: (taskId: number) => window.api.startTimer(taskId),
 		onSuccess: (result: StartTimerResult) => {
 			if (!result.conflict) {
-				setActive(result.entry, null)
+				setActive(result.entry, result.task)
+				queryClient.setQueryData(queryKeys.activeTimer, { entry: result.entry, task: result.task })
 				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
@@ -208,19 +233,26 @@ export function useStopTimer() {
 	const setActive = useTimerStore((s) => s.setActive)
 	return useMutation({
 		mutationFn: (taskId: number) => window.api.stopTimer(taskId),
-		onSuccess: (result: TimeEntry | null, taskId: number) => {
+		onSuccess: (result, taskId) => {
 			setActive(null, null)
-			if (result?.duration) {
-				const updater = (tasks: Task[] | undefined) => {
-					if (!tasks) return tasks
-					return tasks.map((t) =>
-						t.id === taskId ? { ...t, total_duration: (t.total_duration ?? 0) + (result.duration ?? 0) } : t,
-					)
+			if (result) {
+				const patchTask = (t: Task): Task => {
+					const total_duration = (t.total_duration ?? 0) + (result.entry.duration ?? 0)
+					return { ...t, total_duration, cost: costOf(total_duration, t.rate ?? 0) }
 				}
-				queryClient.setQueryData(queryKeys.tasks, updater)
-				queryClient.setQueryData(queryKeys.myDayTasks, updater)
+				const listUpdater = (tasks: Task[] | undefined) => {
+					if (!tasks) return tasks
+					return tasks.map((t) => (t.id === taskId ? patchTask(t) : t))
+				}
+				queryClient.setQueryData(queryKeys.tasks, listUpdater)
+				queryClient.setQueryData(queryKeys.myDayTasks, listUpdater)
+				queryClient.setQueryData(['tasks', taskId], (t: Task | undefined) => (t?.id === taskId ? patchTask(t) : t))
+				queryClient.setQueryData(queryKeys.activeTimer, null)
+				queryClient.setQueryData(queryKeys.lastTimer, result)
 			}
 			queryClient.invalidateQueries({ queryKey: ['tasks', taskId] })
+			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
@@ -326,6 +358,34 @@ export function useUpdateCanvasPosition() {
 	})
 }
 
+export function useTaskLinks() {
+	return useQuery({
+		queryKey: queryKeys.taskLinks,
+		queryFn: () => window.api.getTaskLinks(),
+	})
+}
+
+export function useAddTaskLink() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: ({ sourceTaskId, targetTaskId }: { sourceTaskId: number; targetTaskId: number }) =>
+			window.api.addTaskLink(sourceTaskId, targetTaskId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
+		},
+	})
+}
+
+export function useDeleteTaskLink() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (id: number) => window.api.deleteTaskLink(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
+		},
+	})
+}
+
 export function useProjects() {
 	return useQuery({
 		queryKey: queryKeys.projects,
@@ -341,6 +401,23 @@ export function useProject(id: number) {
 	})
 }
 
+export function useCurrency() {
+	return useQuery({
+		queryKey: ['meta', META_CURRENCY_KEY],
+		queryFn: async () => (await window.api.getMeta(META_CURRENCY_KEY)) ?? '$',
+	})
+}
+
+export function useDefaultRate() {
+	return useQuery({
+		queryKey: ['meta', META_DEFAULT_RATE_KEY],
+		queryFn: async () => {
+			const n = Number(await window.api.getMeta(META_DEFAULT_RATE_KEY))
+			return Number.isFinite(n) ? n : 0
+		},
+	})
+}
+
 export function useAddProject() {
 	const queryClient = useQueryClient()
 	return useMutation({
@@ -349,14 +426,18 @@ export function useAddProject() {
 			description,
 			description_md,
 			description_html,
+			hourlyRate,
 		}: {
 			name: string
 			description?: string
 			description_md?: string
 			description_html?: string
-		}) => window.api.addProject(name, description, description_md, description_html),
+			hourlyRate?: number | null
+		}) => window.api.addProject(name, description, description_md, description_html, hourlyRate),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.projects })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
 	})
 }
@@ -370,16 +451,20 @@ export function useUpdateProject() {
 			description,
 			description_md,
 			description_html,
+			hourlyRate,
 		}: {
 			id: number
 			name: string
 			description?: string
 			description_md?: string
 			description_html?: string
-		}) => window.api.updateProject(id, name, description, description_md, description_html),
+			hourlyRate?: number | null
+		}) => window.api.updateProject(id, name, description, description_md, description_html, hourlyRate),
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['projects', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.projects })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
 	})
 }

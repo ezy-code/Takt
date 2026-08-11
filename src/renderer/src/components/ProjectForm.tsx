@@ -1,8 +1,18 @@
 import { ExtensiveEditor, type ExtensiveEditorRef } from '@lyfie/luthor'
-import { Button, Container, Group, Stack, Text, TextInput, Title, useMantineColorScheme } from '@mantine/core'
+import {
+	Button,
+	Container,
+	Group,
+	NumberInput,
+	Stack,
+	Text,
+	TextInput,
+	Title,
+	useMantineColorScheme,
+} from '@mantine/core'
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
-import { type FormEvent, useEffect, useRef } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAddProject, useProject, useUpdateProject } from '../api'
 import { ROUTES } from '../routes'
@@ -34,6 +44,7 @@ export function ProjectForm({ id }: ProjectFormProps) {
 	const { data: project, isLoading } = useProject(id ?? 0)
 	const addProject = useAddProject()
 	const updateProject = useUpdateProject()
+	const [hourlyRate, setHourlyRate] = useState<number | string>('')
 
 	const form = useForm({
 		defaultValues: { name: '' },
@@ -43,6 +54,7 @@ export function ProjectForm({ id }: ProjectFormProps) {
 			const description = editor?.getJSON() ?? ''
 			const description_md = editor?.getMarkdown() ?? ''
 			const description_html = editor?.getHTML() ?? ''
+			const hourlyRatePayload = hourlyRate === '' ? null : Number(hourlyRate)
 			if (isEdit) {
 				await updateProject.mutateAsync({
 					id: id!,
@@ -50,10 +62,17 @@ export function ProjectForm({ id }: ProjectFormProps) {
 					description,
 					description_md,
 					description_html,
+					hourlyRate: hourlyRatePayload,
 				})
 				navigate({ to: ROUTES.PROJECTS })
 			} else {
-				await addProject.mutateAsync({ name: value.name.trim(), description, description_md, description_html })
+				await addProject.mutateAsync({
+					name: value.name.trim(),
+					description,
+					description_md,
+					description_html,
+					hourlyRate: hourlyRatePayload,
+				})
 				navigate({ to: ROUTES.PROJECTS })
 			}
 		},
@@ -62,6 +81,7 @@ export function ProjectForm({ id }: ProjectFormProps) {
 	useEffect(() => {
 		if (isEdit && project) {
 			form.setFieldValue('name', project.name)
+			setHourlyRate(project.hourly_rate ?? '')
 		}
 	}, [isEdit, project, form])
 
@@ -97,6 +117,13 @@ export function ProjectForm({ id }: ProjectFormProps) {
 							/>
 						)}
 					</form.Field>
+
+					<NumberInput
+						label={t('projects.hourlyRate')}
+						value={hourlyRate}
+						onChange={(v) => setHourlyRate(v)}
+						hideControls
+					/>
 
 					<div>
 						<Text size='sm' fw={500} mb={4}>

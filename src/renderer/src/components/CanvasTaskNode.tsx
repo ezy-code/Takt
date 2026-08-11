@@ -1,13 +1,14 @@
 import { ActionIcon, Anchor, Group, Text } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
-import { type Node, type NodeProps } from '@xyflow/react'
+import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
 import { useTranslation } from 'react-i18next'
 import { useDeleteTask, useStatuses } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
 import { MarkdownPreview } from './MarkdownPreview'
+import { TaskCostPill } from './TaskCostPill'
 
 export type CanvasTaskNodeData = { task: Task }
 export type CanvasTaskNodeType = Node<CanvasTaskNodeData, 'canvasTask'>
@@ -28,6 +29,7 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 
 	return (
 		<>
+			<Handle type='target' position={Position.Left} className='nodrag' />
 			<div
 				style={{
 					width: 260,
@@ -57,6 +59,7 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 						</div>
 					)}
 					<Group justify='space-between' align='center' mt={10} gap='xs' wrap='nowrap'>
+						<TaskCostPill task={task} />
 						{status && (
 							<Group gap={5} align='center' wrap='nowrap' style={{ minWidth: 0 }}>
 								<div
@@ -96,6 +99,7 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 					</Group>
 				</div>
 			</div>
+			<Handle type='source' position={Position.Right} className='nodrag' />
 			{confirmDeleteModal}
 		</>
 	)

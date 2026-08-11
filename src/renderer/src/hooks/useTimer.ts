@@ -7,7 +7,10 @@ export function useTimer(startTime: string | null) {
 	const [elapsed, setElapsed] = useState(0)
 
 	useEffect(() => {
-		if (!startTime) return
+		if (!startTime) {
+			setElapsed(0)
+			return
+		}
 
 		const update = () => {
 			const diff = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)

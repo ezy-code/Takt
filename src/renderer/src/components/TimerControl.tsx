@@ -18,7 +18,7 @@ export function TimerControl({ taskId, duration, startTime, isActiveEntry }: Tim
 	const { start, switchingId } = useTimerActions()
 
 	const isActive = taskId != null && (isActiveEntry ?? activeEntry?.taskId === taskId)
-	const tickingStart = (isActive ? (activeEntry?.startTime ?? startTime) : startTime) ?? null
+	const tickingStart = isActive ? (activeEntry?.startTime ?? startTime ?? null) : null
 	const { elapsed } = useTimer(tickingStart)
 	const shown = formatDuration((duration ?? 0) + elapsed)
 

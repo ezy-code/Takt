@@ -6,7 +6,7 @@ import type { UpdaterState } from '../shared/updater'
 const api: Api = {
 	getTasks: () => ipcRenderer.invoke(IPC.GET_TASKS),
 	getTask: (id: number) => ipcRenderer.invoke(IPC.GET_TASK, id),
-	addTask: (name, description, description_md, description_html, statusId, projectId, myDay, reminderAt) =>
+	addTask: (name, description, description_md, description_html, statusId, projectId, myDay, reminderAt, hourlyRate) =>
 		ipcRenderer.invoke(
 			IPC.ADD_TASK,
 			name,
@@ -17,9 +17,21 @@ const api: Api = {
 			projectId,
 			myDay,
 			reminderAt,
+			hourlyRate,
 		),
 	deleteTask: (id: number) => ipcRenderer.invoke(IPC.DELETE_TASK, id),
-	updateTask: (id, name, description, description_md, description_html, statusId, projectId, myDay, reminderAt) =>
+	updateTask: (
+		id,
+		name,
+		description,
+		description_md,
+		description_html,
+		statusId,
+		projectId,
+		myDay,
+		reminderAt,
+		hourlyRate,
+	) =>
 		ipcRenderer.invoke(
 			IPC.UPDATE_TASK,
 			id,
@@ -31,13 +43,14 @@ const api: Api = {
 			projectId,
 			myDay,
 			reminderAt,
+			hourlyRate,
 		),
 	getProjects: () => ipcRenderer.invoke(IPC.GET_PROJECTS),
 	getProject: (id: number) => ipcRenderer.invoke(IPC.GET_PROJECT, id),
-	addProject: (name, description, description_md, description_html) =>
-		ipcRenderer.invoke(IPC.ADD_PROJECT, name, description, description_md, description_html),
-	updateProject: (id, name, description, description_md, description_html) =>
-		ipcRenderer.invoke(IPC.UPDATE_PROJECT, id, name, description, description_md, description_html),
+	addProject: (name, description, description_md, description_html, hourlyRate) =>
+		ipcRenderer.invoke(IPC.ADD_PROJECT, name, description, description_md, description_html, hourlyRate),
+	updateProject: (id, name, description, description_md, description_html, hourlyRate) =>
+		ipcRenderer.invoke(IPC.UPDATE_PROJECT, id, name, description, description_md, description_html, hourlyRate),
 	getActiveTimer: () => ipcRenderer.invoke(IPC.GET_ACTIVE_TIMER),
 	getLastTimer: () => ipcRenderer.invoke(IPC.GET_LAST_TIMER),
 	startTimer: (taskId: number) => ipcRenderer.invoke(IPC.START_TIMER, taskId),
@@ -65,6 +78,10 @@ const api: Api = {
 		ipcRenderer.invoke(IPC.REORDER_TASKS, columnId, orderedTaskIds),
 	updateTaskCanvasPosition: (id: number, x: number, y: number) =>
 		ipcRenderer.invoke(IPC.UPDATE_TASK_CANVAS_POSITION, id, x, y),
+	getTaskLinks: () => ipcRenderer.invoke(IPC.GET_TASK_LINKS),
+	addTaskLink: (sourceTaskId: number, targetTaskId: number) =>
+		ipcRenderer.invoke(IPC.ADD_TASK_LINK, sourceTaskId, targetTaskId),
+	deleteTaskLink: (id: number) => ipcRenderer.invoke(IPC.DELETE_TASK_LINK, id),
 	getAutostart: () => ipcRenderer.invoke(IPC.GET_AUTOSTART),
 	setAutostart: (enabled: boolean) => ipcRenderer.invoke(IPC.SET_AUTOSTART, enabled),
 	getAppImageDesktopEntryStatus: () => ipcRenderer.invoke(IPC.APPIMAGE_GET_DESKTOP_ENTRY_STATUS),

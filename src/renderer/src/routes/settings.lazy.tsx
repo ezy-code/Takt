@@ -2,17 +2,29 @@ import {
 	Button,
 	Container,
 	Group,
+	NumberInput,
 	SegmentedControl,
 	Stack,
 	Switch,
 	Text,
+	TextInput,
 	Title,
 	useMantineColorScheme,
 } from '@mantine/core'
-import { IconDeviceDesktop, IconLanguage, IconMoon, IconPower, IconRefresh, IconSun } from '@tabler/icons-react'
+import {
+	IconCurrencyDollar,
+	IconDeviceDesktop,
+	IconLanguage,
+	IconMoon,
+	IconPower,
+	IconRefresh,
+	IconSun,
+} from '@tabler/icons-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../../shared/constants'
 import UpdateSection from '../components/UpdateSection'
 import { useUpdater } from '../hooks/useUpdater'
 import { applyLanguage } from '../i18n'
@@ -43,8 +55,19 @@ function SettingsPage() {
 	const [autostart, setAutostart] = useState(false)
 	const [appImageDesktopSupported, setAppImageDesktopSupported] = useState(false)
 	const [appImageDesktopEnabled, setAppImageDesktopEnabled] = useState(false)
+	const [defaultRate, setDefaultRate] = useState<number | string>('')
+	const [currency, setCurrency] = useState('$')
+	const queryClient = useQueryClient()
 	const updater = useUpdater()
 	const hasUpdate = ['available', 'downloading', 'downloaded'].includes(updater.state.status)
+
+	const saveMeta = (key: string, value: string) => {
+		window.api.setMeta(key, value)
+		queryClient.invalidateQueries({ queryKey: ['meta', key] })
+		queryClient.invalidateQueries({ queryKey: ['time-entries'] })
+		queryClient.invalidateQueries({ queryKey: ['time-summary'] })
+		queryClient.invalidateQueries({ queryKey: ['tasks'] })
+	}
 
 	useEffect(() => {
 		window.api.getAutostart().then(setAutostart)
@@ -52,6 +75,11 @@ function SettingsPage() {
 			setAppImageDesktopSupported(status.supported)
 			setAppImageDesktopEnabled(status.enabled === true)
 		})
+		window.api.getMeta(META_DEFAULT_RATE_KEY).then((raw) => {
+			const n = Number(raw)
+			setDefaultRate(Number.isFinite(n) ? n : '')
+		})
+		window.api.getMeta(META_CURRENCY_KEY).then((v) => setCurrency(v ?? '$'))
 	}, [])
 
 	return (
@@ -92,6 +120,43 @@ function SettingsPage() {
 							applyLanguage(v)
 						}}
 						data={languageData}
+					/>
+				</Group>
+
+				<Group justify='space-between' w='100%'>
+					<Group gap='xs'>
+						<IconCurrencyDollar size={18} />
+						<Text fw={500}>{t('settings.defaultRate')}</Text>
+						<Text size='xs' c='dimmed'>
+							{t('settings.defaultRateHint')}
+						</Text>
+					</Group>
+					<NumberInput
+						w={140}
+						value={defaultRate}
+						onChange={(v) => {
+							setDefaultRate(v)
+							saveMeta(META_DEFAULT_RATE_KEY, v !== '' ? String(Number(v)) : '')
+						}}
+						hideControls
+						placeholder='0'
+					/>
+				</Group>
+
+				<Group justify='space-between' w='100%'>
+					<Group gap='xs'>
+						<IconCurrencyDollar size={18} />
+						<Text fw={500}>{t('settings.currency')}</Text>
+					</Group>
+					<TextInput
+						w={140}
+						value={currency}
+						onChange={(e) => {
+							const v = e.currentTarget.value
+							setCurrency(v)
+							saveMeta(META_CURRENCY_KEY, v)
+						}}
+						placeholder='$'
 					/>
 				</Group>
 

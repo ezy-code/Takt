@@ -23,6 +23,9 @@ export const IPC = {
 	REORDER_TASKS: 'reorder-tasks',
 	MOVE_TASK: 'move-task',
 	UPDATE_TASK_CANVAS_POSITION: 'update-task-canvas-position',
+	GET_TASK_LINKS: 'get-task-links',
+	ADD_TASK_LINK: 'add-task-link',
+	DELETE_TASK_LINK: 'delete-task-link',
 
 	// statuses
 	GET_STATUSES: 'get-statuses',

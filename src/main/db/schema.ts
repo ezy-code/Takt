@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm'
-import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { integer, real, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 
 export const appMeta = sqliteTable('app_meta', {
 	key: text('key').primaryKey(),
@@ -22,6 +22,7 @@ export const projects = sqliteTable('projects', {
 	descriptionMarkdown: text('description_md').default(''),
 	descriptionHtml: text('description_html').default(''),
 	created_at: text('created_at').default(sql`(datetime('now'))`),
+	hourly_rate: real('hourly_rate'),
 })
 
 export const tasks = sqliteTable('tasks', {
@@ -38,7 +39,25 @@ export const tasks = sqliteTable('tasks', {
 	descriptionHtml: text('description_html').default(''),
 	canvasX: real('canvas_x'),
 	canvasY: real('canvas_y'),
+	hourly_rate: real('hourly_rate'),
 })
+
+export const taskLinks = sqliteTable(
+	'task_links',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		sourceTaskId: integer('source_task_id')
+			.notNull()
+			.references(() => tasks.id),
+		targetTaskId: integer('target_task_id')
+			.notNull()
+			.references(() => tasks.id),
+		created_at: text('created_at').default(sql`(datetime('now'))`),
+	},
+	(t) => ({
+		uniquePair: unique().on(t.sourceTaskId, t.targetTaskId),
+	}),
+)
 
 export const timeEntries = sqliteTable('time_entries', {
 	id: integer('id').primaryKey({ autoIncrement: true }),

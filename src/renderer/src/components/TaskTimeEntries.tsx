@@ -1,11 +1,11 @@
-import { ActionIcon, Button, Card, Collapse, Group, Table, Text } from '@mantine/core'
+import { ActionIcon, Card, Collapse, Group, Table, Text } from '@mantine/core'
 import { IconChevronDown } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDeleteTimeEntry } from '../api'
 import { formatDuration } from '../hooks/useTimer'
 import type { TimeEntryWithTask } from '../types'
-import { useConfirmDelete } from './ConfirmDeleteModal'
+import { ConfirmDeleteButton } from './ConfirmDeleteButton'
 import { TimerControl } from './TimerControl'
 
 interface TaskTimeEntriesProps {
@@ -19,7 +19,6 @@ interface TaskTimeEntriesProps {
 export function TaskTimeEntries({ taskName, entries, expanded, onToggle, defaultOpen = false }: TaskTimeEntriesProps) {
 	const { t } = useTranslation()
 	const deleteTimeEntry = useDeleteTimeEntry()
-	const [confirmDeleteModal, confirmDelete] = useConfirmDelete()
 	const [internalOpen, setInternalOpen] = useState(defaultOpen)
 
 	const isControlled = expanded !== undefined
@@ -78,21 +77,17 @@ export function TaskTimeEntries({ taskName, entries, expanded, onToggle, default
 									/>
 								</Table.Td>
 								<Table.Td>
-									<Button
-										variant='light'
-										color='red'
+									<ConfirmDeleteButton
 										size='xs'
-										onClick={() => confirmDelete(() => deleteTimeEntry.mutate(entry.id))}
-									>
-										{t('common.delete')}
-									</Button>
+										loading={deleteTimeEntry.isPending}
+										onConfirm={() => deleteTimeEntry.mutate(entry.id)}
+									/>
 								</Table.Td>
 							</Table.Tr>
 						))}
 					</Table.Tbody>
 				</Table>
 			</Collapse>
-			{confirmDeleteModal}
 		</Card>
 	)
 }

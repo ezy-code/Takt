@@ -68,7 +68,7 @@ export default function AppLayout() {
 							</Anchor>
 							<TimerControl
 								taskId={timer.entry.taskId}
-								duration={activeTimer ? timer.task.total_duration : timer.entry.duration}
+								duration={timer.task.total_duration}
 								startTime={activeTimer ? timer.entry.startTime : null}
 							/>
 						</Group>

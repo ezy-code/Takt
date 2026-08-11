@@ -8,13 +8,14 @@ import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
+import { TaskCostPill } from './TaskCostPill'
 import { TimerControl } from './TimerControl'
 
 interface TaskCardProps {
 	task: Task
 }
 
-function getMyDayState(myDayDate: string | null | undefined): 'none' | 'today' | 'overdue' {
+export function getMyDayState(myDayDate: string | null | undefined): 'none' | 'today' | 'overdue' {
 	if (!myDayDate) return 'none'
 	const today = new Date().toISOString().split('T')[0]
 	if (myDayDate === today) return 'today'
@@ -40,13 +41,18 @@ export function TaskCard({ task }: TaskCardProps) {
 	const isPast = task.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 
 	const handleMyDayToggle = () => {
-		if (myDayState === 'none') toggleMyDay.mutate(task.id)
-		else clearMyDay.mutate(task.id)
+		if (myDayState === 'today') clearMyDay.mutate(task.id)
+		else toggleMyDay.mutate(task.id)
 	}
 
 	const menuItems = (
 		<>
-			<MyDayControl variant='menu-item' inMyDay={myDayState !== 'none'} onToggle={handleMyDayToggle} />
+			<MyDayControl
+				variant='menu-item'
+				inMyDay={myDayState !== 'none'}
+				onToggle={handleMyDayToggle}
+				overdue={myDayState === 'overdue'}
+			/>
 			<Menu.Divider />
 			<Menu.Item
 				leftSection={<IconEye size={14} />}
@@ -110,7 +116,12 @@ export function TaskCard({ task }: TaskCardProps) {
 						)} */}
 
 							<Group gap='md' align='center'>
-								<MyDayControl inMyDay={myDayState !== 'none'} onToggle={handleMyDayToggle} />
+								<TaskCostPill task={task} />
+								<MyDayControl
+									inMyDay={myDayState !== 'none'}
+									onToggle={handleMyDayToggle}
+									overdue={myDayState === 'overdue'}
+								/>
 								{status && (
 									<Group
 										gap={5}

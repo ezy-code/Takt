@@ -2,8 +2,10 @@ import { ActionIcon, Anchor, Button, Card, Container, Group, Menu, Stack, Text, 
 import { IconDots, IconPencil, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useProjects } from '../api'
+import { useCurrency, useDefaultRate, useProjects, useTasks } from '../api'
+import { CostInfo } from '../components/CostInfo'
 import { MarkdownPreview } from '../components/MarkdownPreview'
+import { formatDuration } from '../hooks/useTimer'
 import { ROUTES } from '../routes'
 
 const Route = createLazyRoute(ROUTES.PROJECTS)({
@@ -14,6 +16,16 @@ function ProjectsPage() {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const { data: projects, isLoading } = useProjects()
+	const { data: tasks = [] } = useTasks()
+	const { data: defaultRate = 0 } = useDefaultRate()
+	const { data: currency = '$' } = useCurrency()
+
+	const projectStats = (projectId: number) => {
+		const pts = tasks.filter((task) => task.projectId === projectId)
+		const duration = pts.reduce((acc, task) => acc + (task.total_duration ?? 0), 0)
+		const cost = pts.reduce((acc, task) => acc + (task.cost ?? 0), 0)
+		return { duration, cost }
+	}
 
 	return (
 		<Container fluid py='xl'>
@@ -45,6 +57,19 @@ function ProjectsPage() {
 										</Anchor>
 									</Group>
 									<MarkdownPreview content={project.description_md} maxLength={200} />
+									{(() => {
+										const { duration, cost } = projectStats(project.id)
+										const rate = project.hourly_rate ?? defaultRate
+										const source = project.hourly_rate != null ? 'project' : 'default'
+										return (
+											<Group gap='md' mt={4}>
+												<Text size='xs' c='gray'>
+													{formatDuration(duration)}
+												</Text>
+												<CostInfo cost={cost} rate={rate} rateSource={source} currency={currency} />
+											</Group>
+										)
+									})()}
 									<Text size='xs' c='gray' mt={4}>
 										{new Date(project.created_at).toLocaleString()}
 									</Text>

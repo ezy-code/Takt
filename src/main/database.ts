@@ -1,10 +1,12 @@
-import { asc, count, desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, or, sql } from 'drizzle-orm'
 import { app, BrowserWindow, ipcMain, Notification } from 'electron'
 import { join } from 'path'
-import { META_LANGUAGE_KEY } from '../shared/constants'
+import type { RateSource } from '../shared/api'
+import { META_DEFAULT_RATE_KEY, META_LANGUAGE_KEY } from '../shared/constants'
+import { costOf } from '../shared/cost'
 import { IPC } from '../shared/ipc'
 import { createDb } from './db'
-import { appMeta, projects, statuses, tasks, timeEntries } from './db/schema'
+import { appMeta, projects, statuses, taskLinks, tasks, timeEntries } from './db/schema'
 
 let db: ReturnType<typeof createDb>
 
@@ -30,6 +32,33 @@ export function getMeta(key: string): string | null {
 
 export function setMeta(key: string, value: string): void {
 	db.insert(appMeta).values({ key, value }).onConflictDoUpdate({ target: appMeta.key, set: { value } }).run()
+}
+
+function getDefaultRate(): number {
+	const n = Number(getMeta(META_DEFAULT_RATE_KEY))
+	return Number.isFinite(n) ? n : 0
+}
+
+function resolveRate(
+	taskRate: number | null | undefined,
+	projectRate: number | null | undefined,
+	defaultRate: number,
+): { rate: number; rateSource: RateSource } {
+	if (taskRate != null && Number.isFinite(taskRate)) return { rate: taskRate, rateSource: 'task' }
+	if (projectRate != null && Number.isFinite(projectRate)) return { rate: projectRate, rateSource: 'project' }
+	return { rate: defaultRate, rateSource: 'default' }
+}
+
+function decorateTaskRate(
+	r: {
+		total_duration: number
+		hourly_rate: number | null | undefined
+		project_rate: number | null | undefined
+	},
+	defaultRate: number,
+) {
+	const { rate, rateSource } = resolveRate(r.hourly_rate, r.project_rate, defaultRate)
+	return { rate, rateSource, cost: costOf(r.total_duration ?? 0, rate) }
 }
 
 export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
@@ -61,6 +90,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				description_md: projects.descriptionMarkdown,
 				description_html: projects.descriptionHtml,
 				created_at: projects.created_at,
+				hourly_rate: projects.hourly_rate,
 			})
 			.from(projects)
 			.orderBy(desc(projects.created_at))
@@ -76,6 +106,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				description_md: projects.descriptionMarkdown,
 				description_html: projects.descriptionHtml,
 				created_at: projects.created_at,
+				hourly_rate: projects.hourly_rate,
 			})
 			.from(projects)
 			.where(eq(projects.id, id))
@@ -84,7 +115,14 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 	ipcMain.handle(
 		IPC.ADD_PROJECT,
-		(_event, name: string, description?: string, description_md?: string, description_html?: string) => {
+		(
+			_event,
+			name: string,
+			description?: string,
+			description_md?: string,
+			description_html?: string,
+			hourlyRate?: number | null,
+		) => {
 			return db
 				.insert(projects)
 				.values({
@@ -92,6 +130,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 					description: description ?? '',
 					descriptionMarkdown: description_md ?? '',
 					descriptionHtml: description_html ?? '',
+					hourly_rate: hourlyRate ?? null,
 				})
 				.returning()
 				.get()
@@ -100,7 +139,15 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 	ipcMain.handle(
 		IPC.UPDATE_PROJECT,
-		(_event, id: number, name: string, description?: string, description_md?: string, description_html?: string) => {
+		(
+			_event,
+			id: number,
+			name: string,
+			description?: string,
+			description_md?: string,
+			description_html?: string,
+			hourlyRate?: number | null,
+		) => {
 			return db
 				.update(projects)
 				.set({
@@ -108,6 +155,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 					description: description ?? '',
 					descriptionMarkdown: description_md ?? '',
 					descriptionHtml: description_html ?? '',
+					...((hourlyRate !== undefined ? { hourly_rate: hourlyRate } : {}) as object),
 				})
 				.where(eq(projects.id, id))
 				.returning()
@@ -191,7 +239,21 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		return db.update(tasks).set({ canvasX: x, canvasY: y }).where(eq(tasks.id, id)).returning().get()
 	})
 
+	ipcMain.handle(IPC.GET_TASK_LINKS, () => {
+		return db.select().from(taskLinks).all()
+	})
+
+	ipcMain.handle(IPC.ADD_TASK_LINK, (_event, sourceTaskId: number, targetTaskId: number) => {
+		return db.insert(taskLinks).values({ sourceTaskId, targetTaskId }).onConflictDoNothing().returning().get()
+	})
+
+	ipcMain.handle(IPC.DELETE_TASK_LINK, (_event, id: number) => {
+		db.delete(taskLinks).where(eq(taskLinks.id, id)).run()
+		return { success: true }
+	})
+
 	ipcMain.handle(IPC.GET_TASKS, () => {
+		const defaultRate = getDefaultRate()
 		return db
 			.select({
 				id: tasks.id,
@@ -207,17 +269,22 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				position: tasks.position,
 				canvasX: tasks.canvasX,
 				canvasY: tasks.canvasY,
+				hourly_rate: tasks.hourly_rate,
+				project_rate: projects.hourly_rate,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
 			.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
+			.leftJoin(projects, eq(tasks.projectId, projects.id))
 			.groupBy(tasks.id)
 			.orderBy(asc(tasks.position), desc(tasks.created_at))
 			.all()
+			.map((t) => ({ ...t, project_rate: undefined, ...decorateTaskRate(t, defaultRate) }))
 	})
 
 	ipcMain.handle(IPC.GET_TASK, (_event, id: number) => {
-		return db
+		const defaultRate = getDefaultRate()
+		const row = db
 			.select({
 				id: tasks.id,
 				name: tasks.name,
@@ -232,13 +299,17 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				position: tasks.position,
 				canvasX: tasks.canvasX,
 				canvasY: tasks.canvasY,
+				hourly_rate: tasks.hourly_rate,
+				project_rate: projects.hourly_rate,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
 			.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
+			.leftJoin(projects, eq(tasks.projectId, projects.id))
 			.where(eq(tasks.id, id))
 			.groupBy(tasks.id)
 			.get()
+		return row ? { ...row, project_rate: undefined, ...decorateTaskRate(row, defaultRate) } : null
 	})
 
 	ipcMain.handle(
@@ -253,6 +324,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			projectId?: number,
 			myDay?: boolean | string | null,
 			reminderAt?: string | null,
+			hourlyRate?: number | null,
 		) => {
 			const resolvedStatusId = statusId ?? getDefaultStatusId()
 			if (resolvedStatusId == null) throw new Error('No statuses configured')
@@ -274,6 +346,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 					my_day_date,
 					reminderAt: reminderAt ?? null,
 					position: maxPos!.maxPos + 1,
+					hourly_rate: hourlyRate ?? null,
 				})
 				.returning()
 				.get()
@@ -293,6 +366,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			projectId?: number,
 			myDay?: boolean | string | null,
 			reminderAt?: string | null,
+			hourlyRate?: number | null,
 		) => {
 			const updates: {
 				name: string
@@ -303,6 +377,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				projectId?: number
 				my_day_date?: string | null
 				reminderAt?: string | null
+				hourly_rate?: number | null
 			} = {
 				name,
 				description,
@@ -313,18 +388,22 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			if (projectId !== undefined) updates.projectId = projectId
 			if (myDay !== undefined) updates.my_day_date = resolveMyDayDate(myDay)
 			if (reminderAt !== undefined) updates.reminderAt = reminderAt
+			if (hourlyRate !== undefined) updates.hourly_rate = hourlyRate
 			return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
 		},
 	)
 
 	ipcMain.handle(IPC.DELETE_TASK, (_event, id: number) => {
 		db.delete(timeEntries).where(eq(timeEntries.taskId, id)).run()
+		db.delete(taskLinks)
+			.where(or(eq(taskLinks.sourceTaskId, id), eq(taskLinks.targetTaskId, id)))
+			.run()
 		db.delete(tasks).where(eq(tasks.id, id)).run()
 		return { success: true }
 	})
 
-	function selectTimerTask(taskId: number) {
-		return db
+	function selectTimerTask(taskId: number, defaultRate: number) {
+		const row = db
 			.select({
 				id: tasks.id,
 				name: tasks.name,
@@ -337,13 +416,18 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				position: tasks.position,
 				canvasX: tasks.canvasX,
 				canvasY: tasks.canvasY,
+				hourly_rate: tasks.hourly_rate,
+				project_rate: projects.hourly_rate,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
 			.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
+			.leftJoin(projects, eq(tasks.projectId, projects.id))
 			.where(eq(tasks.id, taskId))
 			.groupBy(tasks.id)
 			.get()
+		if (!row) return null
+		return { ...row, project_rate: undefined, ...decorateTaskRate(row, defaultRate) }
 	}
 
 	ipcMain.handle(IPC.GET_ACTIVE_TIMER, () => {
@@ -351,7 +435,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 		if (!entry) return null
 
-		const task = selectTimerTask(entry.taskId)
+		const task = selectTimerTask(entry.taskId, getDefaultRate())
 
 		return { entry, task }
 	})
@@ -361,7 +445,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 		if (!entry) return null
 
-		const task = selectTimerTask(entry.taskId)
+		const task = selectTimerTask(entry.taskId, getDefaultRate())
 		if (!task) return null
 
 		return { entry, task }
@@ -380,7 +464,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 		const task = db.select({ name: tasks.name }).from(tasks).where(eq(tasks.id, taskId)).get()
 		onTimerChange?.({ active: true, startTime: now, taskName: task?.name ?? 'Unknown' })
-		return { conflict: false, entry }
+		return { conflict: false, entry, task: selectTimerTask(taskId, getDefaultRate()) }
 	})
 
 	ipcMain.handle(IPC.STOP_TIMER, (_event, taskId: number) => {
@@ -406,43 +490,89 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 			.get()
 
 		onTimerChange?.({ active: false })
-		return entry
+		return { entry, task: selectTimerTask(taskId, getDefaultRate()) }
 	})
 
 	ipcMain.handle(IPC.GET_ALL_TIME_ENTRIES, () => {
+		const defaultRate = getDefaultRate()
 		return db
 			.select({
 				id: timeEntries.id,
 				taskId: timeEntries.taskId,
 				taskName: tasks.name,
+				projectId: tasks.projectId,
+				projectName: projects.name,
 				startTime: timeEntries.startTime,
 				stopTime: timeEntries.stopTime,
 				duration: timeEntries.duration,
+				task_rate: tasks.hourly_rate,
+				project_rate: projects.hourly_rate,
 			})
 			.from(timeEntries)
 			.leftJoin(tasks, eq(timeEntries.taskId, tasks.id))
+			.leftJoin(projects, eq(tasks.projectId, projects.id))
 			.orderBy(desc(timeEntries.startTime))
 			.all()
+			.map((e) => {
+				const { rate, rateSource } = resolveRate(e.task_rate, e.project_rate, defaultRate)
+				return {
+					id: e.id,
+					taskId: e.taskId,
+					taskName: e.taskName ?? '',
+					projectId: e.projectId,
+					projectName: e.projectName,
+					startTime: e.startTime,
+					stopTime: e.stopTime,
+					duration: e.duration,
+					rate,
+					rateSource,
+					cost: costOf(e.duration ?? 0, rate),
+				}
+			})
 	})
 
 	ipcMain.handle(IPC.GET_TIME_SUMMARY, () => {
-		const total = db
+		const defaultRate = getDefaultRate()
+		const rows = db
 			.select({
-				totalSessions: count(),
-				totalDuration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
+				startTime: timeEntries.startTime,
+				duration: timeEntries.duration,
+				task_rate: tasks.hourly_rate,
+				project_rate: projects.hourly_rate,
 			})
 			.from(timeEntries)
-			.get()
+			.leftJoin(tasks, eq(timeEntries.taskId, tasks.id))
+			.leftJoin(projects, eq(tasks.projectId, projects.id))
+			.all()
 
-		const today = db
-			.select({
-				todayDuration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
-			})
-			.from(timeEntries)
-			.where(sql`date(${timeEntries.startTime}) = date('now')`)
-			.get()
+		let totalDuration = 0
+		let totalCost = 0
+		let todayDuration = 0
+		let todayCost = 0
+		const now = new Date()
+		const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+		const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime()
 
-		return { ...total, ...today }
+		for (const r of rows) {
+			const { rate } = resolveRate(r.task_rate, r.project_rate, defaultRate)
+			const duration = r.duration ?? 0
+			const cost = costOf(duration, rate)
+			totalDuration += duration
+			totalCost += cost
+			const startMs = new Date(r.startTime).getTime()
+			if (startMs >= todayStart && startMs < todayEnd) {
+				todayDuration += duration
+				todayCost += cost
+			}
+		}
+
+		return {
+			totalSessions: rows.length,
+			totalDuration,
+			todayDuration,
+			totalCost,
+			todayCost,
+		}
 	})
 
 	ipcMain.handle(IPC.DELETE_TIME_ENTRY, (_event, id: number) => {
@@ -459,6 +589,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 	})
 
 	ipcMain.handle(IPC.GET_MY_DAY_TASKS, () => {
+		const defaultRate = getDefaultRate()
 		return db
 			.select({
 				id: tasks.id,
@@ -474,14 +605,18 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 				position: tasks.position,
 				canvasX: tasks.canvasX,
 				canvasY: tasks.canvasY,
+				hourly_rate: tasks.hourly_rate,
+				project_rate: projects.hourly_rate,
 				total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 			})
 			.from(tasks)
 			.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
+			.leftJoin(projects, eq(tasks.projectId, projects.id))
 			.where(sql`${tasks.my_day_date} is not null`)
 			.groupBy(tasks.id)
 			.orderBy(asc(tasks.position), desc(tasks.created_at))
 			.all()
+			.map((t) => ({ ...t, project_rate: undefined, ...decorateTaskRate(t, defaultRate) }))
 	})
 
 	ipcMain.handle(IPC.CLEAR_MY_DAY, (_event, id: number) => {

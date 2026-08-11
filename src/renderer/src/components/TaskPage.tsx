@@ -1,8 +1,8 @@
 import type { ExtensiveEditorRef } from '@lyfie/luthor'
-import { Button, Container, Group, Modal, Select, Stack, Text, TextInput, Title } from '@mantine/core'
+import { Button, Container, Group, Modal, NumberInput, Select, Stack, Text, TextInput, Title } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
 import { useMediaQuery } from '@mantine/hooks'
-import { IconClock, IconFolder, IconTrash } from '@tabler/icons-react'
+import { IconClock, IconCoin, IconFolder, IconTrash } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useBlocker, useNavigate } from '@tanstack/react-router'
 import dayjs from 'dayjs'
@@ -26,6 +26,8 @@ import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
 import { RichTextEditor } from './RichTextEditor'
+import { getMyDayState } from './TaskCard'
+import { TaskCostPill } from './TaskCostPill'
 import { TaskTimeEntriesModal } from './TaskTimeEntriesModal'
 import { TimerControl } from './TimerControl'
 
@@ -50,6 +52,7 @@ interface TaskSnapshot {
 	addToMyDay: boolean
 	reminderAt: string | null
 	description: string
+	hourlyRate: number | null
 }
 
 const FIELD_TEXT_STYLE = {
@@ -84,6 +87,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 	const [projectId, setProjectId] = useState<number | null>(null)
 	const [addToMyDay, setAddToMyDay] = useState(false)
 	const [reminderAt, setReminderAt] = useState<string | null>(null)
+	const [hourlyRate, setHourlyRate] = useState<number | string>('')
 	const [showTimeEntries, setShowTimeEntries] = useState(false)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
@@ -99,12 +103,14 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 			setProjectId(task.projectId ?? null)
 			setAddToMyDay(!!task.my_day_date)
 			setReminderAt(task.reminder_at ? dayjs(task.reminder_at).format('YYYY-MM-DD HH:mm:ss') : null)
+			setHourlyRate(task.hourly_rate ?? '')
 		} else if (mode === 'create' && statuses) {
 			const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
 			setStatusId(defaultStatus?.id ?? null)
 			setProjectId(null)
 			setAddToMyDay(false)
 			setReminderAt(null)
+			setHourlyRate('')
 		}
 	}, [isEdit, mode, task, statuses])
 
@@ -132,6 +138,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 				projectId: projectId ?? undefined,
 				myDay: addToMyDay,
 				reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
+				hourlyRate: hourlyRate === '' ? null : Number(hourlyRate),
 			}
 			if (isEdit) {
 				await updateTask.mutateAsync({ id: id!, ...payload })
@@ -168,6 +175,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 						? dayjs(currentTask!.reminder_at).format('YYYY-MM-DD HH:mm:ss')
 						: null
 					: null,
+				hourlyRate: isEdit ? (currentTask!.hourly_rate ?? null) : null,
 				description: editorRef.current?.getJSON() ?? '',
 			}
 		}, 150)
@@ -183,6 +191,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 			projectId !== s.projectId ||
 			addToMyDay !== s.addToMyDay ||
 			reminderAt !== s.reminderAt ||
+			(hourlyRate === '' ? null : Number(hourlyRate)) !== s.hourlyRate ||
 			(editorRef.current?.getJSON() ?? '') !== s.description
 		)
 	}
@@ -330,6 +339,22 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 							}}
 						>
 							{mode !== 'create' && task && <TimerControl taskId={task.id} duration={task.total_duration} />}
+							{mode === 'view' && task && <TaskCostPill task={task} />}
+							{mode !== 'view' && (
+								<PropertyPill leading={<IconCoin size={14} />}>
+									<NumberInput
+										variant='unstyled'
+										placeholder={t('tasks.hourlyRatePlaceholder')}
+										value={hourlyRate}
+										onChange={(v) => setHourlyRate(v)}
+										hideControls
+										leftSection={<span style={{ display: 'none' }} />}
+										rightSection={<span style={{ display: 'none' }} />}
+										styles={{ input: FIELD_TEXT_STYLE }}
+									/>
+								</PropertyPill>
+							)}
+							{isEdit && task && <TaskCostPill task={task} />}
 							{mode !== 'create' && task && (
 								<PropertyPill leading={<IconClock size={14} />} onClick={() => setShowTimeEntries(true)}>
 									<Text size='sm'>{t('timeEntries.title')}</Text>
@@ -339,8 +364,9 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 								<MyDayControl
 									fullWidth
 									inMyDay={!!task!.my_day_date}
+									overdue={getMyDayState(task!.my_day_date ?? null) === 'overdue'}
 									onToggle={() => {
-										if (task!.my_day_date) clearMyDay.mutate(task!.id)
+										if (getMyDayState(task!.my_day_date ?? null) === 'today') clearMyDay.mutate(task!.id)
 										else toggleMyDay.mutate(task!.id)
 									}}
 								/>
