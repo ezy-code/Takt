@@ -1,6 +1,7 @@
 import {
 	Button,
 	Container,
+	Divider,
 	Group,
 	NumberInput,
 	SegmentedControl,
@@ -12,6 +13,7 @@ import {
 	useMantineColorScheme,
 } from '@mantine/core'
 import {
+	IconClock,
 	IconCurrencyDollar,
 	IconDeviceDesktop,
 	IconLanguage,
@@ -24,7 +26,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../../shared/constants'
+import {
+	META_CURRENCY_KEY,
+	META_DEFAULT_RATE_KEY,
+	META_TIMER_AUTO_RESUME_KEY,
+	META_TIMER_AUTO_STOP_KEY,
+} from '../../../shared/constants'
 import UpdateSection from '../components/UpdateSection'
 import { useUpdater } from '../hooks/useUpdater'
 import { applyLanguage } from '../i18n'
@@ -57,6 +64,8 @@ function SettingsPage() {
 	const [appImageDesktopEnabled, setAppImageDesktopEnabled] = useState(false)
 	const [defaultRate, setDefaultRate] = useState<number | string>('')
 	const [currency, setCurrency] = useState('$')
+	const [timerAutoStop, setTimerAutoStop] = useState(false)
+	const [timerAutoResume, setTimerAutoResume] = useState(false)
 	const queryClient = useQueryClient()
 	const updater = useUpdater()
 	const hasUpdate = ['available', 'downloading', 'downloaded'].includes(updater.state.status)
@@ -80,6 +89,8 @@ function SettingsPage() {
 			setDefaultRate(Number.isFinite(n) ? n : '')
 		})
 		window.api.getMeta(META_CURRENCY_KEY).then((v) => setCurrency(v ?? '$'))
+		window.api.getMeta(META_TIMER_AUTO_STOP_KEY).then((v) => setTimerAutoStop(v === '1'))
+		window.api.getMeta(META_TIMER_AUTO_RESUME_KEY).then((v) => setTimerAutoResume(v === '1'))
 	}, [])
 
 	return (
@@ -125,6 +136,30 @@ function SettingsPage() {
 
 				<Group justify='space-between' w='100%'>
 					<Group gap='xs'>
+						<IconPower size={18} />
+						<Text fw={500}>{t('settings.launchAtStartup')}</Text>
+					</Group>
+					<Switch
+						checked={autostart}
+						onChange={(e) => {
+							const val = e.currentTarget.checked
+							setAutostart(val)
+							window.api.setAutostart(val)
+						}}
+					/>
+				</Group>
+
+				<Divider
+					label={
+						<Group gap='xs'>
+							<IconClock size={16} />
+							<Text fw={600}>{t('settings.timerSection')}</Text>
+						</Group>
+					}
+				/>
+
+				<Group justify='space-between' w='100%'>
+					<Group gap='xs'>
 						<IconCurrencyDollar size={18} />
 						<Text fw={500}>{t('settings.defaultRate')}</Text>
 						<Text size='xs' c='dimmed'>
@@ -162,15 +197,34 @@ function SettingsPage() {
 
 				<Group justify='space-between' w='100%'>
 					<Group gap='xs'>
-						<IconPower size={18} />
-						<Text fw={500}>{t('settings.launchAtStartup')}</Text>
+						<Text fw={500}>{t('settings.timerAutoStop')}</Text>
+						<Text size='xs' c='dimmed'>
+							{t('settings.timerAutoStopHint')}
+						</Text>
 					</Group>
 					<Switch
-						checked={autostart}
+						checked={timerAutoStop}
 						onChange={(e) => {
 							const val = e.currentTarget.checked
-							setAutostart(val)
-							window.api.setAutostart(val)
+							setTimerAutoStop(val)
+							saveMeta(META_TIMER_AUTO_STOP_KEY, val ? '1' : '0')
+						}}
+					/>
+				</Group>
+
+				<Group justify='space-between' w='100%'>
+					<Group gap='xs'>
+						<Text fw={500}>{t('settings.timerAutoResume')}</Text>
+						<Text size='xs' c='dimmed'>
+							{t('settings.timerAutoResumeHint')}
+						</Text>
+					</Group>
+					<Switch
+						checked={timerAutoResume}
+						onChange={(e) => {
+							const val = e.currentTarget.checked
+							setTimerAutoResume(val)
+							saveMeta(META_TIMER_AUTO_RESUME_KEY, val ? '1' : '0')
 						}}
 					/>
 				</Group>

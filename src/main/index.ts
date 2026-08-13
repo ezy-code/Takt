@@ -1,11 +1,14 @@
-import { app, BrowserWindow, ipcMain, Menu, Notification, nativeImage, nativeTheme, Tray } from 'electron'
+import { execFile } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { app, BrowserWindow, ipcMain, Menu, Notification, nativeImage, nativeTheme, powerMonitor, Tray } from 'electron'
 import { join } from 'path'
-import { APP_NAME, AUTOSTART_ARG } from '../shared/constants'
+import { APP_NAME, AUTOSTART_ARG, META_TIMER_AUTO_RESUME_KEY, META_TIMER_AUTO_STOP_KEY } from '../shared/constants'
 import { formatDuration } from '../shared/formatDuration'
 import { IPC } from '../shared/ipc'
 import { initAutostart } from './autostart'
 import { createDb, type Db } from './db'
 import { getLastTimeEntry, getRecentTasks, startTimer, stopTimer } from './db/handlers/timer'
+import { getMeta } from './db/meta'
 import { registerHandlers } from './db/registerHandlers'
 import type { TimerChangeInfo } from './db/types'
 import { getResourcePath } from './helpers'
@@ -21,6 +24,9 @@ let timerStartTime: string | null = null
 let timerTaskName: string | null = null
 let timerTaskId: number | null = null
 let trayTimerInterval: ReturnType<typeof setInterval> | null = null
+let autoStoppedTaskId: number | null = null
+let linuxSessionId: string | null = null
+let lockCheckInFlight = false
 
 const gotTheLock = app.requestSingleInstanceLock()
 
@@ -59,6 +65,12 @@ if (!gotTheLock) {
 		createTray()
 
 		nativeTheme.on('updated', updateTrayIcon)
+
+		powerMonitor.on('suspend', handleIdleStart)
+		powerMonitor.on('lock-screen', handleIdleStart)
+		powerMonitor.on('resume', onResume)
+		powerMonitor.on('unlock-screen', handleIdleEnd)
+		initLinuxLockDetection()
 
 		app.on('activate', () => {
 			if (!mainWindow) {
@@ -132,6 +144,65 @@ function continueLastTask() {
 
 function stopActiveTimer() {
 	if (db && timerTaskId != null) stopTimer(db, timerTaskId, handleTimerChange)
+}
+
+function handleIdleStart() {
+	if (!db || !isTimerActive || timerTaskId == null) return
+	if (getMeta(META_TIMER_AUTO_STOP_KEY) !== '1') return
+	const taskId = timerTaskId
+	stopTimer(db, taskId, handleTimerChange)
+	autoStoppedTaskId = taskId
+}
+
+function handleIdleEnd() {
+	if (autoStoppedTaskId == null) return
+	const taskId = autoStoppedTaskId
+	autoStoppedTaskId = null
+	if (getMeta(META_TIMER_AUTO_RESUME_KEY) === '1' && db) {
+		startTimer(db, taskId, handleTimerChange)
+	}
+	BrowserWindow.getAllWindows()[0]?.webContents.send(IPC.TIMER_CHANGED)
+}
+
+function onResume() {
+	// Linux: after wake the screen may still be locked — defer to the lock poll.
+	if (process.platform === 'linux' && autoStoppedTaskId != null) {
+		pollLinuxLock()
+		return
+	}
+	handleIdleEnd()
+}
+
+function pollLinuxLock() {
+	if (lockCheckInFlight || !linuxSessionId) return
+	lockCheckInFlight = true
+	execFile('loginctl', ['show-session', linuxSessionId, '-p', 'LockedHint', '--value'], (err, stdout) => {
+		lockCheckInFlight = false
+		if (err) return
+		const value = stdout.trim()
+		if (value === 'yes') {
+			handleIdleStart()
+		} else if (value === 'no' && autoStoppedTaskId != null) {
+			handleIdleEnd()
+		}
+	})
+}
+
+function readLinuxSessionId(): string | null {
+	try {
+		return readFileSync('/proc/self/sessionid', 'utf-8').trim() || null
+	} catch {
+		return null
+	}
+}
+
+function initLinuxLockDetection() {
+	if (process.platform !== 'linux') return
+	linuxSessionId = process.env['XDG_SESSION_ID'] ?? readLinuxSessionId()
+	if (!linuxSessionId) return // ponytail: no logind session id, rely on suspend/resume only
+	setInterval(() => {
+		if (isTimerActive || autoStoppedTaskId != null) pollLinuxLock()
+	}, 5000)
 }
 
 function createTray() {
