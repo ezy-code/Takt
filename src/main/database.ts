@@ -1,7 +1,13 @@
 import { asc, desc, eq, or, sql } from 'drizzle-orm'
 import { app, BrowserWindow, ipcMain, Notification } from 'electron'
 import { join } from 'path'
-import type { RateSource } from '../shared/api'
+import type {
+	AddProjectPayload,
+	AddTaskPayload,
+	RateSource,
+	UpdateProjectPayload,
+	UpdateTaskPayload,
+} from '../shared/api'
 import { META_DEFAULT_RATE_KEY, META_LANGUAGE_KEY } from '../shared/constants'
 import { costOf } from '../shared/cost'
 import { IPC } from '../shared/ipc'
@@ -115,14 +121,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 	ipcMain.handle(
 		IPC.ADD_PROJECT,
-		(
-			_event,
-			name: string,
-			description?: string,
-			description_md?: string,
-			description_html?: string,
-			hourlyRate?: number | null,
-		) => {
+		(_event, { name, description, description_md, description_html, hourlyRate }: AddProjectPayload) => {
 			return db
 				.insert(projects)
 				.values({
@@ -139,15 +138,7 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 
 	ipcMain.handle(
 		IPC.UPDATE_PROJECT,
-		(
-			_event,
-			id: number,
-			name: string,
-			description?: string,
-			description_md?: string,
-			description_html?: string,
-			hourlyRate?: number | null,
-		) => {
+		(_event, { id, name, description, description_md, description_html, hourlyRate }: UpdateProjectPayload) => {
 			return db
 				.update(projects)
 				.set({
@@ -316,15 +307,17 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		IPC.ADD_TASK,
 		(
 			_event,
-			name: string,
-			description: string,
-			description_md?: string,
-			description_html?: string,
-			statusId?: number,
-			projectId?: number,
-			myDay?: boolean | string | null,
-			reminderAt?: string | null,
-			hourlyRate?: number | null,
+			{
+				name,
+				description,
+				description_md,
+				description_html,
+				statusId,
+				projectId,
+				myDay,
+				reminderAt,
+				hourlyRate,
+			}: AddTaskPayload,
 		) => {
 			const resolvedStatusId = statusId ?? getDefaultStatusId()
 			if (resolvedStatusId == null) throw new Error('No statuses configured')
@@ -357,16 +350,18 @@ export function initDatabase(onTimerChange?: (info: TimerChangeInfo) => void) {
 		IPC.UPDATE_TASK,
 		(
 			_event,
-			id: number,
-			name: string,
-			description: string,
-			description_md?: string,
-			description_html?: string,
-			statusId?: number,
-			projectId?: number,
-			myDay?: boolean | string | null,
-			reminderAt?: string | null,
-			hourlyRate?: number | null,
+			{
+				id,
+				name,
+				description,
+				description_md,
+				description_html,
+				statusId,
+				projectId,
+				myDay,
+				reminderAt,
+				hourlyRate,
+			}: UpdateTaskPayload,
 		) => {
 			const updates: {
 				name: string

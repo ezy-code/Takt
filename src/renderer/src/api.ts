@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AddProjectPayload, AddTaskPayload, UpdateProjectPayload, UpdateTaskPayload } from '../../shared/api'
 import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
 import { useTimerStore } from './store/timer'
@@ -69,38 +70,7 @@ export function useTimeSummary() {
 export function useAddTask() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({
-			name,
-			description,
-			description_md,
-			description_html,
-			statusId,
-			projectId,
-			myDay,
-			reminderAt,
-			hourlyRate,
-		}: {
-			name: string
-			description: string
-			description_md?: string
-			description_html?: string
-			statusId?: number
-			projectId?: number
-			myDay?: boolean
-			reminderAt?: string | null
-			hourlyRate?: number | null
-		}) =>
-			window.api.addTask(
-				name,
-				description,
-				description_md,
-				description_html,
-				statusId,
-				projectId,
-				myDay,
-				reminderAt,
-				hourlyRate,
-			),
+		mutationFn: (payload: AddTaskPayload) => window.api.addTask(payload),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
@@ -113,41 +83,7 @@ export function useAddTask() {
 export function useUpdateTask() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({
-			id,
-			name,
-			description,
-			description_md,
-			description_html,
-			statusId,
-			projectId,
-			myDay,
-			reminderAt,
-			hourlyRate,
-		}: {
-			id: number
-			name: string
-			description: string
-			description_md?: string
-			description_html?: string
-			statusId?: number
-			projectId?: number
-			myDay?: boolean
-			reminderAt?: string | null
-			hourlyRate?: number | null
-		}) =>
-			window.api.updateTask(
-				id,
-				name,
-				description,
-				description_md,
-				description_html,
-				statusId,
-				projectId,
-				myDay,
-				reminderAt,
-				hourlyRate,
-			),
+		mutationFn: (payload: UpdateTaskPayload) => window.api.updateTask(payload),
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
@@ -421,19 +357,7 @@ export function useDefaultRate() {
 export function useAddProject() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({
-			name,
-			description,
-			description_md,
-			description_html,
-			hourlyRate,
-		}: {
-			name: string
-			description?: string
-			description_md?: string
-			description_html?: string
-			hourlyRate?: number | null
-		}) => window.api.addProject(name, description, description_md, description_html, hourlyRate),
+		mutationFn: (payload: AddProjectPayload) => window.api.addProject(payload),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.projects })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
@@ -445,21 +369,7 @@ export function useAddProject() {
 export function useUpdateProject() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({
-			id,
-			name,
-			description,
-			description_md,
-			description_html,
-			hourlyRate,
-		}: {
-			id: number
-			name: string
-			description?: string
-			description_md?: string
-			description_html?: string
-			hourlyRate?: number | null
-		}) => window.api.updateProject(id, name, description, description_md, description_html, hourlyRate),
+		mutationFn: (payload: UpdateProjectPayload) => window.api.updateProject(payload),
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['projects', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.projects })

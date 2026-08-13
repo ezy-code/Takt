@@ -85,50 +85,44 @@ export interface TaskLink {
 	created_at?: string | null
 }
 
+export interface AddTaskPayload {
+	name: string
+	description: string
+	description_md?: string
+	description_html?: string
+	statusId?: number
+	projectId?: number
+	myDay?: boolean | string | null
+	reminderAt?: string | null
+	hourlyRate?: number | null
+}
+
+export interface UpdateTaskPayload extends AddTaskPayload {
+	id: number
+}
+
+export interface AddProjectPayload {
+	name: string
+	description?: string
+	description_md?: string
+	description_html?: string
+	hourlyRate?: number | null
+}
+
+export interface UpdateProjectPayload extends AddProjectPayload {
+	id: number
+}
+
 export interface Api {
 	getTasks: () => Promise<Task[]>
 	getTask: (id: number) => Promise<Task | null>
-	addTask: (
-		name: string,
-		description: string,
-		description_md?: string,
-		description_html?: string,
-		statusId?: number,
-		projectId?: number,
-		myDay?: boolean | string | null,
-		reminderAt?: string | null,
-		hourlyRate?: number | null,
-	) => Promise<Task>
+	addTask: (payload: AddTaskPayload) => Promise<Task>
 	deleteTask: (id: number) => Promise<{ success: boolean }>
-	updateTask: (
-		id: number,
-		name: string,
-		description: string,
-		description_md?: string,
-		description_html?: string,
-		statusId?: number,
-		projectId?: number,
-		myDay?: boolean | string | null,
-		reminderAt?: string | null,
-		hourlyRate?: number | null,
-	) => Promise<Task>
+	updateTask: (payload: UpdateTaskPayload) => Promise<Task>
 	getProjects: () => Promise<Project[]>
 	getProject: (id: number) => Promise<Project | null>
-	addProject: (
-		name: string,
-		description?: string,
-		description_md?: string,
-		description_html?: string,
-		hourlyRate?: number | null,
-	) => Promise<Project>
-	updateProject: (
-		id: number,
-		name: string,
-		description?: string,
-		description_md?: string,
-		description_html?: string,
-		hourlyRate?: number | null,
-	) => Promise<Project>
+	addProject: (payload: AddProjectPayload) => Promise<Project>
+	updateProject: (payload: UpdateProjectPayload) => Promise<Project>
 	getActiveTimer: () => Promise<ActiveTimerInfo | null>
 	getLastTimer: () => Promise<ActiveTimerInfo | null>
 	startTimer: (taskId: number) => Promise<StartTimerResult>
