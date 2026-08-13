@@ -4,8 +4,9 @@ import { APP_NAME, AUTOSTART_ARG } from '../shared/constants'
 import { formatDuration } from '../shared/formatDuration'
 import { IPC } from '../shared/ipc'
 import { initAutostart } from './autostart'
-import type { TimerChangeInfo } from './database'
-import { initDatabase } from './database'
+import { createDb } from './db'
+import { registerHandlers } from './db/registerHandlers'
+import type { TimerChangeInfo } from './db/types'
 import { getResourcePath } from './helpers'
 import { initAppImageDesktopEntry } from './linuxDesktopEntry'
 import { initUpdater } from './updater'
@@ -47,19 +48,22 @@ if (!gotTheLock) {
 
 		initUpdater({ checkOnStart: app.isPackaged })
 
-		initDatabase((info: TimerChangeInfo) => {
-			if (info.active) {
-				isTimerActive = true
-				timerStartTime = info.startTime
-				timerTaskName = info.taskName
-				startTrayTimerUpdate()
-			} else {
-				isTimerActive = false
-				timerStartTime = null
-				timerTaskName = null
-				stopTrayTimerUpdate()
-			}
-			updateTrayIcon()
+		const db = createDb(join(app.getPath('userData'), 'tasks.db'))
+		registerHandlers(db, {
+			onTimerChange: (info: TimerChangeInfo) => {
+				if (info.active) {
+					isTimerActive = true
+					timerStartTime = info.startTime
+					timerTaskName = info.taskName
+					startTrayTimerUpdate()
+				} else {
+					isTimerActive = false
+					timerStartTime = null
+					timerTaskName = null
+					stopTrayTimerUpdate()
+				}
+				updateTrayIcon()
+			},
 		})
 		initAppImageDesktopEntry()
 		createWindow()

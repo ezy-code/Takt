@@ -12,3 +12,5 @@ export function createDb(dbPath: string) {
 
 	return db
 }
+
+export type Db = ReturnType<typeof createDb>

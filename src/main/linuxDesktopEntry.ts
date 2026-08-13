@@ -4,7 +4,7 @@ import path from 'node:path'
 import { app, ipcMain } from 'electron'
 import { AUTOSTART_ARG, META_APPIMAGE_DESKTOP_KEY } from '../shared/constants'
 import { IPC } from '../shared/ipc'
-import { getMeta, setMeta } from './database'
+import { getMeta, setMeta } from './db/meta'
 import { getResourcePath } from './helpers'
 
 const isLinux = (): boolean => process.platform === 'linux'
