@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import type { AddProjectPayload, AddTaskPayload, UpdateProjectPayload, UpdateTaskPayload } from '../../shared/api'
 import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
@@ -62,6 +63,21 @@ export function useLastTimer() {
 		queryKey: queryKeys.lastTimer,
 		queryFn: () => window.api.getLastTimer(),
 	})
+}
+
+export function useTimerChangedSync() {
+	const queryClient = useQueryClient()
+	useEffect(
+		() =>
+			window.api.onTimerChanged(() => {
+				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
+				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
+				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+				queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+				queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+			}),
+		[queryClient],
+	)
 }
 
 export function useTimeEntries() {

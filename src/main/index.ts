@@ -4,7 +4,8 @@ import { APP_NAME, AUTOSTART_ARG } from '../shared/constants'
 import { formatDuration } from '../shared/formatDuration'
 import { IPC } from '../shared/ipc'
 import { initAutostart } from './autostart'
-import { createDb } from './db'
+import { createDb, type Db } from './db'
+import { getLastTimeEntry, getRecentTasks, startTimer, stopTimer } from './db/handlers/timer'
 import { registerHandlers } from './db/registerHandlers'
 import type { TimerChangeInfo } from './db/types'
 import { getResourcePath } from './helpers'
@@ -14,9 +15,11 @@ import { initUpdater } from './updater'
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
+let db: Db | null = null
 let isTimerActive = false
 let timerStartTime: string | null = null
 let timerTaskName: string | null = null
+let timerTaskId: number | null = null
 let trayTimerInterval: ReturnType<typeof setInterval> | null = null
 
 const gotTheLock = app.requestSingleInstanceLock()
@@ -48,23 +51,8 @@ if (!gotTheLock) {
 
 		initUpdater({ checkOnStart: app.isPackaged })
 
-		const db = createDb(join(app.getPath('userData'), 'tasks.db'))
-		registerHandlers(db, {
-			onTimerChange: (info: TimerChangeInfo) => {
-				if (info.active) {
-					isTimerActive = true
-					timerStartTime = info.startTime
-					timerTaskName = info.taskName
-					startTrayTimerUpdate()
-				} else {
-					isTimerActive = false
-					timerStartTime = null
-					timerTaskName = null
-					stopTrayTimerUpdate()
-				}
-				updateTrayIcon()
-			},
-		})
+		db = createDb(join(app.getPath('userData'), 'tasks.db'))
+		registerHandlers(db, { onTimerChange: handleTimerChange })
 		initAppImageDesktopEntry()
 		createWindow()
 		if (process.argv.includes(AUTOSTART_ARG)) mainWindow?.hide()
@@ -108,37 +96,94 @@ function stopTrayTimerUpdate() {
 	tray?.setToolTip(APP_NAME)
 }
 
+function handleTimerChange(info: TimerChangeInfo) {
+	if (info.active) {
+		isTimerActive = true
+		timerStartTime = info.startTime
+		timerTaskName = info.taskName
+		timerTaskId = info.taskId
+		startTrayTimerUpdate()
+	} else {
+		isTimerActive = false
+		timerStartTime = null
+		timerTaskName = null
+		timerTaskId = null
+		stopTrayTimerUpdate()
+	}
+	updateTrayIcon()
+	rebuildTrayMenu()
+	BrowserWindow.getAllWindows()[0]?.webContents.send(IPC.TIMER_CHANGED)
+}
+
+function showMainWindow() {
+	const win = BrowserWindow.getAllWindows()[0]
+	if (win) {
+		if (win.isMinimized()) win.restore()
+		win.show()
+		win.focus()
+	}
+}
+
+function continueLastTask() {
+	if (!db) return
+	const last = getLastTimeEntry(db)
+	if (last) startTimer(db, last.entry.taskId, handleTimerChange)
+}
+
+function stopActiveTimer() {
+	if (db && timerTaskId != null) stopTimer(db, timerTaskId, handleTimerChange)
+}
+
 function createTray() {
 	const icon = nativeImage.createFromPath(getTrayIcon())
 	tray = new Tray(icon)
 
-	const showWindow = () => {
-		const win = BrowserWindow.getAllWindows()[0]
-		if (win) {
-			if (win.isMinimized()) win.restore()
-			win.show()
-			win.focus()
+	tray.setToolTip(APP_NAME)
+	rebuildTrayMenu()
+	tray.on('click', showMainWindow)
+}
+
+function rebuildTrayMenu() {
+	if (!tray || !db) return
+	tray.setContextMenu(buildTrayMenu())
+}
+
+function buildTrayMenu(): Menu {
+	const template: Electron.MenuItemConstructorOptions[] = []
+
+	if (isTimerActive) {
+		template.push(
+			{ label: `⏱ ${timerTaskName ?? ''}`, enabled: false },
+			{ label: 'Stop timer', click: stopActiveTimer },
+		)
+	} else {
+		const last = db ? getLastTimeEntry(db) : null
+		if (last) template.push({ label: `Continue last task: ${last.task.name}`, click: continueLastTask })
+
+		const dbRef = db
+		if (dbRef) {
+			const recent = getRecentTasks(dbRef)
+			if (recent.length) {
+				template.push({
+					label: 'Start timer for…',
+					submenu: recent.map((t) => ({ label: t.name, click: () => startTimer(dbRef, t.id, handleTimerChange) })),
+				})
+			}
 		}
 	}
 
-	const contextMenu = Menu.buildFromTemplate([
-		{
-			label: 'Show Window',
-			click: showWindow,
-		},
-		{ type: 'separator' },
-		{
-			label: 'Quit',
-			click: () => {
-				isQuitting = true
-				app.quit()
-			},
-		},
-	])
+	template.push({ type: 'separator' }, { label: 'Show Window', click: showMainWindow }, { type: 'separator' })
 
-	tray.setToolTip(APP_NAME)
-	tray.setContextMenu(contextMenu)
-	tray.on('click', showWindow)
+	template.push({
+		label: isTimerActive ? 'Stop & Quit' : 'Quit',
+		click: () => {
+			stopActiveTimer()
+			isQuitting = true
+			app.quit()
+		},
+	})
+
+	return Menu.buildFromTemplate(template)
 }
 
 function updateTrayIcon() {

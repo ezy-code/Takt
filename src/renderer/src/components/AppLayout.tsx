@@ -4,7 +4,7 @@ import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
-import { useActiveTimer, useLastTimer } from '../api'
+import { useActiveTimer, useLastTimer, useTimerChangedSync } from '../api'
 import { ROUTES } from '../routes'
 import { TimerControl } from './TimerControl'
 import UpdateSection from './UpdateSection'
@@ -23,6 +23,7 @@ export default function AppLayout() {
 	const { t } = useTranslation()
 	const activeTimer = useActiveTimer().data
 	const { data: lastTimer } = useLastTimer()
+	useTimerChangedSync()
 	const [appImageDesktop, setAppImageDesktop] = useState<{ supported: boolean; enabled: boolean | null } | null>(null)
 
 	useEffect(() => {

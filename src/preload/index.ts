@@ -26,6 +26,11 @@ const api: Api = {
 		ipcRenderer.on(IPC.NAVIGATE_TO_TASK, listener)
 		return () => ipcRenderer.removeListener(IPC.NAVIGATE_TO_TASK, listener)
 	},
+	onTimerChanged: (callback: () => void) => {
+		const listener = () => callback()
+		ipcRenderer.on(IPC.TIMER_CHANGED, listener)
+		return () => ipcRenderer.removeListener(IPC.TIMER_CHANGED, listener)
+	},
 	toggleMyDayTask: (id: number) => ipcRenderer.invoke(IPC.TOGGLE_MY_DAY, id),
 	getMyDayTasks: () => ipcRenderer.invoke(IPC.GET_MY_DAY_TASKS),
 	clearMyDayDate: (id: number) => ipcRenderer.invoke(IPC.CLEAR_MY_DAY, id),

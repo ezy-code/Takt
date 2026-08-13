@@ -47,6 +47,7 @@ export const IPC = {
 	// notifications / navigation
 	SHOW_NOTIFICATION: 'show-notification',
 	NAVIGATE_TO_TASK: 'navigate-to-task',
+	TIMER_CHANGED: 'timer-changed',
 
 	// autostart
 	GET_AUTOSTART: 'get-autostart',

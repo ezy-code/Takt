@@ -132,6 +132,7 @@ export interface Api {
 	deleteTimeEntry: (id: number) => Promise<{ success: boolean }>
 	showNotification: (title: string, body: string) => Promise<void>
 	onNavigateToTask: (callback: (id: number) => void) => () => void
+	onTimerChanged: (callback: () => void) => () => void
 	toggleMyDayTask: (id: number) => Promise<{ success: boolean }>
 	getMyDayTasks: () => Promise<Task[]>
 	clearMyDayDate: (id: number) => Promise<{ success: boolean }>
