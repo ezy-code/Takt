@@ -8,7 +8,6 @@ import { CanvasBoard } from '../components/CanvasBoard'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { ManageStatusesModal } from '../components/ManageStatusesModal'
 import { TaskGrid } from '../components/TaskGrid'
-import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
 import { ROUTES } from '../routes'
 import { setLastTasksTab } from '../store/lastTasksTab'
 
@@ -22,7 +21,6 @@ function TasksPage() {
 	const { tab } = Route.useSearch()
 	const { data: tasks, isLoading } = useTasks()
 	const { data: projects } = useProjects()
-	useSyncActiveTimer()
 	const [projectFilter, setProjectFilter] = useState<string | null>(null)
 
 	const filteredTasks = (tasks ?? []).filter((t) => projectFilter == null || t.projectId === Number(projectFilter))

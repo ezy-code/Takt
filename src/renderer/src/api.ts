@@ -2,10 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AddProjectPayload, AddTaskPayload, UpdateProjectPayload, UpdateTaskPayload } from '../../shared/api'
 import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
-import { useTimerStore } from './store/timer'
 import type { StartTimerResult, Task } from './types'
 
-const queryKeys = {
+export const queryKeys = {
 	tasks: ['tasks'] as const,
 	myDayTasks: ['tasks', 'my-day'] as const,
 	taskLinks: ['task-links'] as const,
@@ -44,6 +43,18 @@ export function useActiveTimer() {
 		queryKey: queryKeys.activeTimer,
 		queryFn: () => window.api.getActiveTimer(),
 	})
+}
+
+export function useActiveTimerState(taskId?: number | null) {
+	const { data } = useActiveTimer()
+	const activeEntry = data?.entry ?? null
+	const isActiveForTask = taskId != null && activeEntry?.taskId === taskId
+	return {
+		activeTimer: data,
+		activeEntry,
+		isActiveForTask,
+		tickingStart: isActiveForTask ? (activeEntry?.startTime ?? null) : null,
+	}
 }
 
 export function useLastTimer() {
@@ -101,6 +112,7 @@ export function useDeleteTask() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
@@ -146,12 +158,10 @@ export function useDeleteTimeEntry() {
 
 export function useStartTimer() {
 	const queryClient = useQueryClient()
-	const setActive = useTimerStore((s) => s.setActive)
 	return useMutation({
 		mutationFn: (taskId: number) => window.api.startTimer(taskId),
 		onSuccess: (result: StartTimerResult) => {
 			if (!result.conflict) {
-				setActive(result.entry, result.task)
 				queryClient.setQueryData(queryKeys.activeTimer, { entry: result.entry, task: result.task })
 				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
@@ -166,11 +176,9 @@ export function useStartTimer() {
 
 export function useStopTimer() {
 	const queryClient = useQueryClient()
-	const setActive = useTimerStore((s) => s.setActive)
 	return useMutation({
 		mutationFn: (taskId: number) => window.api.stopTimer(taskId),
 		onSuccess: (result, taskId) => {
-			setActive(null, null)
 			if (result) {
 				const patchTask = (t: Task): Task => {
 					const total_duration = (t.total_duration ?? 0) + (result.entry.duration ?? 0)

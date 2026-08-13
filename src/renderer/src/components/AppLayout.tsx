@@ -4,8 +4,7 @@ import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
-import { useLastTimer } from '../api'
-import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
+import { useActiveTimer, useLastTimer } from '../api'
 import { ROUTES } from '../routes'
 import { TimerControl } from './TimerControl'
 import UpdateSection from './UpdateSection'
@@ -22,7 +21,7 @@ export default function AppLayout() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { t } = useTranslation()
-	const activeTimer = useSyncActiveTimer()
+	const activeTimer = useActiveTimer().data
 	const { data: lastTimer } = useLastTimer()
 	const [appImageDesktop, setAppImageDesktop] = useState<{ supported: boolean; enabled: boolean | null } | null>(null)
 

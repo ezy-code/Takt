@@ -1,9 +1,8 @@
 import { Chip } from '@mantine/core'
 import { IconPlayerPlayFilled, IconPlayerStopFilled } from '@tabler/icons-react'
-import { useStopTimer } from '../api'
+import { useActiveTimerState, useStopTimer } from '../api'
 import { formatDuration, useTimer } from '../hooks/useTimer'
 import { useTimerActions } from '../hooks/useTimerActions'
-import { useTimerStore } from '../store/timer'
 
 interface TimerControlProps {
 	taskId?: number | null
@@ -13,11 +12,11 @@ interface TimerControlProps {
 }
 
 export function TimerControl({ taskId, duration, startTime, isActiveEntry }: TimerControlProps) {
-	const { activeEntry } = useTimerStore()
+	const { activeEntry, isActiveForTask } = useActiveTimerState(taskId)
 	const stopTimer = useStopTimer()
 	const { start, switchingId } = useTimerActions()
 
-	const isActive = taskId != null && (isActiveEntry ?? activeEntry?.taskId === taskId)
+	const isActive = taskId != null && (isActiveEntry ?? isActiveForTask)
 	const tickingStart = isActive ? (activeEntry?.startTime ?? startTime ?? null) : null
 	const { elapsed } = useTimer(tickingStart)
 	const shown = formatDuration((duration ?? 0) + elapsed)

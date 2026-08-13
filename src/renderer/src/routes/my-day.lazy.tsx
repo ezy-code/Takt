@@ -4,14 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { useMyDayTasks, useTasks } from '../api'
 import { OtherTasksSection } from '../components/OtherTasksSection'
 import { TaskGrid } from '../components/TaskGrid'
-import { useSyncActiveTimer } from '../hooks/useSyncActiveTimer'
 import { ROUTES } from '../routes'
 
 function MyDayPage() {
 	const { t } = useTranslation()
 	const { data: myDayTasks } = useMyDayTasks()
 	const { data: allTasks } = useTasks()
-	useSyncActiveTimer()
 
 	const today = new Date().toISOString().split('T')[0]
 	const tasks = myDayTasks ?? []
