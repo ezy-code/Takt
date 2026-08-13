@@ -1,9 +1,13 @@
-.hljs {
-	background: var(--mantine-color-body) !important;
-}
+/* hljs github light/dark palettes are injected at runtime by MarkdownPreview
+   (Vite `?inline` imports of highlight.js/styles/github*.css), scoped via CSS
+   nesting under [data-mantine-color-scheme]. Only layout/overrides live here. */
 
 .markdown-preview {
 	line-height: 1.5;
+}
+.markdown-preview .hljs {
+	background: var(--mantine-color-body) !important;
+	border-radius: var(--mantine-radius-md);
 }
 .markdown-preview p {
 	margin: 0.35em 0;

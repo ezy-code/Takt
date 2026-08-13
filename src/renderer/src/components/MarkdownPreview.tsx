@@ -1,26 +1,19 @@
-import { Text, useMantineColorScheme } from '@mantine/core'
-import { useEffect } from 'react'
+import { Text } from '@mantine/core'
+import github from 'highlight.js/styles/github.css?inline'
+import githubDark from 'highlight.js/styles/github-dark.css?inline'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 
-// ponytail: theme css loaded via one shared <link>; singleton avoids duplicating links per card
-const hljsThemes = import.meta.glob('../../../../node_modules/highlight.js/styles/github{,-dark}.css', {
-	query: '?url',
-})
-let themeLink: HTMLLinkElement | null = null
-function applyHljsTheme(colorScheme: string) {
-	if (!themeLink) {
-		themeLink = document.createElement('link')
-		themeLink.rel = 'stylesheet'
-		document.head.appendChild(themeLink)
-	}
-	const loader =
-		colorScheme === 'light'
-			? hljsThemes['../../../../node_modules/highlight.js/styles/github.css']
-			: hljsThemes['../../../../node_modules/highlight.js/styles/github-dark.css']
-	loader().then((url) => {
-		if (themeLink) themeLink.href = url
-	})
+// hljs themes bundled by Vite, then scoped to .markdown-preview under the
+// active Mantine color scheme (CSS nesting) — both sheets ship in one <style>,
+// no runtime <link> swap, no import.meta.glob into node_modules, no hand-maintained palette.
+const scope = (css: string) => css.replace(/\.hljs/g, '.markdown-preview .hljs')
+const sheet = `[data-mantine-color-scheme="light"]{${scope(github)}}[data-mantine-color-scheme="dark"]{${scope(githubDark)}}`
+if (!document.querySelector('style[data-hljs]')) {
+	const el = document.createElement('style')
+	el.setAttribute('data-hljs', '')
+	el.textContent = sheet
+	document.head.appendChild(el)
 }
 
 export interface MarkdownPreviewProps {
@@ -30,10 +23,6 @@ export interface MarkdownPreviewProps {
 }
 
 export function MarkdownPreview({ content, maxLength, variant = 'preview' }: MarkdownPreviewProps) {
-	const { colorScheme } = useMantineColorScheme()
-	useEffect(() => {
-		applyHljsTheme(colorScheme)
-	}, [colorScheme])
 	const clean = content.replace(/<!-- luthor:meta .*? -->/g, '').trim()
 	const preview =
 		variant !== 'full' && maxLength != null && clean.length > maxLength ? clean.slice(0, maxLength) + '…' : clean
