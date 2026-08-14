@@ -32,6 +32,8 @@ export const ru: typeof en = {
 		allProjects: 'Все проекты',
 		filterByGroup: 'Фильтр по группе',
 		allGroups: 'Все группы',
+		filterByStatus: 'Фильтр по статусу',
+		allStatuses: 'Все статусы',
 		newGroup: 'Новая группа',
 		groupName: 'Название группы',
 		groupColor: 'Цвет группы',

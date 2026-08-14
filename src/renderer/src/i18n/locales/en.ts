@@ -30,6 +30,8 @@ export const en = {
 		allProjects: 'All projects',
 		filterByGroup: 'Filter by group',
 		allGroups: 'All groups',
+		filterByStatus: 'Filter by status',
+		allStatuses: 'All statuses',
 		newGroup: 'New Group',
 		groupName: 'Group name',
 		groupColor: 'Group color',

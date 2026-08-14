@@ -1,14 +1,15 @@
-import { Button, Container, Group, Select, Tabs, Text, Title } from '@mantine/core'
+import { Button, Container, Group, Tabs, Text, Title } from '@mantine/core'
 import { IconColumns, IconLayoutBoard, IconList, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useCanvasGroups, useProjects, useTasks } from '../api'
 import { CanvasBoard } from '../components/CanvasBoard'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { ManageGroupsModal } from '../components/ManageGroupsModal'
 import { ManageStatusesModal } from '../components/ManageStatusesModal'
+import { TaskFilters } from '../components/TaskFilters'
 import { TaskGrid } from '../components/TaskGrid'
+import { useTaskFilters } from '../hooks/useTaskFilters'
 import { ROUTES } from '../routes'
 import { setLastTasksTab } from '../store/lastTasksTab'
 
@@ -20,27 +21,7 @@ function TasksPage() {
 	const navigate = Route.useNavigate()
 	const { t } = useTranslation()
 	const { tab, focusGroup, focusTask } = Route.useSearch()
-	const { data: tasks, isLoading } = useTasks()
-	const { data: projects } = useProjects()
-	const { data: groups } = useCanvasGroups()
-	const [projectFilter, setProjectFilter] = useState<string | null>(null)
-	const [groupFilter, setGroupFilter] = useState<string | null>(null)
-
-	const filteredTasks = (tasks ?? []).filter(
-		(t) =>
-			(projectFilter == null || t.projectId === Number(projectFilter)) &&
-			(groupFilter == null || t.groupId === Number(groupFilter)),
-	)
-
-	const projectOptions = (projects ?? []).map((p) => ({
-		value: String(p.id),
-		label: p.name,
-	}))
-
-	const groupOptions = (groups ?? []).map((g) => ({
-		value: String(g.id),
-		label: g.name,
-	}))
+	const { isLoading, filteredTasks, projectFilter } = useTaskFilters()
 
 	useEffect(() => {
 		setLastTasksTab(tab ?? 'list')
@@ -65,40 +46,7 @@ function TasksPage() {
 				</Group>
 			</Group>
 
-			{(tab === 'list' || tab === 'canvas') && (
-				<Group mb='md'>
-					<Select
-						label={t('tasks.filterByProject')}
-						placeholder={t('tasks.allProjects')}
-						clearable
-						data={projectOptions}
-						value={projectFilter}
-						onChange={setProjectFilter}
-						w={280}
-					/>
-					<Select
-						label={t('tasks.filterByGroup')}
-						placeholder={t('tasks.allGroups')}
-						clearable
-						data={groupOptions}
-						value={groupFilter}
-						onChange={setGroupFilter}
-						w={280}
-					/>
-					{(projectFilter != null || groupFilter != null) && (
-						<Button
-							variant='default'
-							mt={22}
-							onClick={() => {
-								setProjectFilter(null)
-								setGroupFilter(null)
-							}}
-						>
-							{t('common.reset')}
-						</Button>
-					)}
-				</Group>
-			)}
+			{(tab === 'list' || tab === 'canvas') && <TaskFilters />}
 
 			<Tabs value={tab} onChange={(v) => navigate({ search: (prev) => ({ ...prev, tab: v ?? 'list' }) })}>
 				<Tabs.List mb='md'>
