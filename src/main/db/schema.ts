@@ -1,4 +1,5 @@
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
+import { relations } from 'drizzle-orm/_relations'
 import { integer, real, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 
 export const appMeta = sqliteTable('app_meta', {

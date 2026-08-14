@@ -1,12 +1,12 @@
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { DatabaseSync } from 'node:sqlite'
+import { drizzle } from 'drizzle-orm/node-sqlite'
+import { migrate } from 'drizzle-orm/node-sqlite/migrator'
 import { join } from 'path'
 
 export function createDb(dbPath: string) {
-	const sqlite = new Database(dbPath)
-	sqlite.pragma('journal_mode = WAL')
-	const db = drizzle(sqlite)
+	const sqlite = new DatabaseSync(dbPath)
+	sqlite.exec('PRAGMA journal_mode = WAL')
+	const db = drizzle({ client: sqlite })
 
 	migrate(db, { migrationsFolder: join(__dirname, '../../drizzle') })
 

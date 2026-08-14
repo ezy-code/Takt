@@ -17,7 +17,7 @@ Currently Linux only.
 
 ## Stack
 
-Electron · React · TypeScript · Mantine · Zustand · TanStack Router · SQLite (better-sqlite3 + Drizzle)
+Electron · React · TypeScript · Mantine · Zustand · TanStack Router · SQLite (node:sqlite + Drizzle)
 
 ## Screenshots
 
@@ -45,7 +45,7 @@ Electron · React · TypeScript · Mantine · Zustand · TanStack Router · SQLi
 
 ## Стек
 
-Electron · React · TypeScript · Mantine · Zustand · TanStack Router · SQLite (better-sqlite3 + Drizzle)
+Electron · React · TypeScript · Mantine · Zustand · TanStack Router · SQLite (node:sqlite + Drizzle)
 
 ## Скриншоты
 

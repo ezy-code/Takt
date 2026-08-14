@@ -11,9 +11,8 @@
 | **Mantine 9** | UI component library (React) |
 | **Zustand 5** | Lightweight state management |
 | **TanStack Router 1** | Type-safe client-side routing |
-| **better-sqlite3 12** | Synchronous SQLite3 driver (main process) |
-| **drizzle-orm 0.45** | SQLite ORM — schema + migrations |
-| **@electron/rebuild 4** | Rebuilds native modules after install |
+| **node:sqlite** | Synchronous SQLite3 driver, built into Node/Electron (main process) |
+| **drizzle-orm 1.0** | SQLite ORM — schema + migrations |
 | **pnpm 11** | Fast, disk-efficient package manager |
 
 ## Commands
@@ -23,7 +22,7 @@
 | `pnpm dev` | Start dev server with HMR |
 | `pnpm build` | Build for production |
 | `pnpm preview` | Preview production build |
-| `pnpm install` | Install deps + rebuild native modules (postinstall) |
+| `pnpm install` | Install deps (postinstall downloads Electron binary) |
 | `pnpm approve-builds` | Approve native module builds |
 | `pnpm db:generate` | Generate drizzle migration from schema |
 | `pnpm db:push` | Apply schema without generating a migration |
@@ -31,7 +30,7 @@
 
 ## Architecture
 
-- **Main process** — Node.js, has access to `better-sqlite3` and Electron APIs.
+- **Main process** — Node.js, has access to `node:sqlite` and Electron APIs.
   Exposes IPC handlers: tasks (`get/update/delete-task`), projects CRUD, statuses
   (CRUD + reorder + set default), timer (`get-active/start/stop`, single active
   session), time entries (list/summary/delete), my day toggles, autostart,

@@ -6,7 +6,7 @@ export default defineConfig({
 		build: {
 			externalizeDeps: true,
 			rollupOptions: {
-				external: ['electron', 'better-sqlite3'],
+				external: ['electron', 'node:sqlite'],
 			},
 		},
 	},
