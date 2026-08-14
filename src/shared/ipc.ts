@@ -27,6 +27,12 @@ export const IPC = {
 	ADD_TASK_LINK: 'add-task-link',
 	DELETE_TASK_LINK: 'delete-task-link',
 
+	// canvas groups
+	GET_CANVAS_GROUPS: 'get-canvas-groups',
+	ADD_CANVAS_GROUP: 'add-canvas-group',
+	UPDATE_CANVAS_GROUP: 'update-canvas-group',
+	DELETE_CANVAS_GROUP: 'delete-canvas-group',
+
 	// statuses
 	GET_STATUSES: 'get-statuses',
 	ADD_STATUS: 'add-status',

@@ -11,8 +11,10 @@ const rootRoute = createRootRoute({
 const tasksRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: ROUTES.TASKS,
-	validateSearch: (search: Record<string, unknown>) => ({
+	validateSearch: (search: Record<string, unknown>): { tab?: string; focusGroup?: number; focusTask?: number } => ({
 		tab: (search.tab as string) || 'list',
+		focusGroup: search.focusGroup != null ? Number(search.focusGroup) : undefined,
+		focusTask: search.focusTask != null ? Number(search.focusTask) : undefined,
 	}),
 }).lazy(() => import('./routes/tasks.lazy').then((d) => d.Route))
 

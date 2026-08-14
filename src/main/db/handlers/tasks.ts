@@ -30,6 +30,7 @@ export function registerTasksHandlers(db: Db) {
 				description_html,
 				statusId,
 				projectId,
+				groupId,
 				myDay,
 				reminderAt,
 				hourlyRate,
@@ -52,6 +53,7 @@ export function registerTasksHandlers(db: Db) {
 					descriptionHtml: description_html ?? '',
 					statusId: resolvedStatusId,
 					projectId,
+					groupId: groupId ?? null,
 					my_day_date,
 					reminderAt: reminderAt ?? null,
 					position: maxPos!.maxPos + 1,
@@ -74,32 +76,27 @@ export function registerTasksHandlers(db: Db) {
 				description_html,
 				statusId,
 				projectId,
+				groupId,
 				myDay,
 				reminderAt,
 				hourlyRate,
+				canvasX,
+				canvasY,
 			}: UpdateTaskPayload,
 		) => {
-			const updates: {
-				name: string
-				description: string
-				descriptionMarkdown: string
-				descriptionHtml: string
-				statusId?: number
-				projectId?: number
-				my_day_date?: string | null
-				reminderAt?: string | null
-				hourly_rate?: number | null
-			} = {
-				name,
-				description,
-				descriptionMarkdown: description_md ?? '',
-				descriptionHtml: description_html ?? '',
-			}
+			const updates: Partial<typeof tasks.$inferInsert> = {}
+			if (name !== undefined) updates.name = name
+			if (description !== undefined) updates.description = description
+			if (description_md !== undefined) updates.descriptionMarkdown = description_md
+			if (description_html !== undefined) updates.descriptionHtml = description_html
 			if (statusId !== undefined) updates.statusId = statusId
 			if (projectId !== undefined) updates.projectId = projectId
+			if (groupId !== undefined) updates.groupId = groupId
 			if (myDay !== undefined) updates.my_day_date = resolveMyDayDate(myDay)
 			if (reminderAt !== undefined) updates.reminderAt = reminderAt
 			if (hourlyRate !== undefined) updates.hourly_rate = hourlyRate
+			if (canvasX !== undefined) updates.canvasX = canvasX
+			if (canvasY !== undefined) updates.canvasY = canvasY
 			return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
 		},
 	)

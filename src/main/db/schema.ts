@@ -26,6 +26,17 @@ export const projects = sqliteTable('projects', {
 	hourly_rate: real('hourly_rate'),
 })
 
+export const canvasGroups = sqliteTable('canvas_groups', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	name: text('name').notNull(),
+	canvasX: real('canvas_x'),
+	canvasY: real('canvas_y'),
+	width: real('width').notNull().default(320),
+	height: real('height').notNull().default(220),
+	color: text('color').notNull().default('#868e96'),
+	created_at: text('created_at').default(sql`(datetime('now'))`),
+})
+
 export const tasks = sqliteTable('tasks', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
@@ -41,6 +52,7 @@ export const tasks = sqliteTable('tasks', {
 	canvasX: real('canvas_x'),
 	canvasY: real('canvas_y'),
 	hourly_rate: real('hourly_rate'),
+	groupId: integer('group_id').references(() => canvasGroups.id, { onDelete: 'set null' }),
 })
 
 export const taskLinks = sqliteTable(
@@ -79,6 +91,10 @@ export const projectsRelations = relations(projects, ({ many }) => ({
 	tasks: many(tasks),
 }))
 
+export const canvasGroupsRelations = relations(canvasGroups, ({ many }) => ({
+	tasks: many(tasks),
+}))
+
 export const tasksRelations = relations(tasks, ({ many, one }) => ({
 	status: one(statuses, {
 		fields: [tasks.statusId],
@@ -87,6 +103,10 @@ export const tasksRelations = relations(tasks, ({ many, one }) => ({
 	project: one(projects, {
 		fields: [tasks.projectId],
 		references: [projects.id],
+	}),
+	group: one(canvasGroups, {
+		fields: [tasks.groupId],
+		references: [canvasGroups.id],
 	}),
 	timeEntries: many(timeEntries),
 }))

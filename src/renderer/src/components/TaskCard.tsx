@@ -1,8 +1,8 @@
-import { ActionIcon, Anchor, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
-import { IconClock, IconDots, IconEye, IconFolder, IconPencil, IconTrash } from '@tabler/icons-react'
+import { ActionIcon, Anchor, Badge, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
+import { IconClock, IconDots, IconEye, IconFolder, IconLayoutBoard, IconPencil, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
+import { useCanvasGroups, useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
@@ -30,6 +30,7 @@ export function TaskCard({ task }: TaskCardProps) {
 	const clearMyDay = useClearMyDay()
 	const { data: statuses } = useStatuses()
 	const { data: projects } = useProjects()
+	const { data: groups } = useCanvasGroups()
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
 		message: t('tasks.deleteBody'),
@@ -37,6 +38,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
 	const status = statuses?.find((s) => s.id === task.statusId)
 	const project = projects?.find((p) => p.id === task.projectId)
+	const group = groups?.find((g) => g.id === task.groupId)
 	const myDayState = getMyDayState(task.my_day_date ?? null)
 	const isPast = task.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 
@@ -65,6 +67,12 @@ export function TaskCard({ task }: TaskCardProps) {
 				onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task.id) } })}
 			>
 				{t('common.edit')}
+			</Menu.Item>
+			<Menu.Item
+				leftSection={<IconLayoutBoard size={14} />}
+				onClick={() => navigate({ to: ROUTES.TASKS, search: { tab: 'canvas', focusTask: task.id } })}
+			>
+				{t('tasks.openOnCanvas')}
 			</Menu.Item>
 			<Menu.Divider />
 			<Menu.Item
@@ -135,6 +143,22 @@ export function TaskCard({ task }: TaskCardProps) {
 										/>
 										<Text size='xs'>{status.name}</Text>
 									</Group>
+								)}
+								{group && (
+									<Badge
+										component='button'
+										size='xs'
+										variant='light'
+										style={{
+											background: `${group.color}1a`,
+											color: group.color,
+											border: `1px solid ${group.color}66`,
+											cursor: 'pointer',
+										}}
+										onClick={() => navigate({ to: ROUTES.TASKS, search: { tab: 'canvas', focusGroup: group.id } })}
+									>
+										{group.name}
+									</Badge>
 								)}
 								{project && (
 									<Group

@@ -29,6 +29,7 @@ export interface Task {
 	description_html: string
 	statusId?: number | null
 	projectId?: number | null
+	groupId?: number | null
 	my_day_date?: string | null
 	reminder_at?: string | null
 	created_at: string
@@ -85,6 +86,20 @@ export interface TaskLink {
 	created_at?: string | null
 }
 
+export interface CanvasGroup {
+	id: number
+	name: string
+	canvasX?: number | null
+	canvasY?: number | null
+	width: number
+	height: number
+	color: string
+	created_at?: string | null
+}
+
+export type AddCanvasGroupPayload = Partial<Omit<CanvasGroup, 'id' | 'created_at'>>
+export type UpdateCanvasGroupPayload = Partial<Omit<CanvasGroup, 'created_at'>> & { id: number }
+
 export interface AddTaskPayload {
 	name: string
 	description: string
@@ -92,13 +107,16 @@ export interface AddTaskPayload {
 	description_html?: string
 	statusId?: number
 	projectId?: number
+	groupId?: number | null
 	myDay?: boolean | string | null
 	reminderAt?: string | null
 	hourlyRate?: number | null
 }
 
-export interface UpdateTaskPayload extends AddTaskPayload {
+export interface UpdateTaskPayload extends Partial<AddTaskPayload> {
 	id: number
+	canvasX?: number | null
+	canvasY?: number | null
 }
 
 export interface AddProjectPayload {
@@ -148,6 +166,10 @@ export interface Api {
 	getTaskLinks: () => Promise<TaskLink[]>
 	addTaskLink: (sourceTaskId: number, targetTaskId: number) => Promise<TaskLink>
 	deleteTaskLink: (id: number) => Promise<{ success: boolean }>
+	getCanvasGroups: () => Promise<CanvasGroup[]>
+	addCanvasGroup: (payload: AddCanvasGroupPayload) => Promise<CanvasGroup>
+	updateCanvasGroup: (payload: UpdateCanvasGroupPayload) => Promise<CanvasGroup>
+	deleteCanvasGroup: (id: number) => Promise<{ success: boolean }>
 	getAutostart: () => Promise<boolean>
 	setAutostart: (enabled: boolean) => Promise<void>
 	getAppImageDesktopEntryStatus: () => Promise<{ supported: boolean; enabled: boolean | null }>

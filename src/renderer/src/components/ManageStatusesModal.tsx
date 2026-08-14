@@ -130,7 +130,7 @@ export function ManageStatusesModal() {
 
 	return (
 		<>
-			<Button onClick={open} variant='light'>
+			<Button onClick={open} variant='outline'>
 				{t('statuses.manage')}
 			</Button>
 

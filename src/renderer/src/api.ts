@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import type { AddProjectPayload, AddTaskPayload, UpdateProjectPayload, UpdateTaskPayload } from '../../shared/api'
+import type {
+	AddCanvasGroupPayload,
+	AddProjectPayload,
+	AddTaskPayload,
+	UpdateCanvasGroupPayload,
+	UpdateProjectPayload,
+	UpdateTaskPayload,
+} from '../../shared/api'
 import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
 import type { StartTimerResult, Task } from './types'
@@ -9,6 +16,7 @@ export const queryKeys = {
 	tasks: ['tasks'] as const,
 	myDayTasks: ['tasks', 'my-day'] as const,
 	taskLinks: ['task-links'] as const,
+	canvasGroups: ['canvas-groups'] as const,
 	activeTimer: ['active-timer'] as const,
 	lastTimer: ['last-timer'] as const,
 	timeEntries: ['time-entries'] as const,
@@ -342,6 +350,45 @@ export function useDeleteTaskLink() {
 		mutationFn: (id: number) => window.api.deleteTaskLink(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
+		},
+	})
+}
+
+export function useCanvasGroups() {
+	return useQuery({
+		queryKey: queryKeys.canvasGroups,
+		queryFn: () => window.api.getCanvasGroups(),
+	})
+}
+
+export function useAddCanvasGroup() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (payload: AddCanvasGroupPayload) => window.api.addCanvasGroup(payload),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.canvasGroups })
+		},
+	})
+}
+
+export function useUpdateCanvasGroup() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (payload: UpdateCanvasGroupPayload) => window.api.updateCanvasGroup(payload),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.canvasGroups })
+		},
+	})
+}
+
+export function useDeleteCanvasGroup() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (id: number) => window.api.deleteCanvasGroup(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.canvasGroups })
+			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
 }

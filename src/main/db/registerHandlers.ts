@@ -1,3 +1,4 @@
+import { registerCanvasGroupsHandlers } from './handlers/canvas-groups'
 import { registerMetaHandlers } from './handlers/meta'
 import { registerMyDayHandlers } from './handlers/my-day'
 import { registerProjectsHandlers } from './handlers/projects'
@@ -18,6 +19,7 @@ export function registerHandlers(db: Db, opts: { onTimerChange?: OnTimerChange }
 	registerStatusesHandlers(db)
 	registerTasksHandlers(db)
 	registerTaskLinksHandlers(db)
+	registerCanvasGroupsHandlers(db)
 	registerTimerHandlers(db, opts.onTimerChange)
 	registerTimeEntriesHandlers(db)
 	registerMyDayHandlers(db)

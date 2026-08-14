@@ -1,9 +1,9 @@
-import { ActionIcon, Anchor, Group, Text } from '@mantine/core'
-import { IconPencil, IconTrash } from '@tabler/icons-react'
+import { ActionIcon, Anchor, Badge, Group, Text } from '@mantine/core'
+import { IconPencil, IconTrash, IconX } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
 import { useTranslation } from 'react-i18next'
-import { useDeleteTask, useStatuses } from '../api'
+import { useCanvasGroups, useDeleteTask, useStatuses, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
@@ -18,14 +18,28 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const deleteTask = useDeleteTask()
+	const updateTask = useUpdateTask()
 	const { data: statuses } = useStatuses()
+	const { data: groups } = useCanvasGroups()
 	const status = statuses?.find((s) => s.id === task.statusId)
+	const group = groups?.find((g) => g.id === task.groupId)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
 		message: t('tasks.deleteBody'),
 	})
 
 	const openEdit = () => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task.id) } })
+
+	const ungroup = () => {
+		if (!group) return
+		// grouped coords are relative to the group; convert to absolute before detaching
+		const abs = {
+			x: (task.canvasX ?? 0) + (group.canvasX ?? 0),
+			y: (task.canvasY ?? 0) + (group.canvasY ?? 0),
+		}
+		// single mutation to avoid inconsistent intermediate rebuild
+		updateTask.mutate({ id: task.id, groupId: null, canvasX: abs.x, canvasY: abs.y })
+	}
 
 	return (
 		<>
@@ -57,6 +71,31 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 						>
 							<MarkdownPreview content={task.description_md} maxLength={180} variant='preview' />
 						</div>
+					)}
+					{group && (
+						<Group gap={4} mt={6} wrap='nowrap'>
+							<Badge
+								size='xs'
+								variant='light'
+								style={{
+									background: `${group.color}1a`,
+									color: group.color,
+									border: `1px solid ${group.color}66`,
+								}}
+							>
+								{group.name}
+							</Badge>
+							<ActionIcon
+								className='nodrag'
+								size='xs'
+								variant='subtle'
+								color='gray'
+								onClick={ungroup}
+								aria-label={t('tasks.ungroup')}
+							>
+								<IconX size={10} />
+							</ActionIcon>
+						</Group>
 					)}
 					<Group justify='space-between' align='center' mt={10} gap='xs' wrap='nowrap'>
 						<TaskCostPill task={task} />

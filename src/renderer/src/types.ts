@@ -3,6 +3,7 @@ import type { Api } from '../../shared/api'
 export type {
 	ActiveTimerInfo,
 	Api,
+	CanvasGroup,
 	Project,
 	StartTimerResult,
 	Status,

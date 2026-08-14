@@ -49,6 +49,10 @@ const api: Api = {
 	addTaskLink: (sourceTaskId: number, targetTaskId: number) =>
 		ipcRenderer.invoke(IPC.ADD_TASK_LINK, sourceTaskId, targetTaskId),
 	deleteTaskLink: (id: number) => ipcRenderer.invoke(IPC.DELETE_TASK_LINK, id),
+	getCanvasGroups: () => ipcRenderer.invoke(IPC.GET_CANVAS_GROUPS),
+	addCanvasGroup: (payload) => ipcRenderer.invoke(IPC.ADD_CANVAS_GROUP, payload),
+	updateCanvasGroup: (payload) => ipcRenderer.invoke(IPC.UPDATE_CANVAS_GROUP, payload),
+	deleteCanvasGroup: (id: number) => ipcRenderer.invoke(IPC.DELETE_CANVAS_GROUP, id),
 	getAutostart: () => ipcRenderer.invoke(IPC.GET_AUTOSTART),
 	setAutostart: (enabled: boolean) => ipcRenderer.invoke(IPC.SET_AUTOSTART, enabled),
 	getAppImageDesktopEntryStatus: () => ipcRenderer.invoke(IPC.APPIMAGE_GET_DESKTOP_ENTRY_STATUS),
