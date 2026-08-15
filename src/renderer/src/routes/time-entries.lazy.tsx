@@ -1,7 +1,10 @@
 import { Button, Card, Container, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core'
+import { DateTimePicker } from '@mantine/dates'
+import { IconPencil } from '@tabler/icons-react'
 import { createLazyRoute } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useCurrency, useDeleteTimeEntry, useTimeSummary } from '../api'
+import { useCurrency, useDeleteTimeEntry, useTimeSummary, useUpdateTimeEntry } from '../api'
 import { useConfirmDelete } from '../components/ConfirmDeleteModal'
 import { CostInfo } from '../components/CostInfo'
 import { TimeEntryFilters } from '../components/TimeEntryFilters'
@@ -9,11 +12,100 @@ import { useTimeEntryFilters } from '../hooks/useTimeEntryFilters'
 import { formatDuration } from '../hooks/useTimer'
 import { ROUTES } from '../routes'
 
+const MIN_DURATION_MS = 60_000
+
+type DateTimeValidationError = 'range' | 'duration'
+
+interface EditableDateTimeCellProps {
+	value: string | null
+	minDate?: Date
+	maxDate?: Date
+	disabled?: boolean
+	emptyLabel?: string
+	invalidRangeLabel: string
+	minimumDurationLabel: string
+	onSave: (value: string) => void
+}
+
+function EditableDateTimeCell({
+	value,
+	minDate,
+	maxDate,
+	disabled = false,
+	emptyLabel,
+	invalidRangeLabel,
+	minimumDurationLabel,
+	onSave,
+}: EditableDateTimeCellProps) {
+	const [draft, setDraft] = useState<string | null>(value)
+	const [validationError, setValidationError] = useState<DateTimeValidationError | null>(null)
+
+	useEffect(() => {
+		setDraft(value)
+		setValidationError(null)
+	}, [value])
+
+	return (
+		<DateTimePicker
+			variant='unstyled'
+			size='sm'
+			disabled={disabled}
+			rightSection={disabled ? undefined : <IconPencil size={14} />}
+			rightSectionPointerEvents='none'
+			value={draft}
+			placeholder={emptyLabel}
+			valueFormat='DD.MM.YYYY HH:mm:ss'
+			withSeconds
+			error={
+				validationError === 'range'
+					? invalidRangeLabel
+					: validationError === 'duration'
+						? minimumDurationLabel
+						: undefined
+			}
+			onChange={(next) => {
+				setDraft(next)
+				setValidationError(null)
+			}}
+			submitButtonProps={{
+				onClick: () => {
+					if (!draft) return
+					const timestamp = new Date(draft).getTime()
+					let error: DateTimeValidationError | null = null
+					if (
+						!Number.isFinite(timestamp) ||
+						(minDate !== undefined && timestamp < minDate.getTime()) ||
+						(maxDate !== undefined && timestamp > maxDate.getTime())
+					) {
+						error = 'range'
+					} else if (
+						(minDate !== undefined && timestamp - minDate.getTime() < MIN_DURATION_MS) ||
+						(maxDate !== undefined && maxDate.getTime() - timestamp < MIN_DURATION_MS)
+					) {
+						error = 'duration'
+					}
+					if (error) {
+						setValidationError(error)
+						return
+					}
+					setValidationError(null)
+					onSave(new Date(draft).toISOString())
+				},
+			}}
+			timePickerProps={{
+				withDropdown: true,
+				popoverProps: { withinPortal: false },
+			}}
+		/>
+	)
+}
+
 function TimeEntriesPage() {
 	const { t } = useTranslation()
 	const { data: summary } = useTimeSummary()
 	const { data: currency = '$' } = useCurrency()
 	const deleteTimeEntry = useDeleteTimeEntry()
+	const updateTimeEntry = useUpdateTimeEntry()
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('timeEntries.deleteTitle'),
 		message: t('timeEntries.deleteBody'),
@@ -114,13 +206,30 @@ function TimeEntriesPage() {
 						{filteredEntries.map((entry) => (
 							<Table.Tr key={entry.id}>
 								<Table.Td fw={500}>{entry.taskName}</Table.Td>
-								<Table.Td>{new Date(entry.startTime).toLocaleString()}</Table.Td>
 								<Table.Td>
-									{entry.stopTime ? (
-										new Date(entry.stopTime).toLocaleString()
-									) : (
-										<Text c='green'>{t('timeEntries.inProgress')}</Text>
-									)}
+									<EditableDateTimeCell
+										value={entry.startTime}
+										disabled={entry.stopTime === null}
+										maxDate={entry.stopTime ? new Date(entry.stopTime) : undefined}
+										invalidRangeLabel={t('timeEntries.invalidRange')}
+										minimumDurationLabel={t('timeEntries.minimumDuration')}
+										onSave={(startTime) =>
+											updateTimeEntry.mutate({ id: entry.id, startTime, stopTime: entry.stopTime! })
+										}
+									/>
+								</Table.Td>
+								<Table.Td>
+									<EditableDateTimeCell
+										value={entry.stopTime}
+										disabled={entry.stopTime === null}
+										minDate={new Date(entry.startTime)}
+										emptyLabel={t('timeEntries.inProgress')}
+										invalidRangeLabel={t('timeEntries.invalidRange')}
+										minimumDurationLabel={t('timeEntries.minimumDuration')}
+										onSave={(stopTime) =>
+											updateTimeEntry.mutate({ id: entry.id, startTime: entry.startTime, stopTime })
+										}
+									/>
 								</Table.Td>
 								<Table.Td>
 									{entry.stopTime === null ? (

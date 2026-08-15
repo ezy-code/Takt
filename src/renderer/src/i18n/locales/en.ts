@@ -123,6 +123,8 @@ export const en = {
 		from: 'From',
 		to: 'To',
 		noMatch: 'No entries match the filters.',
+		invalidRange: 'End must not be earlier than start.',
+		minimumDuration: 'Time entry must be at least one minute long.',
 		deleteTitle: 'Delete time entry?',
 		deleteBody: 'This will permanently delete the time entry.',
 	},

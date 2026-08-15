@@ -7,6 +7,7 @@ import type {
 	UpdateCanvasGroupPayload,
 	UpdateProjectPayload,
 	UpdateTaskPayload,
+	UpdateTimeEntryPayload,
 } from '../../shared/api'
 import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
@@ -164,6 +165,21 @@ export function useClearMyDay() {
 			queryClient.invalidateQueries({ queryKey: ['tasks', id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+		},
+	})
+}
+
+export function useUpdateTimeEntry() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (payload: UpdateTimeEntryPayload) => window.api.updateTimeEntry(payload),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
+			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
+			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 		},
 	})
 }

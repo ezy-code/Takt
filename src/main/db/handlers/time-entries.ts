@@ -1,12 +1,12 @@
 import { desc, eq } from 'drizzle-orm'
 import { ipcMain } from 'electron'
+import type { UpdateTimeEntryPayload } from '../../../shared/api'
 import { costOf } from '../../../shared/cost'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
 import { getDefaultRate } from '../meta'
 import { resolveRate } from '../repositories/tasks'
 import { projects, tasks, timeEntries } from '../schema'
-
 export function registerTimeEntriesHandlers(db: Db) {
 	ipcMain.handle(IPC.GET_ALL_TIME_ENTRIES, () => {
 		const defaultRate = getDefaultRate()
@@ -26,7 +26,7 @@ export function registerTimeEntriesHandlers(db: Db) {
 			.from(timeEntries)
 			.leftJoin(tasks, eq(timeEntries.taskId, tasks.id))
 			.leftJoin(projects, eq(tasks.projectId, projects.id))
-			.orderBy(desc(timeEntries.startTime))
+			.orderBy(desc(timeEntries.id))
 			.all()
 			.map((e) => {
 				const { rate, rateSource } = resolveRate(e.task_rate, e.project_rate, defaultRate)
@@ -88,6 +88,40 @@ export function registerTimeEntriesHandlers(db: Db) {
 			totalCost,
 			todayCost,
 		}
+	})
+
+	ipcMain.handle(IPC.UPDATE_TIME_ENTRY, (_event, payload: UpdateTimeEntryPayload) => {
+		const existing = db.select().from(timeEntries).where(eq(timeEntries.id, payload.id)).get()
+		if (!existing) throw new Error('Time entry not found')
+		if (existing.stopTime === null) throw new Error('Cannot edit an active time entry')
+
+		const start = new Date(payload.startTime)
+		if (payload.stopTime === null) throw new Error('Time entry stop time is required')
+		const stop = new Date(payload.stopTime)
+		if (!Number.isFinite(start.getTime()) || !Number.isFinite(stop.getTime())) {
+			throw new Error('Invalid time entry date')
+		}
+		const durationMs = stop.getTime() - start.getTime()
+		if (durationMs < 0) {
+			throw new Error('Time entry stop time cannot be earlier than start time')
+		}
+		if (durationMs < 60_000) {
+			throw new Error('Time entry duration must be at least one minute')
+		}
+
+		const startTime = start.toISOString()
+		const stopTime = stop.toISOString()
+		const duration = Math.floor(durationMs / 1000)
+		const entry = db
+			.update(timeEntries)
+			.set({ startTime, stopTime, duration })
+			.where(eq(timeEntries.id, payload.id))
+			.returning()
+			.get()
+
+		if (!entry) throw new Error('Time entry update failed')
+
+		return entry
 	})
 
 	ipcMain.handle(IPC.DELETE_TIME_ENTRY, (_event, id: number) => {

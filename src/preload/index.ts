@@ -19,6 +19,7 @@ const api: Api = {
 	stopTimer: (taskId: number) => ipcRenderer.invoke(IPC.STOP_TIMER, taskId),
 	getAllTimeEntries: () => ipcRenderer.invoke(IPC.GET_ALL_TIME_ENTRIES),
 	getTimeSummary: () => ipcRenderer.invoke(IPC.GET_TIME_SUMMARY),
+	updateTimeEntry: (payload) => ipcRenderer.invoke(IPC.UPDATE_TIME_ENTRY, payload),
 	deleteTimeEntry: (id: number) => ipcRenderer.invoke(IPC.DELETE_TIME_ENTRY, id),
 	showNotification: (title, body) => ipcRenderer.invoke(IPC.SHOW_NOTIFICATION, title, body),
 	onNavigateToTask: (callback: (id: number) => void) => {

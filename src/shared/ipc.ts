@@ -48,6 +48,7 @@ export const IPC = {
 	STOP_TIMER: 'stop-timer',
 	GET_ALL_TIME_ENTRIES: 'get-all-time-entries',
 	GET_TIME_SUMMARY: 'get-time-summary',
+	UPDATE_TIME_ENTRY: 'update-time-entry',
 	DELETE_TIME_ENTRY: 'delete-time-entry',
 
 	// notifications / navigation

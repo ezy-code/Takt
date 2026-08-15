@@ -60,6 +60,12 @@ export interface TimeEntryWithTask extends TimeEntry {
 	cost?: number
 }
 
+export interface UpdateTimeEntryPayload {
+	id: number
+	startTime: string
+	stopTime: string
+}
+
 export interface TimeSummary {
 	totalSessions: number
 	totalDuration: number
@@ -147,6 +153,7 @@ export interface Api {
 	stopTimer: (taskId: number) => Promise<StopTimerResult>
 	getAllTimeEntries: () => Promise<TimeEntryWithTask[]>
 	getTimeSummary: () => Promise<TimeSummary>
+	updateTimeEntry: (payload: UpdateTimeEntryPayload) => Promise<TimeEntry>
 	deleteTimeEntry: (id: number) => Promise<{ success: boolean }>
 	showNotification: (title: string, body: string) => Promise<void>
 	onNavigateToTask: (callback: (id: number) => void) => () => void
