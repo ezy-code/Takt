@@ -2,17 +2,22 @@ import type { Task } from '../../../shared/api'
 import { useCanvasGroups, useProjects, useStatuses, useTasks } from '../api'
 import { useTaskFiltersStore } from '../store/taskFilters'
 
-export function filterTasks(
-	tasks: Task[],
-	projectFilter: string | null,
-	groupFilter: string | null,
-	statusFilter: string | null,
-): Task[] {
+type TaskFilters = {
+	projectId: number | null
+	groupId: number | null
+	statusId: number | null
+}
+
+function toId(value: string | null): number | null {
+	return value == null ? null : Number(value)
+}
+
+function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
 	return tasks.filter(
-		(t) =>
-			(projectFilter == null || t.projectId === Number(projectFilter)) &&
-			(groupFilter == null || t.groupId === Number(groupFilter)) &&
-			(statusFilter == null || t.statusId === Number(statusFilter)),
+		(task) =>
+			(filters.projectId == null || task.projectId === filters.projectId) &&
+			(filters.groupId == null || task.groupId === filters.groupId) &&
+			(filters.statusId == null || task.statusId === filters.statusId),
 	)
 }
 
@@ -24,24 +29,26 @@ export function useTaskFilters() {
 	const { projectFilter, groupFilter, statusFilter, setProjectFilter, setGroupFilter, setStatusFilter, reset } =
 		useTaskFiltersStore()
 
-	const tasksList = tasks ?? []
+	const allTasks = tasks ?? []
+	const filters: TaskFilters = {
+		projectId: toId(projectFilter),
+		groupId: toId(groupFilter),
+		statusId: toId(statusFilter),
+	}
 
-	const projectOptions = (projects ?? []).map((p) => {
-		const value = String(p.id)
-		const disabled = value !== projectFilter && filterTasks(tasksList, value, groupFilter, statusFilter).length === 0
-		return { value, label: p.name, disabled }
-	})
-	const groupOptions = (groups ?? []).map((g) => {
-		const value = String(g.id)
-		const disabled = value !== groupFilter && filterTasks(tasksList, projectFilter, value, statusFilter).length === 0
-		return { value, label: g.name, disabled }
-	})
-	const statusOptions = (statuses ?? []).map((s) => {
-		const value = String(s.id)
-		const disabled = value !== statusFilter && filterTasks(tasksList, projectFilter, groupFilter, value).length === 0
-		return { value, label: s.name, disabled }
-	})
-	const filteredTasks = filterTasks(tasksList, projectFilter, groupFilter, statusFilter)
+	const projectOptions = (projects ?? []).map((project) => ({
+		value: String(project.id),
+		label: project.name,
+	}))
+	const groupOptions = (groups ?? []).map((group) => ({
+		value: String(group.id),
+		label: group.name,
+	}))
+	const statusOptions = (statuses ?? []).map((status) => ({
+		value: String(status.id),
+		label: status.name,
+	}))
+	const filteredTasks = filterTasks(allTasks, filters)
 
 	return {
 		isLoading,
