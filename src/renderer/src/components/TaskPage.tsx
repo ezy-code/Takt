@@ -403,6 +403,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 						>
 							{mode !== 'create' && task && <TimerControl taskId={task.id} duration={task.total_duration} />}
 							<SegmentedControl
+								color='blue'
 								value={entityType}
 								onChange={(v) => handleTypeChange(v as EntityType)}
 								data={[
