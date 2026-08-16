@@ -48,6 +48,8 @@ export const en = {
 		addChild: 'Add child',
 		childrenEmpty: 'No children yet.',
 		parentSearchPlaceholder: 'Select parent',
+		attachExisting: 'Attach existing',
+		attach: 'Attach',
 		cycleError: 'This parent would create a cycle.',
 	},
 	tasks: {

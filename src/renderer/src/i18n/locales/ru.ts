@@ -50,6 +50,8 @@ export const ru: typeof en = {
 		addChild: 'Добавить дочерний элемент',
 		childrenEmpty: 'Дочерних элементов пока нет.',
 		parentSearchPlaceholder: 'Выберите родителя',
+		attachExisting: 'Прикрепить существующий',
+		attach: 'Прикрепить',
 		cycleError: 'Этот родитель создаст цикл.',
 	},
 	tasks: {

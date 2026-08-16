@@ -123,6 +123,8 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	const entityLabel = t(`entity.${entityType}`)
 	const [showTimeEntries, setShowTimeEntries] = useState(false)
 	const [createChildOpen, setCreateChildOpen] = useState(false)
+	const [addChildMode, setAddChildMode] = useState<'create' | 'attach'>('create')
+	const [attachChildId, setAttachChildId] = useState<string | null>(null)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
 		message: t('tasks.deleteBody'),
@@ -586,17 +588,53 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 			{task && (
 				<Modal
 					opened={createChildOpen}
-					onClose={() => setCreateChildOpen(false)}
+					onClose={() => {
+						setCreateChildOpen(false)
+						setAddChildMode('create')
+						setAttachChildId(null)
+					}}
 					title={t('entities.addChild')}
 					size='xl'
 					centered
 				>
-					<TaskPage
-						mode='create'
-						initialParentId={task.id}
-						onCancel={() => setCreateChildOpen(false)}
-						onCreated={() => setCreateChildOpen(false)}
+					<SegmentedControl
+						value={addChildMode}
+						onChange={(v) => setAddChildMode(v as 'create' | 'attach')}
+						data={[
+							{ value: 'create', label: t('common.create') },
+							{ value: 'attach', label: t('entities.attachExisting') },
+						]}
 					/>
+					{addChildMode === 'create' ? (
+						<TaskPage
+							mode='create'
+							initialParentId={task.id}
+							onCancel={() => setCreateChildOpen(false)}
+							onCreated={() => setCreateChildOpen(false)}
+						/>
+					) : (
+						<Group mt='md'>
+							<Select
+								flex={1}
+								searchable
+								placeholder={t('entities.searchPlaceholder')}
+								data={parentOptions}
+								value={attachChildId}
+								onChange={setAttachChildId}
+							/>
+							<Button
+								disabled={attachChildId == null}
+								onClick={() => {
+									updateTask.mutate({ id: Number(attachChildId), parentId: task.id })
+									setCreateChildOpen(false)
+									setAddChildMode('create')
+									setAttachChildId(null)
+								}}
+							>
+								{t('entities.attach')}
+							</Button>
+						</Group>
+					)}
 				</Modal>
 			)}
 
