@@ -4,6 +4,7 @@ export type {
 	ActiveTimerInfo,
 	Api,
 	CanvasGroup,
+	EntityType,
 	Project,
 	StartTimerResult,
 	Status,

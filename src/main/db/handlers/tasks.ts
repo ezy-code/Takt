@@ -34,6 +34,7 @@ export function registerTasksHandlers(db: Db) {
 				myDay,
 				reminderAt,
 				hourlyRate,
+				entityType,
 			}: AddTaskPayload,
 		) => {
 			const resolvedStatusId = statusId ?? getDefaultStatusId(db)
@@ -58,6 +59,7 @@ export function registerTasksHandlers(db: Db) {
 					reminderAt: reminderAt ?? null,
 					position: maxPos!.maxPos + 1,
 					hourly_rate: hourlyRate ?? null,
+					entityType: entityType ?? 'task',
 				})
 				.returning()
 				.get()
@@ -82,6 +84,7 @@ export function registerTasksHandlers(db: Db) {
 				hourlyRate,
 				canvasX,
 				canvasY,
+				entityType,
 			}: UpdateTaskPayload,
 		) => {
 			const updates: Partial<typeof tasks.$inferInsert> = {}
@@ -97,6 +100,7 @@ export function registerTasksHandlers(db: Db) {
 			if (hourlyRate !== undefined) updates.hourly_rate = hourlyRate
 			if (canvasX !== undefined) updates.canvasX = canvasX
 			if (canvasY !== undefined) updates.canvasY = canvasY
+			if (entityType !== undefined) updates.entityType = entityType
 			return db.update(tasks).set(updates).where(eq(tasks.id, id)).returning().get()
 		},
 	)

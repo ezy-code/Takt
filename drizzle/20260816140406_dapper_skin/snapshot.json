@@ -1,9 +1,9 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "a47fa42c-73fc-47a5-975f-1999bd8a5a98",
+  "id": "ecc19260-3785-4d57-9d9f-7eda9bc54168",
   "prevIds": [
-    "da3d6d7f-061d-4f4e-9dec-8da4b28f91df"
+    "a47fa42c-73fc-47a5-975f-1999bd8a5a98"
   ],
   "ddl": [
     {
@@ -451,6 +451,16 @@
       "default": null,
       "generated": null,
       "name": "group_id",
+      "entityType": "columns",
+      "table": "tasks"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'task'",
+      "generated": null,
+      "name": "entity_type",
       "entityType": "columns",
       "table": "tasks"
     },

@@ -53,6 +53,7 @@ export const tasks = sqliteTable('tasks', {
 	canvasY: real('canvas_y'),
 	hourly_rate: real('hourly_rate'),
 	groupId: integer('group_id').references(() => canvasGroups.id, { onDelete: 'set null' }),
+	entityType: text('entity_type').notNull().default('task'),
 })
 
 export const taskLinks = sqliteTable(

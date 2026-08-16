@@ -102,6 +102,9 @@ export function TaskCard({ task }: TaskCardProps) {
 										>
 											{task.name}
 										</Anchor>
+										<Badge size='xs' variant='outline' color='gray'>
+											{t(`entity.${task.entityType ?? 'task'}`)}
+										</Badge>
 									</Group>
 								</div>
 								<Group gap='xs' wrap='nowrap' align='center'>

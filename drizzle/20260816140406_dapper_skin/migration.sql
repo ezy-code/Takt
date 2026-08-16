@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `entity_type` text DEFAULT 'task' NOT NULL;

@@ -11,6 +11,8 @@ export interface Status {
 
 export type RateSource = 'task' | 'project' | 'default'
 
+export type EntityType = 'task' | 'note' | 'project'
+
 export interface Project {
 	id: number
 	name: string
@@ -30,6 +32,7 @@ export interface Task {
 	statusId?: number | null
 	projectId?: number | null
 	groupId?: number | null
+	entityType?: EntityType
 	my_day_date?: string | null
 	reminder_at?: string | null
 	created_at: string
@@ -117,6 +120,7 @@ export interface AddTaskPayload {
 	myDay?: boolean | string | null
 	reminderAt?: string | null
 	hourlyRate?: number | null
+	entityType?: EntityType
 }
 
 export interface UpdateTaskPayload extends Partial<AddTaskPayload> {

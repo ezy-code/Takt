@@ -1,5 +1,17 @@
 import type { ExtensiveEditorRef } from '@lyfie/luthor'
-import { Button, Container, Group, Modal, NumberInput, Select, Stack, Text, TextInput, Title } from '@mantine/core'
+import {
+	Button,
+	Container,
+	Group,
+	Modal,
+	NumberInput,
+	SegmentedControl,
+	Select,
+	Stack,
+	Text,
+	TextInput,
+	Title,
+} from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
 import { useMediaQuery } from '@mantine/hooks'
 import { IconClock, IconCoin, IconFolder, IconTrash } from '@tabler/icons-react'
@@ -20,7 +32,7 @@ import {
 } from '../api'
 import { ROUTES } from '../routes'
 import { lastTasksTab } from '../store/lastTasksTab'
-import type { Task } from '../types'
+import type { EntityType, Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
@@ -43,6 +55,7 @@ interface TaskPageProps {
 	mode: 'view' | 'edit' | 'create'
 	onCreated?: (task: Task) => void
 	onCancel?: () => void
+	initialEntityType?: EntityType
 }
 
 interface TaskSnapshot {
@@ -53,6 +66,7 @@ interface TaskSnapshot {
 	reminderAt: string | null
 	description: string
 	hourlyRate: number | null
+	entityType: EntityType
 }
 
 const FIELD_TEXT_STYLE = {
@@ -65,7 +79,7 @@ const FIELD_TEXT_STYLE = {
 	cursor: 'pointer',
 } as const
 
-export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
+export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: TaskPageProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
@@ -88,6 +102,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 	const [addToMyDay, setAddToMyDay] = useState(false)
 	const [reminderAt, setReminderAt] = useState<string | null>(null)
 	const [hourlyRate, setHourlyRate] = useState<number | string>('')
+	const [entityType, setEntityType] = useState<EntityType>('task')
 	const [showTimeEntries, setShowTimeEntries] = useState(false)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
@@ -98,6 +113,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 	const savedRef = useRef(false)
 
 	useEffect(() => {
+		if (task) setEntityType(task.entityType ?? 'task')
 		if (isEdit && task) {
 			setStatusId(task.statusId ?? null)
 			setProjectId(task.projectId ?? null)
@@ -111,6 +127,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 			setAddToMyDay(false)
 			setReminderAt(null)
 			setHourlyRate('')
+			setEntityType(initialEntityType ?? 'task')
 		}
 	}, [isEdit, mode, task, statuses])
 
@@ -139,6 +156,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 				myDay: addToMyDay,
 				reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
 				hourlyRate: hourlyRate === '' ? null : Number(hourlyRate),
+				entityType,
 			}
 			if (isEdit) {
 				await updateTask.mutateAsync({ id: id!, ...payload })
@@ -176,6 +194,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 						: null
 					: null,
 				hourlyRate: isEdit ? (currentTask!.hourly_rate ?? null) : null,
+				entityType: isEdit ? (currentTask!.entityType ?? 'task') : (initialEntityType ?? 'task'),
 				description: editorRef.current?.getJSON() ?? '',
 			}
 		}, 150)
@@ -192,6 +211,7 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 			addToMyDay !== s.addToMyDay ||
 			reminderAt !== s.reminderAt ||
 			(hourlyRate === '' ? null : Number(hourlyRate)) !== s.hourlyRate ||
+			entityType !== s.entityType ||
 			(editorRef.current?.getJSON() ?? '') !== s.description
 		)
 	}
@@ -235,6 +255,11 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 		if (onCancel) onCancel()
 		else if (isEdit) navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
 		else navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })
+	}
+
+	const handleTypeChange = (next: EntityType) => {
+		setEntityType(next)
+		if (mode === 'view' && task) updateTask.mutate({ id: task.id, entityType: next })
 	}
 
 	return (
@@ -339,6 +364,15 @@ export function TaskPage({ id, mode, onCreated, onCancel }: TaskPageProps) {
 							}}
 						>
 							{mode !== 'create' && task && <TimerControl taskId={task.id} duration={task.total_duration} />}
+							<SegmentedControl
+								value={entityType}
+								onChange={(v) => handleTypeChange(v as EntityType)}
+								data={[
+									{ value: 'task', label: t('entity.task') },
+									{ value: 'note', label: t('entity.note') },
+									{ value: 'project', label: t('entity.project') },
+								]}
+							/>
 							{mode === 'view' && task && <TaskCostPill task={task} />}
 							{mode !== 'view' && (
 								<PropertyPill leading={<IconCoin size={14} />}>

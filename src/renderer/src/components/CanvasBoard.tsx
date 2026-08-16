@@ -313,6 +313,7 @@ function CanvasInner({
 			<Modal opened={createOpen} onClose={() => setCreateOpen(false)} title={t('tasks.newTitle')} size='xl' centered>
 				<TaskPage
 					mode='create'
+					initialEntityType='note'
 					onCancel={() => setCreateOpen(false)}
 					onCreated={(task) => {
 						updateCanvasPosition.mutate({ id: task.id, x: NEW_NOTE_POS.x, y: NEW_NOTE_POS.y })

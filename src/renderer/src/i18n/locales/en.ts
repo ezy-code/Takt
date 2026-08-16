@@ -23,6 +23,11 @@ export const en = {
 		later: 'Later',
 		discard: 'Discard',
 	},
+	entity: {
+		task: 'Task',
+		note: 'Note',
+		project: 'Project',
+	},
 	tasks: {
 		title: 'Tasks',
 		newTask: 'New Task',

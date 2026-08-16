@@ -59,6 +59,9 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 					<Anchor component='button' className='nodrag' fw={600} underline='never' onClick={openEdit}>
 						{task.name}
 					</Anchor>
+					<Badge size='xs' variant='outline' color='gray' ml={6}>
+						{t(`entity.${task.entityType ?? 'task'}`)}
+					</Badge>
 					{task.description_md && (
 						<div
 							style={{

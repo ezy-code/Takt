@@ -25,6 +25,11 @@ export const ru: typeof en = {
 		later: 'Позже',
 		discard: 'Отменить изменения',
 	},
+	entity: {
+		task: 'Задача',
+		note: 'Заметка',
+		project: 'Проект',
+	},
 	tasks: {
 		title: 'Задачи',
 		newTask: 'Новая задача',

@@ -42,6 +42,7 @@ const taskRateSelect = {
 	canvasY: tasks.canvasY,
 	groupId: tasks.groupId,
 	hourly_rate: tasks.hourly_rate,
+	entityType: tasks.entityType,
 	project_rate: projects.hourly_rate,
 	total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 }
