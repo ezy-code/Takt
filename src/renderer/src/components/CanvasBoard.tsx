@@ -7,6 +7,7 @@ import {
 	BackgroundVariant,
 	Controls,
 	type Edge,
+	MarkerType,
 	type NodeMouseHandler,
 	type OnConnect,
 	type OnEdgesChange,
@@ -92,6 +93,35 @@ const taskIdOf = (nodeId: string) => Number(nodeId.replace('task-', ''))
 const groupIdOf = (nodeId: string) => Number(nodeId.replace('group-', ''))
 const edgeLinkId = (edge: Edge) => Number(edge.id.replace('link-', ''))
 
+function buildEdges(tasks: Task[], links: { id: number; sourceTaskId: number; targetTaskId: number }[]): Edge[] {
+	const taskIds = new Set(tasks.map((task) => task.id))
+	const parentEdges = tasks.flatMap((task) =>
+		task.parentId != null && taskIds.has(task.parentId)
+			? [
+					{
+						id: `parent-${task.parentId}-${task.id}`,
+						source: `task-${task.parentId}`,
+						target: `task-${task.id}`,
+						type: 'smoothstep',
+						markerEnd: { type: MarkerType.ArrowClosed },
+						style: { stroke: 'var(--mantine-color-blue-6)', strokeWidth: 2 },
+						deletable: false,
+						reconnectable: false,
+					},
+				]
+			: [],
+	)
+	const relatedEdges = links
+		.filter((link) => taskIds.has(link.sourceTaskId) && taskIds.has(link.targetTaskId))
+		.map((link) => ({
+			id: `link-${link.id}`,
+			source: `task-${link.sourceTaskId}`,
+			target: `task-${link.targetTaskId}`,
+			style: { stroke: 'var(--mantine-color-gray-6)', strokeDasharray: '6 4' },
+		}))
+	return [...parentEdges, ...relatedEdges]
+}
+
 // ponytail: O(n*m) AABB intersect, sufficient for typical canvas sizes.
 function findGroupAt(nodes: CanvasNode[], node: CanvasNode): CanvasGroupNodeType | null {
 	const w = node.measured?.width ?? 0
@@ -155,16 +185,8 @@ function CanvasInner({
 	}, [tasks, groups, setNodes])
 
 	useEffect(() => {
-		const nodeIds = new Set(nodes.map((n) => n.id))
-		const next = (links ?? [])
-			.filter((l) => nodeIds.has(`task-${l.sourceTaskId}`) && nodeIds.has(`task-${l.targetTaskId}`))
-			.map((l) => ({
-				id: `link-${l.id}`,
-				source: `task-${l.sourceTaskId}`,
-				target: `task-${l.targetTaskId}`,
-			}))
-		setEdges(next)
-	}, [links, nodes, setEdges])
+		setEdges(buildEdges(tasks, links ?? []))
+	}, [links, tasks, setEdges])
 
 	const openCreateModal = () => {
 		setCreateOpen(true)
@@ -248,10 +270,11 @@ function CanvasInner({
 	}
 
 	const handleEdgesDelete = (deleted: Edge[]) => {
-		deleted.forEach((edge) => deleteTaskLink.mutate(edgeLinkId(edge)))
+		deleted.filter((edge) => edge.id.startsWith('link-')).forEach((edge) => deleteTaskLink.mutate(edgeLinkId(edge)))
 	}
 
 	const handleReconnect: OnReconnect = (_oldEdge, newConnection) => {
+		if (!_oldEdge.id.startsWith('link-')) return
 		if (!newConnection.source || !newConnection.target || newConnection.source === newConnection.target) return
 		const old = edges.find((e) => e.id === _oldEdge.id)
 		if (!old) return
