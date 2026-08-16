@@ -3,7 +3,13 @@ import { ipcMain } from 'electron'
 import type { AddTaskPayload, UpdateTaskPayload } from '../../../shared/api'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
-import { getEntityAncestors, getEntityChildren, getTasksWithRate, getTaskWithRate } from '../repositories/tasks'
+import {
+	getEntityAncestors,
+	getEntityChildren,
+	getTasksWithRate,
+	getTaskWithRate,
+	searchEntities,
+} from '../repositories/tasks'
 import { taskLinks, tasks, timeEntries } from '../schema'
 import { getDefaultStatusId } from './statuses'
 
@@ -141,6 +147,7 @@ export function registerTasksHandlers(db: Db) {
 
 	ipcMain.handle(IPC.GET_ENTITY_CHILDREN, (_event, parentId: number) => getEntityChildren(db, parentId))
 	ipcMain.handle(IPC.GET_ENTITY_ANCESTORS, (_event, entityId: number) => getEntityAncestors(db, entityId))
+	ipcMain.handle(IPC.SEARCH_ENTITIES, (_event, query: unknown, limit?: unknown) => searchEntities(db, query, limit))
 
 	ipcMain.handle(IPC.DELETE_TASK, (_event, id: number) => {
 		db.delete(timeEntries).where(eq(timeEntries.taskId, id)).run()

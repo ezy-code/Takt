@@ -94,6 +94,14 @@ export interface EntitySummary {
 	entityType?: EntityType
 }
 
+export interface EntitySearchResult {
+	id: number
+	name: string
+	entityType: EntityType
+	parentName: string | null
+	snippet: string | null
+}
+
 export interface RelatedEntity extends Task {
 	linkId: number
 }
@@ -167,6 +175,7 @@ export interface Api {
 	getTaskRelatedItems: (taskId: number) => Promise<RelatedEntity[]>
 	getEntityChildren: (parentId: number) => Promise<Task[]>
 	getEntityAncestors: (entityId: number) => Promise<EntitySummary[]>
+	searchEntities: (query: string, limit?: number) => Promise<EntitySearchResult[]>
 	getCanvasGroups: () => Promise<CanvasGroup[]>
 	addCanvasGroup: (payload: AddCanvasGroupPayload) => Promise<CanvasGroup>
 	updateCanvasGroup: (payload: UpdateCanvasGroupPayload) => Promise<CanvasGroup>

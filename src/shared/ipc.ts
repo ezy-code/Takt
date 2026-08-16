@@ -23,6 +23,7 @@ export const IPC = {
 	GET_TASK_RELATED_ITEMS: 'get-task-related-items',
 	GET_ENTITY_CHILDREN: 'get-entity-children',
 	GET_ENTITY_ANCESTORS: 'get-entity-ancestors',
+	SEARCH_ENTITIES: 'search-entities',
 
 	// canvas groups
 	GET_CANVAS_GROUPS: 'get-canvas-groups',

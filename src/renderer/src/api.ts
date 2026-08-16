@@ -24,6 +24,7 @@ export const queryKeys = {
 	statuses: ['statuses'] as const,
 	entityChildren: (parentId: number) => ['entity-children', parentId] as const,
 	entityAncestors: (entityId: number) => ['entity-ancestors', entityId] as const,
+	entitySearch: (query: string, limit: number) => ['entity-search', query, limit] as const,
 }
 
 export function useTasks() {
@@ -109,6 +110,7 @@ export function useAddTask() {
 		mutationFn: (payload: AddTaskPayload) => window.api.addTask(payload),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: ['entity-search'] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
 			queryClient.invalidateQueries({ queryKey: ['entity-ancestors'] })
@@ -125,6 +127,7 @@ export function useUpdateTask() {
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: ['entity-search'] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
@@ -140,6 +143,7 @@ export function useDeleteTask() {
 		mutationFn: (id: number) => window.api.deleteTask(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: ['entity-search'] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
@@ -378,6 +382,16 @@ export function useEntityAncestors(entityId: number) {
 		queryKey: queryKeys.entityAncestors(entityId),
 		queryFn: () => window.api.getEntityAncestors(entityId),
 		enabled: !!entityId,
+	})
+}
+
+export function useEntitySearch(query: string, limit = 20, enabled = true) {
+	return useQuery({
+		queryKey: queryKeys.entitySearch(query, limit),
+		queryFn: () => window.api.searchEntities(query, limit),
+		enabled: enabled && query.trim().length > 0,
+		staleTime: 5_000,
+		gcTime: 5 * 60_000,
 	})
 }
 

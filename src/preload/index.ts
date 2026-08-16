@@ -49,6 +49,7 @@ const api: Api = {
 	getTaskRelatedItems: (taskId: number) => ipcRenderer.invoke(IPC.GET_TASK_RELATED_ITEMS, taskId),
 	getEntityChildren: (parentId: number) => ipcRenderer.invoke(IPC.GET_ENTITY_CHILDREN, parentId),
 	getEntityAncestors: (entityId: number) => ipcRenderer.invoke(IPC.GET_ENTITY_ANCESTORS, entityId),
+	searchEntities: (query: string, limit?: number) => ipcRenderer.invoke(IPC.SEARCH_ENTITIES, query, limit),
 	getCanvasGroups: () => ipcRenderer.invoke(IPC.GET_CANVAS_GROUPS),
 	addCanvasGroup: (payload) => ipcRenderer.invoke(IPC.ADD_CANVAS_GROUP, payload),
 	updateCanvasGroup: (payload) => ipcRenderer.invoke(IPC.UPDATE_CANVAS_GROUP, payload),

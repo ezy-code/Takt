@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
 import { useActiveTimer, useLastTimer, useTimerChangedSync } from '../api'
 import { ROUTES } from '../routes'
+import { SpotlightSearch } from './SpotlightSearch'
 import { TimerControl } from './TimerControl'
 import UpdateSection from './UpdateSection'
 
@@ -54,6 +55,7 @@ export default function AppLayout() {
 					<Anchor component='button' underline='never' onClick={() => navigate({ to: ROUTES.MY_DAY })}>
 						<Title order={3}>{APP_NAME}</Title>
 					</Anchor>
+					<SpotlightSearch />
 					{timer && (
 						<Group gap='sm' wrap='nowrap'>
 							<Anchor

@@ -1,5 +1,5 @@
 import { asc, desc, eq, sql } from 'drizzle-orm'
-import type { EntitySummary, EntityType, RateSource } from '../../../shared/api'
+import type { EntitySearchResult, EntitySummary, EntityType, RateSource } from '../../../shared/api'
 import { costOf } from '../../../shared/cost'
 import type { Db } from '../index'
 import { getDefaultRate } from '../meta'
@@ -134,4 +134,37 @@ export function getEntityAncestors(db: Db, entityId: number): EntitySummary[] {
 	}
 
 	return ancestors
+}
+
+function toFtsQuery(value: string) {
+	return value
+		.normalize('NFKC')
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 8)
+		.map((token) => `"${token.replaceAll('"', '""')}"*`)
+		.join(' AND ')
+}
+
+export function searchEntities(db: Db, value: unknown, requestedLimit?: unknown): EntitySearchResult[] {
+	if (typeof value !== 'string') return []
+	const query = toFtsQuery(value.slice(0, 256))
+	if (!query) return []
+	const limit = Math.min(50, Math.max(1, Math.floor(Number(requestedLimit) || 20)))
+
+	return db.all<EntitySearchResult>(sql`
+			SELECT
+				t.id,
+				t.name,
+				t.entity_type AS entityType,
+				parent.name AS parentName,
+				snippet(entity_search_fts, 1, '', '', '...', 18) AS snippet
+			FROM entity_search_fts
+			JOIN tasks AS t ON t.id = entity_search_fts.rowid
+			LEFT JOIN tasks AS parent ON parent.id = t.parent_id
+			WHERE entity_search_fts MATCH ${query}
+			ORDER BY bm25(entity_search_fts, 10.0, 1.0), lower(t.name)
+			LIMIT ${limit}
+		`)
 }

@@ -26,6 +26,15 @@ export const ru: typeof en = {
 		discard: 'Отменить изменения',
 		created: 'Создано: {{date}}',
 	},
+	search: {
+		title: 'Поиск entities',
+		open: 'Открыть поиск',
+		placeholder: 'Поиск по названию или Markdown-контенту',
+		hint: 'Начните вводить текст для поиска по всем entities.',
+		noResults: 'Подходящих entities не найдено.',
+		navigate: 'навигация',
+		openResult: 'открыть',
+	},
 	entity: {
 		task: 'Задача',
 		note: 'Заметка',

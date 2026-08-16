@@ -24,6 +24,15 @@ export const en = {
 		discard: 'Discard',
 		created: 'Created: {{date}}',
 	},
+	search: {
+		title: 'Search entities',
+		open: 'Open search',
+		placeholder: 'Search by name or Markdown content',
+		hint: 'Start typing to search all entities.',
+		noResults: 'No matching entities.',
+		navigate: 'navigate',
+		openResult: 'open',
+	},
 	entity: {
 		task: 'Task',
 		note: 'Note',
