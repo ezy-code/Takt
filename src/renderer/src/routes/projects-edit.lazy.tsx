@@ -1,10 +1,10 @@
 import { createLazyRoute, useParams } from '@tanstack/react-router'
-import { ProjectForm } from '../components/ProjectForm'
+import { TaskPage } from '../components/TaskPage'
 import { ROUTES } from '../routes'
 
 function EditProjectPage() {
 	const { id } = useParams({ from: ROUTES.PROJECT_EDIT })
-	return <ProjectForm id={Number(id)} />
+	return <TaskPage id={Number(id)} mode='edit' />
 }
 
 export const Route = createLazyRoute(ROUTES.PROJECT_EDIT)({

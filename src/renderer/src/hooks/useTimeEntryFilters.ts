@@ -1,5 +1,5 @@
-import type { TimeEntryWithTask } from '../../../shared/api'
-import { useProjects, useTasks, useTimeEntries } from '../api'
+import type { Task, TimeEntryWithTask } from '../../../shared/api'
+import { useProjectEntities, useTasks, useTimeEntries } from '../api'
 import { useTimeEntryFiltersStore } from '../store/timeEntryFilters'
 
 function startOfDay(date: string): number {
@@ -17,10 +17,25 @@ export function filterTimeEntries(
 	taskFilter: string | null,
 	dateFrom: string | null,
 	dateTo: string | null,
+	tasks: Task[],
 ): TimeEntryWithTask[] {
 	const projectId = projectFilter ? Number(projectFilter) : null
+	const byId = new Map(tasks.map((task) => [task.id, task]))
 	return entries.filter((entry) => {
-		if (projectId != null && entry.projectId !== projectId) return false
+		if (projectId != null) {
+			let parentId = byId.get(entry.taskId)?.parentId
+			const visited = new Set<number>()
+			let inProject = false
+			while (parentId != null && !visited.has(parentId)) {
+				visited.add(parentId)
+				if (parentId === projectId) {
+					inProject = true
+					break
+				}
+				parentId = byId.get(parentId)?.parentId
+			}
+			if (!inProject) return false
+		}
 		if (taskFilter && entry.taskId !== Number(taskFilter)) return false
 		const ts = localDayStart(entry.startTime)
 		if (dateFrom && ts < startOfDay(dateFrom)) return false
@@ -31,7 +46,7 @@ export function filterTimeEntries(
 
 export function useTimeEntryFilters() {
 	const { data: entries = [] } = useTimeEntries()
-	const { data: projects = [] } = useProjects()
+	const { data: projects = [] } = useProjectEntities()
 	const { data: tasks = [] } = useTasks()
 	const {
 		projectFilter,
@@ -53,7 +68,7 @@ export function useTimeEntryFilters() {
 		setProjectFilter(value)
 	}
 
-	const filteredEntries = filterTimeEntries(entries, projectFilter, taskFilter, dateFrom, dateTo)
+	const filteredEntries = filterTimeEntries(entries, projectFilter, taskFilter, dateFrom, dateTo, tasks)
 	const filteredDuration = filteredEntries.reduce((acc, e) => acc + (e.duration ?? 0), 0)
 	const filteredCost = filteredEntries.reduce((acc, e) => acc + (e.cost ?? 0), 0)
 

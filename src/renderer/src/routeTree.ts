@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import AppLayout from './components/AppLayout'
 
 import { ROUTES } from './routes'
+import type { EntityType } from './types'
 
 const rootRoute = createRootRoute({
 	component: AppLayout,
@@ -21,6 +22,12 @@ const tasksRoute = createRoute({
 const tasksNewRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: ROUTES.TASKS_NEW,
+	validateSearch: (search: Record<string, unknown>): { parentId?: number; entityType?: EntityType } => ({
+		parentId: search.parentId != null ? Number(search.parentId) : undefined,
+		entityType: ['task', 'note', 'project'].includes(String(search.entityType))
+			? (search.entityType as EntityType)
+			: undefined,
+	}),
 }).lazy(() => import('./routes/tasks-new.lazy').then((d) => d.Route))
 
 const taskDetailRoute = createRoute({

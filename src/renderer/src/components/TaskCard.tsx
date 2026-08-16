@@ -1,13 +1,15 @@
-import { ActionIcon, Anchor, Badge, Card, Group, Menu, Spoiler, Stack, Text } from '@mantine/core'
-import { IconClock, IconDots, IconEye, IconFolder, IconLayoutBoard, IconPencil, IconTrash } from '@tabler/icons-react'
+import { ActionIcon, Anchor, Badge, Card, Group, Menu, Spoiler, Stack, Text, UnstyledButton } from '@mantine/core'
+import { IconClock, IconDots, IconEye, IconLayoutBoard, IconPencil, IconSitemap, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useCanvasGroups, useClearMyDay, useDeleteTask, useProjects, useStatuses, useToggleMyDay } from '../api'
+import { useCanvasGroups, useClearMyDay, useDeleteTask, useStatuses, useToggleMyDay } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
+import { EntityTypeBadge } from './EntityTypeBadge'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
+import { RelatedCount } from './RelatedCount'
 import { TaskCostPill } from './TaskCostPill'
 import { TimerControl } from './TimerControl'
 
@@ -29,7 +31,6 @@ export function TaskCard({ task }: TaskCardProps) {
 	const toggleMyDay = useToggleMyDay()
 	const clearMyDay = useClearMyDay()
 	const { data: statuses } = useStatuses()
-	const { data: projects } = useProjects()
 	const { data: groups } = useCanvasGroups()
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
@@ -37,7 +38,7 @@ export function TaskCard({ task }: TaskCardProps) {
 	})
 
 	const status = statuses?.find((s) => s.id === task.statusId)
-	const project = projects?.find((p) => p.id === task.projectId)
+	const parent = task.parentName
 	const group = groups?.find((g) => g.id === task.groupId)
 	const myDayState = getMyDayState(task.my_day_date ?? null)
 	const isPast = task.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
@@ -102,9 +103,7 @@ export function TaskCard({ task }: TaskCardProps) {
 										>
 											{task.name}
 										</Anchor>
-										<Badge size='xs' variant='outline' color='gray'>
-											{t(`entity.${task.entityType ?? 'task'}`)}
-										</Badge>
+										<EntityTypeBadge entityType={task.entityType} />
 									</Group>
 								</div>
 								<Group gap='xs' wrap='nowrap' align='center'>
@@ -133,7 +132,11 @@ export function TaskCard({ task }: TaskCardProps) {
 									onToggle={handleMyDayToggle}
 									overdue={myDayState === 'overdue'}
 								/>
-								{status && (
+								<RelatedCount
+									count={task.relatedCount}
+									onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
+								/>
+								{task.entityType === 'task' && status && (
 									<Group
 										gap={5}
 										align='center'
@@ -163,18 +166,28 @@ export function TaskCard({ task }: TaskCardProps) {
 										{group.name}
 									</Badge>
 								)}
-								{project && (
+								{parent && (
 									<Group
+										component={UnstyledButton}
 										gap={5}
 										align='center'
 										px={6}
 										py={2}
-										style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
+										style={{
+											borderRadius: 999,
+											background: 'var(--mantine-color-default-light)',
+											cursor: 'pointer',
+										}}
+										onClick={() => {
+											if (task.parentId != null)
+												navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.parentId) } })
+										}}
 									>
-										<IconFolder size={12} color='var(--mantine-color-dimmed)' />
+										<IconSitemap size={12} color='var(--mantine-color-dimmed)' />
 										<Text size='xs' c='dimmed'>
-											{project.name}
+											{parent}
 										</Text>
+										{task.parentType && <EntityTypeBadge entityType={task.parentType} />}
 									</Group>
 								)}
 								{task.reminder_at && (

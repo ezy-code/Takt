@@ -7,6 +7,7 @@ import { useCanvasGroups, useDeleteTask, useStatuses, useUpdateTask } from '../a
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
+import { EntityTypeBadge } from './EntityTypeBadge'
 import { MarkdownPreview } from './MarkdownPreview'
 import { TaskCostPill } from './TaskCostPill'
 
@@ -54,14 +55,20 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 					overflow: 'hidden',
 				}}
 			>
-				<div style={{ height: 6, background: status?.color ?? 'var(--mantine-color-default)' }} />
+				<div
+					style={{
+						height: 6,
+						background:
+							task.entityType === 'task'
+								? (status?.color ?? 'var(--mantine-color-default)')
+								: 'var(--mantine-color-default)',
+					}}
+				/>
 				<div style={{ padding: '10px 12px 12px' }}>
 					<Anchor component='button' className='nodrag' fw={600} underline='never' onClick={openEdit}>
 						{task.name}
 					</Anchor>
-					<Badge size='xs' variant='outline' color='gray' ml={6}>
-						{t(`entity.${task.entityType ?? 'task'}`)}
-					</Badge>
+					<EntityTypeBadge entityType={task.entityType} ml={6} />
 					{task.description_md && (
 						<div
 							style={{
@@ -102,7 +109,7 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 					)}
 					<Group justify='space-between' align='center' mt={10} gap='xs' wrap='nowrap'>
 						<TaskCostPill task={task} />
-						{status && (
+						{task.entityType === 'task' && status && (
 							<Group gap={5} align='center' wrap='nowrap' style={{ minWidth: 0 }}>
 								<div
 									style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}

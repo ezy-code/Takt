@@ -5,12 +5,6 @@ export const IPC = {
 	GET_META: 'get-meta',
 	SET_META: 'set-meta',
 
-	// projects
-	GET_PROJECTS: 'get-projects',
-	GET_PROJECT: 'get-project',
-	ADD_PROJECT: 'add-project',
-	UPDATE_PROJECT: 'update-project',
-
 	// tasks
 	GET_TASKS: 'get-tasks',
 	GET_TASK: 'get-task',
@@ -26,6 +20,9 @@ export const IPC = {
 	GET_TASK_LINKS: 'get-task-links',
 	ADD_TASK_LINK: 'add-task-link',
 	DELETE_TASK_LINK: 'delete-task-link',
+	GET_TASK_RELATED_ITEMS: 'get-task-related-items',
+	GET_ENTITY_CHILDREN: 'get-entity-children',
+	GET_ENTITY_ANCESTORS: 'get-entity-ancestors',
 
 	// canvas groups
 	GET_CANVAS_GROUPS: 'get-canvas-groups',

@@ -1,7 +1,6 @@
 import { registerCanvasGroupsHandlers } from './handlers/canvas-groups'
 import { registerMetaHandlers } from './handlers/meta'
 import { registerMyDayHandlers } from './handlers/my-day'
-import { registerProjectsHandlers } from './handlers/projects'
 import { startReminderPoller } from './handlers/reminders'
 import { registerStatusesHandlers } from './handlers/statuses'
 import { registerTaskLinksHandlers } from './handlers/task-links'
@@ -15,7 +14,6 @@ import type { OnTimerChange } from './types'
 export function registerHandlers(db: Db, opts: { onTimerChange?: OnTimerChange } = {}) {
 	initMetaDb(db)
 	registerMetaHandlers()
-	registerProjectsHandlers(db)
 	registerStatusesHandlers(db)
 	registerTasksHandlers(db)
 	registerTaskLinksHandlers(db)

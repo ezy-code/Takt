@@ -1,5 +1,5 @@
 import type { Task } from '../../../shared/api'
-import { useCanvasGroups, useProjects, useStatuses, useTasks } from '../api'
+import { useCanvasGroups, useProjectEntities, useStatuses, useTasks } from '../api'
 import { useTaskFiltersStore } from '../store/taskFilters'
 
 type TaskFilters = {
@@ -13,9 +13,21 @@ function toId(value: string | null): number | null {
 }
 
 function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
+	const byId = new Map(tasks.map((task) => [task.id, task]))
+	const isInProject = (task: Task, projectId: number) => {
+		let parentId = task.parentId
+		const visited = new Set<number>()
+		while (parentId != null && !visited.has(parentId)) {
+			visited.add(parentId)
+			if (parentId === projectId) return true
+			parentId = byId.get(parentId)?.parentId
+		}
+		return false
+	}
+
 	return tasks.filter(
 		(task) =>
-			(filters.projectId == null || task.projectId === filters.projectId) &&
+			(filters.projectId == null || isInProject(task, filters.projectId)) &&
 			(filters.groupId == null || task.groupId === filters.groupId) &&
 			(filters.statusId == null || task.statusId === filters.statusId),
 	)
@@ -23,7 +35,7 @@ function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
 
 export function useTaskFilters() {
 	const { data: tasks, isLoading } = useTasks()
-	const { data: projects } = useProjects()
+	const { data: projects } = useProjectEntities()
 	const { data: groups } = useCanvasGroups()
 	const { data: statuses } = useStatuses()
 	const { projectFilter, groupFilter, statusFilter, setProjectFilter, setGroupFilter, setStatusFilter, reset } =

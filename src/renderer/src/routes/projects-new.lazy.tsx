@@ -1,7 +1,7 @@
 import { createLazyRoute } from '@tanstack/react-router'
-import { ProjectForm } from '../components/ProjectForm'
+import { TaskPage } from '../components/TaskPage'
 import { ROUTES } from '../routes'
 
 export const Route = createLazyRoute(ROUTES.PROJECTS_NEW)({
-	component: () => <ProjectForm />,
+	component: () => <TaskPage mode='create' initialEntityType='project' />,
 })

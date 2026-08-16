@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { relations } from 'drizzle-orm/_relations'
-import { integer, real, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
+import { type AnySQLiteColumn, integer, real, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 
 export const appMeta = sqliteTable('app_meta', {
 	key: text('key').primaryKey(),
@@ -14,16 +14,6 @@ export const statuses = sqliteTable('statuses', {
 	position: integer('position').notNull().default(0),
 	is_default: integer('is_default', { mode: 'boolean' }).notNull().default(false),
 	created_at: text('created_at').default(sql`(datetime('now'))`),
-})
-
-export const projects = sqliteTable('projects', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name').notNull(),
-	description: text('description').default(''),
-	descriptionMarkdown: text('description_md').default(''),
-	descriptionHtml: text('description_html').default(''),
-	created_at: text('created_at').default(sql`(datetime('now'))`),
-	hourly_rate: real('hourly_rate'),
 })
 
 export const canvasGroups = sqliteTable('canvas_groups', {
@@ -42,7 +32,7 @@ export const tasks = sqliteTable('tasks', {
 	name: text('name').notNull(),
 	description: text('description').default(''),
 	statusId: integer('status_id').references(() => statuses.id),
-	projectId: integer('project_id').references(() => projects.id),
+	parentId: integer('parent_id').references((): AnySQLiteColumn => tasks.id, { onDelete: 'set null' }),
 	my_day_date: text('my_day_date'),
 	reminderAt: text('reminder_at'),
 	created_at: text('created_at').default(sql`(datetime('now'))`),
@@ -88,10 +78,6 @@ export const statusesRelations = relations(statuses, ({ many }) => ({
 	tasks: many(tasks),
 }))
 
-export const projectsRelations = relations(projects, ({ many }) => ({
-	tasks: many(tasks),
-}))
-
 export const canvasGroupsRelations = relations(canvasGroups, ({ many }) => ({
 	tasks: many(tasks),
 }))
@@ -101,9 +87,13 @@ export const tasksRelations = relations(tasks, ({ many, one }) => ({
 		fields: [tasks.statusId],
 		references: [statuses.id],
 	}),
-	project: one(projects, {
-		fields: [tasks.projectId],
-		references: [projects.id],
+	parent: one(tasks, {
+		fields: [tasks.parentId],
+		references: [tasks.id],
+		relationName: 'parent',
+	}),
+	children: many(tasks, {
+		relationName: 'parent',
 	}),
 	group: one(canvasGroups, {
 		fields: [tasks.groupId],

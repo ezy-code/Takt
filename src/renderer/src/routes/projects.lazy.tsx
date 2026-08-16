@@ -2,7 +2,7 @@ import { ActionIcon, Anchor, Button, Card, Container, Group, Menu, Stack, Text, 
 import { IconDots, IconPencil, IconPlus } from '@tabler/icons-react'
 import { createLazyRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useCurrency, useDefaultRate, useProjects, useTasks } from '../api'
+import { useCurrency, useDefaultRate, useProjectEntities, useTasks } from '../api'
 import { CostInfo } from '../components/CostInfo'
 import { MarkdownPreview } from '../components/MarkdownPreview'
 import { formatDuration } from '../hooks/useTimer'
@@ -15,13 +15,24 @@ const Route = createLazyRoute(ROUTES.PROJECTS)({
 function ProjectsPage() {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
-	const { data: projects, isLoading } = useProjects()
+	const { data: projects, isLoading } = useProjectEntities()
 	const { data: tasks = [] } = useTasks()
 	const { data: defaultRate = 0 } = useDefaultRate()
 	const { data: currency = '$' } = useCurrency()
 
 	const projectStats = (projectId: number) => {
-		const pts = tasks.filter((task) => task.projectId === projectId)
+		const ids = new Set([projectId])
+		let changed = true
+		while (changed) {
+			changed = false
+			for (const task of tasks) {
+				if (task.parentId != null && ids.has(task.parentId) && !ids.has(task.id)) {
+					ids.add(task.id)
+					changed = true
+				}
+			}
+		}
+		const pts = tasks.filter((task) => task.id !== projectId && ids.has(task.id))
 		const duration = pts.reduce((acc, task) => acc + (task.total_duration ?? 0), 0)
 		const cost = pts.reduce((acc, task) => acc + (task.cost ?? 0), 0)
 		return { duration, cost }
@@ -51,7 +62,7 @@ function ProjectsPage() {
 											component='button'
 											fw={500}
 											style={{ textAlign: 'left' }}
-											onClick={() => navigate({ to: ROUTES.PROJECT_EDIT, params: { id: String(project.id) } })}
+											onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(project.id) } })}
 										>
 											{project.name}
 										</Anchor>
@@ -83,7 +94,7 @@ function ProjectsPage() {
 									<Menu.Dropdown>
 										<Menu.Item
 											leftSection={<IconPencil size={14} />}
-											onClick={() => navigate({ to: ROUTES.PROJECT_EDIT, params: { id: String(project.id) } })}
+											onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(project.id) } })}
 										>
 											{t('common.edit')}
 										</Menu.Item>

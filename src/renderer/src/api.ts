@@ -2,10 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import type {
 	AddCanvasGroupPayload,
-	AddProjectPayload,
 	AddTaskPayload,
 	UpdateCanvasGroupPayload,
-	UpdateProjectPayload,
 	UpdateTaskPayload,
 	UpdateTimeEntryPayload,
 } from '../../shared/api'
@@ -17,13 +15,15 @@ export const queryKeys = {
 	tasks: ['tasks'] as const,
 	myDayTasks: ['tasks', 'my-day'] as const,
 	taskLinks: ['task-links'] as const,
+	taskRelatedItems: (taskId: number) => ['task-related-items', taskId] as const,
 	canvasGroups: ['canvas-groups'] as const,
 	activeTimer: ['active-timer'] as const,
 	lastTimer: ['last-timer'] as const,
 	timeEntries: ['time-entries'] as const,
 	timeSummary: ['time-summary'] as const,
 	statuses: ['statuses'] as const,
-	projects: ['projects'] as const,
+	entityChildren: (parentId: number) => ['entity-children', parentId] as const,
+	entityAncestors: (entityId: number) => ['entity-ancestors', entityId] as const,
 }
 
 export function useTasks() {
@@ -110,6 +110,8 @@ export function useAddTask() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
+			queryClient.invalidateQueries({ queryKey: ['entity-ancestors'] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
@@ -126,6 +128,8 @@ export function useUpdateTask() {
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
+			queryClient.invalidateQueries({ queryKey: ['entity-ancestors'] })
 		},
 	})
 }
@@ -141,6 +145,10 @@ export function useDeleteTask() {
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
+			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
+			queryClient.invalidateQueries({ queryKey: ['task-related-items'] })
+			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
+			queryClient.invalidateQueries({ queryKey: ['entity-ancestors'] })
 		},
 	})
 }
@@ -349,6 +357,30 @@ export function useTaskLinks() {
 	})
 }
 
+export function useTaskRelatedItems(taskId: number) {
+	return useQuery({
+		queryKey: queryKeys.taskRelatedItems(taskId),
+		queryFn: () => window.api.getTaskRelatedItems(taskId),
+		enabled: !!taskId,
+	})
+}
+
+export function useEntityChildren(parentId: number) {
+	return useQuery({
+		queryKey: queryKeys.entityChildren(parentId),
+		queryFn: () => window.api.getEntityChildren(parentId),
+		enabled: !!parentId,
+	})
+}
+
+export function useEntityAncestors(entityId: number) {
+	return useQuery({
+		queryKey: queryKeys.entityAncestors(entityId),
+		queryFn: () => window.api.getEntityAncestors(entityId),
+		enabled: !!entityId,
+	})
+}
+
 export function useAddTaskLink() {
 	const queryClient = useQueryClient()
 	return useMutation({
@@ -356,6 +388,9 @@ export function useAddTaskLink() {
 			window.api.addTaskLink(sourceTaskId, targetTaskId),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: ['task-related-items'] })
 		},
 	})
 }
@@ -366,6 +401,9 @@ export function useDeleteTaskLink() {
 		mutationFn: (id: number) => window.api.deleteTaskLink(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: ['task-related-items'] })
 		},
 	})
 }
@@ -409,19 +447,9 @@ export function useDeleteCanvasGroup() {
 	})
 }
 
-export function useProjects() {
-	return useQuery({
-		queryKey: queryKeys.projects,
-		queryFn: () => window.api.getProjects(),
-	})
-}
-
-export function useProject(id: number) {
-	return useQuery({
-		queryKey: ['projects', id],
-		queryFn: () => window.api.getProject(id),
-		enabled: !!id,
-	})
+export function useProjectEntities() {
+	const query = useTasks()
+	return { ...query, data: query.data?.filter((entity) => entity.entityType === 'project') }
 }
 
 export function useCurrency() {
@@ -437,31 +465,6 @@ export function useDefaultRate() {
 		queryFn: async () => {
 			const n = Number(await window.api.getMeta(META_DEFAULT_RATE_KEY))
 			return Number.isFinite(n) ? n : 0
-		},
-	})
-}
-
-export function useAddProject() {
-	const queryClient = useQueryClient()
-	return useMutation({
-		mutationFn: (payload: AddProjectPayload) => window.api.addProject(payload),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.projects })
-			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
-			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
-		},
-	})
-}
-
-export function useUpdateProject() {
-	const queryClient = useQueryClient()
-	return useMutation({
-		mutationFn: (payload: UpdateProjectPayload) => window.api.updateProject(payload),
-		onSuccess: (_data, vars) => {
-			queryClient.invalidateQueries({ queryKey: ['projects', vars.id] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.projects })
-			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
-			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 		},
 	})
 }

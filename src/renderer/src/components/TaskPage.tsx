@@ -24,9 +24,9 @@ import {
 	useAddTask,
 	useClearMyDay,
 	useDeleteTask,
-	useProjects,
 	useStatuses,
 	useTask,
+	useTasks,
 	useToggleMyDay,
 	useUpdateTask,
 } from '../api'
@@ -34,9 +34,12 @@ import { ROUTES } from '../routes'
 import { lastTasksTab } from '../store/lastTasksTab'
 import type { EntityType, Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
+import { EntityHierarchy } from './EntityHierarchy'
+import { EntityTypeBadge } from './EntityTypeBadge'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
+import { RelatedEntities } from './RelatedEntities'
 import { RichTextEditor } from './RichTextEditor'
 import { getMyDayState } from './TaskCard'
 import { TaskCostPill } from './TaskCostPill'
@@ -50,18 +53,32 @@ function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) 
 	submit()
 }
 
+function isDescendant(entities: Task[], entityId: number | undefined, candidateParentId: number) {
+	if (entityId == null) return false
+	const byId = new Map(entities.map((entity) => [entity.id, entity]))
+	let currentId: number | null = candidateParentId
+	const visited = new Set<number>()
+	while (currentId != null && !visited.has(currentId)) {
+		visited.add(currentId)
+		if (currentId === entityId) return true
+		currentId = byId.get(currentId)?.parentId ?? null
+	}
+	return false
+}
+
 interface TaskPageProps {
 	id?: number
 	mode: 'view' | 'edit' | 'create'
 	onCreated?: (task: Task) => void
 	onCancel?: () => void
 	initialEntityType?: EntityType
+	initialParentId?: number | null
 }
 
 interface TaskSnapshot {
 	name: string
 	statusId: number | null
-	projectId: number | null
+	parentId: number | null
 	addToMyDay: boolean
 	reminderAt: string | null
 	description: string
@@ -79,7 +96,7 @@ const FIELD_TEXT_STYLE = {
 	cursor: 'pointer',
 } as const
 
-export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: TaskPageProps) {
+export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, initialParentId }: TaskPageProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
@@ -90,7 +107,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 
 	const { data: task, isLoading } = useTask(id ?? 0)
 	const { data: statuses } = useStatuses()
-	const { data: projects } = useProjects()
+	const { data: entities = [] } = useTasks()
 	const addTask = useAddTask()
 	const updateTask = useUpdateTask()
 	const toggleMyDay = useToggleMyDay()
@@ -98,12 +115,14 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 	const deleteTask = useDeleteTask()
 
 	const [statusId, setStatusId] = useState<number | null>(null)
-	const [projectId, setProjectId] = useState<number | null>(null)
+	const [parentId, setParentId] = useState<number | null>(null)
 	const [addToMyDay, setAddToMyDay] = useState(false)
 	const [reminderAt, setReminderAt] = useState<string | null>(null)
 	const [hourlyRate, setHourlyRate] = useState<number | string>('')
 	const [entityType, setEntityType] = useState<EntityType>('task')
+	const entityLabel = t(`entity.${entityType}`)
 	const [showTimeEntries, setShowTimeEntries] = useState(false)
+	const [createChildOpen, setCreateChildOpen] = useState(false)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
 		message: t('tasks.deleteBody'),
@@ -115,19 +134,20 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 	useEffect(() => {
 		if (task) setEntityType(task.entityType ?? 'task')
 		if (isEdit && task) {
-			setStatusId(task.statusId ?? null)
-			setProjectId(task.projectId ?? null)
+			setStatusId(task.entityType === 'task' ? (task.statusId ?? null) : null)
+			setParentId(task.parentId ?? null)
 			setAddToMyDay(!!task.my_day_date)
 			setReminderAt(task.reminder_at ? dayjs(task.reminder_at).format('YYYY-MM-DD HH:mm:ss') : null)
 			setHourlyRate(task.hourly_rate ?? '')
 		} else if (mode === 'create' && statuses) {
 			const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
-			setStatusId(defaultStatus?.id ?? null)
-			setProjectId(null)
+			const type = initialEntityType ?? 'task'
+			setEntityType(type)
+			setStatusId(type === 'task' ? (defaultStatus?.id ?? null) : null)
+			setParentId(initialParentId ?? null)
 			setAddToMyDay(false)
 			setReminderAt(null)
 			setHourlyRate('')
-			setEntityType(initialEntityType ?? 'task')
 		}
 	}, [isEdit, mode, task, statuses])
 
@@ -151,8 +171,8 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 				description,
 				description_md,
 				description_html,
-				statusId: statusId ?? undefined,
-				projectId: projectId ?? undefined,
+				statusId: entityType === 'task' ? statusId : null,
+				parentId: parentId ?? null,
 				myDay: addToMyDay,
 				reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
 				hourlyRate: hourlyRate === '' ? null : Number(hourlyRate),
@@ -185,8 +205,14 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 			const currentTask = isEdit && task ? task : null
 			initialRef.current = {
 				name: isEdit ? currentTask!.name : '',
-				statusId: isEdit ? (currentTask!.statusId ?? null) : (statuses?.find((s) => s.is_default)?.id ?? null),
-				projectId: isEdit ? (currentTask!.projectId ?? null) : null,
+				statusId: isEdit
+					? currentTask!.entityType === 'task'
+						? (currentTask!.statusId ?? null)
+						: null
+					: (initialEntityType ?? 'task') === 'task'
+						? (statuses?.find((s) => s.is_default)?.id ?? null)
+						: null,
+				parentId: isEdit ? (currentTask!.parentId ?? null) : (initialParentId ?? null),
 				addToMyDay: isEdit ? !!currentTask!.my_day_date : false,
 				reminderAt: isEdit
 					? currentTask!.reminder_at
@@ -199,7 +225,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 			}
 		}, 150)
 		return () => clearTimeout(timer)
-	}, [editable, isEdit, mode, task, statuses, editorReady])
+	}, [editable, isEdit, mode, task, statuses, editorReady, initialParentId])
 
 	const isDirty = () => {
 		const s = initialRef.current
@@ -207,7 +233,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 		return (
 			form.state.values.name !== s.name ||
 			statusId !== s.statusId ||
-			projectId !== s.projectId ||
+			parentId !== s.parentId ||
 			addToMyDay !== s.addToMyDay ||
 			reminderAt !== s.reminderAt ||
 			(hourlyRate === '' ? null : Number(hourlyRate)) !== s.hourlyRate ||
@@ -237,7 +263,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 		)
 
 	const status = statuses?.find((s) => s.id === (mode === 'view' ? task?.statusId : statusId))
-	const project = projects?.find((p) => p.id === (mode === 'view' ? task?.projectId : projectId))
+	const parent = entities.find((entity) => entity.id === (mode === 'view' ? task?.parentId : parentId))
 	const isPast = task?.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 	const statusColor = statuses?.find((s) => s.id === statusId)?.color ?? '#868e96'
 
@@ -246,10 +272,12 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 		label: s.name,
 	}))
 
-	const projectOptions = (projects ?? []).map((p) => ({
-		value: String(p.id),
-		label: p.name,
-	}))
+	const parentOptions = entities
+		.filter((entity) => entity.id !== task?.id && !isDescendant(entities, task?.id, entity.id))
+		.map((entity) => ({
+			value: String(entity.id),
+			label: `${entity.name} · ${t(`entity.${entity.entityType ?? 'task'}`)}`,
+		}))
 
 	const goBack = () => {
 		if (onCancel) onCancel()
@@ -257,9 +285,17 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 		else navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })
 	}
 
+	const goToPrevious = () => {
+		if (window.history.length > 1) window.history.back()
+		else navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })
+	}
+
 	const handleTypeChange = (next: EntityType) => {
 		setEntityType(next)
-		if (mode === 'view' && task) updateTask.mutate({ id: task.id, entityType: next })
+		if (next !== 'task') setStatusId(null)
+		if (mode === 'view' && task) {
+			updateTask.mutate({ id: task.id, entityType: next, statusId: next === 'task' ? undefined : null })
+		}
 	}
 
 	return (
@@ -275,7 +311,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 											variant='unstyled'
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.currentTarget.value)}
-											placeholder={isEdit ? t('tasks.editTitle') : t('tasks.newTitle')}
+											placeholder={t(isEdit ? 'entities.editTitle' : 'entities.newTitle', { type: entityLabel })}
 											data-autofocus
 											required
 											styles={{
@@ -294,7 +330,10 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 									)}
 								</form.Field>
 							) : (
-								task!.name
+								<>
+									{task!.name}
+									<EntityTypeBadge entityType={task!.entityType} />
+								</>
 							)}
 						</Title>
 						{!isModal && (
@@ -307,10 +346,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 										>
 											{t('common.edit')}
 										</Button>
-										<Button
-											variant='default'
-											onClick={() => navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })}
-										>
+										<Button variant='default' onClick={goToPrevious}>
 											{t('common.back')}
 										</Button>
 										<Button
@@ -434,50 +470,56 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 									/>
 								</PropertyPill>
 							)}
-							{mode === 'view' ? (
-								status && (
+							{entityType === 'task' &&
+								(mode === 'view' ? (
+									status && (
+										<PropertyPill
+											leading={
+												<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color }} />
+											}
+										>
+											<Text size='sm'>{status.name}</Text>
+										</PropertyPill>
+									)
+								) : (
 									<PropertyPill
 										leading={
-											<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color }} />
+											<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: statusColor }} />
 										}
 									>
-										<Text size='sm'>{status.name}</Text>
+										<Select
+											variant='unstyled'
+											placeholder={t('tasks.selectStatus')}
+											data={statusOptions}
+											value={statusId != null ? String(statusId) : null}
+											onChange={(value) => setStatusId(value ? Number(value) : null)}
+											disabled={!statuses?.length}
+											required
+											rightSection={<span style={{ display: 'none' }} />}
+											styles={{ input: FIELD_TEXT_STYLE }}
+										/>
 									</PropertyPill>
-								)
-							) : (
-								<PropertyPill
-									leading={<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: statusColor }} />}
-								>
-									<Select
-										variant='unstyled'
-										placeholder={t('tasks.selectStatus')}
-										data={statusOptions}
-										value={statusId != null ? String(statusId) : null}
-										onChange={(value) => setStatusId(value ? Number(value) : null)}
-										disabled={!statuses?.length}
-										required
-										rightSection={<span style={{ display: 'none' }} />}
-										styles={{ input: FIELD_TEXT_STYLE }}
-									/>
-								</PropertyPill>
-							)}
+								))}
 							{mode === 'view' ? (
-								project && (
+								parent && (
 									<PropertyPill leading={<IconFolder size={14} />} color='dimmed'>
-										<Text size='sm'>{project.name}</Text>
+										<Group gap='xs' wrap='nowrap'>
+											<Text size='sm'>{parent.name}</Text>
+											<EntityTypeBadge entityType={parent.entityType} />
+										</Group>
 									</PropertyPill>
 								)
 							) : (
 								<PropertyPill leading={<IconFolder size={14} />}>
 									<Select
 										variant='unstyled'
-										placeholder={t('tasks.selectProject')}
+										placeholder={t('entities.parentSearchPlaceholder')}
 										clearable
 										searchable
-										data={projectOptions}
-										value={projectId != null ? String(projectId) : null}
-										onChange={(value) => setProjectId(value ? Number(value) : null)}
-										disabled={!projects?.length}
+										data={parentOptions}
+										value={parentId != null ? String(parentId) : null}
+										onChange={(value) => setParentId(value ? Number(value) : null)}
+										disabled={!entities.length}
 										rightSection={<span style={{ display: 'none' }} />}
 										styles={{ input: FIELD_TEXT_STYLE }}
 									/>
@@ -485,6 +527,12 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 							)}
 						</Stack>
 					</Group>
+					{mode === 'view' && task && (
+						<>
+							<EntityHierarchy entity={task} onAddChild={() => setCreateChildOpen(true)} />
+							<RelatedEntities entity={task} />
+						</>
+					)}
 					{isModal && (
 						<Group justify='flex-end' mt='lg'>
 							<Button variant='default' onClick={goBack}>
@@ -502,7 +550,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 					c='dimmed'
 					style={{ position: 'fixed', bottom: 12, right: 16, zIndex: 100, userSelect: 'none' }}
 				>
-					{t('projects.created', { date: new Date(task.created_at).toLocaleString() })}
+					{t('common.created', { date: new Date(task.created_at).toLocaleString() })}
 				</Text>
 			)}
 
@@ -534,6 +582,23 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType }: T
 			)}
 
 			{confirmDeleteModal}
+
+			{task && (
+				<Modal
+					opened={createChildOpen}
+					onClose={() => setCreateChildOpen(false)}
+					title={t('entities.addChild')}
+					size='xl'
+					centered
+				>
+					<TaskPage
+						mode='create'
+						initialParentId={task.id}
+						onCancel={() => setCreateChildOpen(false)}
+						onCreated={() => setCreateChildOpen(false)}
+					/>
+				</Modal>
+			)}
 
 			{showTimeEntries && task && <TaskTimeEntriesModal task={task} onClose={() => setShowTimeEntries(false)} />}
 		</Container>

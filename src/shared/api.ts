@@ -13,16 +13,6 @@ export type RateSource = 'task' | 'project' | 'default'
 
 export type EntityType = 'task' | 'note' | 'project'
 
-export interface Project {
-	id: number
-	name: string
-	description: string
-	description_md: string
-	description_html: string
-	created_at: string
-	hourly_rate?: number | null
-}
-
 export interface Task {
 	id: number
 	name: string
@@ -30,7 +20,9 @@ export interface Task {
 	description_md: string
 	description_html: string
 	statusId?: number | null
-	projectId?: number | null
+	parentId?: number | null
+	parentName?: string | null
+	parentType?: EntityType | null
 	groupId?: number | null
 	entityType?: EntityType
 	my_day_date?: string | null
@@ -44,6 +36,7 @@ export interface Task {
 	rate?: number | null
 	rateSource?: RateSource
 	cost?: number
+	relatedCount?: number
 }
 
 export interface TimeEntry {
@@ -56,8 +49,8 @@ export interface TimeEntry {
 
 export interface TimeEntryWithTask extends TimeEntry {
 	taskName: string
-	projectId?: number | null
-	projectName?: string | null
+	parentId?: number | null
+	parentName?: string | null
 	rate?: number | null
 	rateSource?: RateSource
 	cost?: number
@@ -95,6 +88,16 @@ export interface TaskLink {
 	created_at?: string | null
 }
 
+export interface EntitySummary {
+	id: number
+	name: string
+	entityType?: EntityType
+}
+
+export interface RelatedEntity extends Task {
+	linkId: number
+}
+
 export interface CanvasGroup {
 	id: number
 	name: string
@@ -114,8 +117,8 @@ export interface AddTaskPayload {
 	description: string
 	description_md?: string
 	description_html?: string
-	statusId?: number
-	projectId?: number
+	statusId?: number | null
+	parentId?: number | null
 	groupId?: number | null
 	myDay?: boolean | string | null
 	reminderAt?: string | null
@@ -129,28 +132,12 @@ export interface UpdateTaskPayload extends Partial<AddTaskPayload> {
 	canvasY?: number | null
 }
 
-export interface AddProjectPayload {
-	name: string
-	description?: string
-	description_md?: string
-	description_html?: string
-	hourlyRate?: number | null
-}
-
-export interface UpdateProjectPayload extends AddProjectPayload {
-	id: number
-}
-
 export interface Api {
 	getTasks: () => Promise<Task[]>
 	getTask: (id: number) => Promise<Task | null>
 	addTask: (payload: AddTaskPayload) => Promise<Task>
 	deleteTask: (id: number) => Promise<{ success: boolean }>
 	updateTask: (payload: UpdateTaskPayload) => Promise<Task>
-	getProjects: () => Promise<Project[]>
-	getProject: (id: number) => Promise<Project | null>
-	addProject: (payload: AddProjectPayload) => Promise<Project>
-	updateProject: (payload: UpdateProjectPayload) => Promise<Project>
 	getActiveTimer: () => Promise<ActiveTimerInfo | null>
 	getLastTimer: () => Promise<ActiveTimerInfo | null>
 	startTimer: (taskId: number) => Promise<StartTimerResult>
@@ -177,6 +164,9 @@ export interface Api {
 	getTaskLinks: () => Promise<TaskLink[]>
 	addTaskLink: (sourceTaskId: number, targetTaskId: number) => Promise<TaskLink>
 	deleteTaskLink: (id: number) => Promise<{ success: boolean }>
+	getTaskRelatedItems: (taskId: number) => Promise<RelatedEntity[]>
+	getEntityChildren: (parentId: number) => Promise<Task[]>
+	getEntityAncestors: (entityId: number) => Promise<EntitySummary[]>
 	getCanvasGroups: () => Promise<CanvasGroup[]>
 	addCanvasGroup: (payload: AddCanvasGroupPayload) => Promise<CanvasGroup>
 	updateCanvasGroup: (payload: UpdateCanvasGroupPayload) => Promise<CanvasGroup>
