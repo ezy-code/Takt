@@ -1,7 +1,7 @@
 import { ActionIcon, Anchor, Badge, Group, Text } from '@mantine/core'
 import { IconPencil, IconTrash, IconX } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
-import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
+import { Handle, type Node, type NodeProps, NodeResizer, Position } from '@xyflow/react'
 import { useTranslation } from 'react-i18next'
 import { useDeleteTask, useGroups, useStatuses, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
@@ -14,7 +14,7 @@ import { TaskCostPill } from './TaskCostPill'
 export type CanvasTaskNodeData = { task: Task }
 export type CanvasTaskNodeType = Node<CanvasTaskNodeData, 'canvasTask'>
 
-export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
+export function CanvasTaskNode({ data, selected }: NodeProps<CanvasTaskNodeType>) {
 	const { task } = data
 	const navigate = useNavigate()
 	const { t } = useTranslation()
@@ -45,9 +45,13 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 	return (
 		<>
 			<Handle type='target' position={Position.Left} className='nodrag' />
+			<NodeResizer minWidth={180} minHeight={120} isVisible={selected} />
 			<div
 				style={{
-					width: 260,
+					width: '100%',
+					height: '100%',
+					display: 'flex',
+					flexDirection: 'column',
 					borderRadius: 12,
 					border: '1px solid var(--mantine-color-default-border)',
 					background: 'var(--mantine-color-body)',
@@ -64,88 +68,102 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 								: 'var(--mantine-color-default)',
 					}}
 				/>
-				<div style={{ padding: '10px 12px 12px' }}>
-					<Anchor component='button' className='nodrag' fw={600} underline='never' onClick={openEdit}>
-						{task.name}
-					</Anchor>
-					<EntityTypeBadge entityType={task.entityType} ml={6} />
+				<div
+					style={{
+						padding: '10px 12px 12px',
+						flex: 1,
+						minHeight: 0,
+						display: 'flex',
+						flexDirection: 'column',
+						overflow: 'hidden',
+					}}
+				>
+					<div>
+						<Anchor component='button' className='nodrag' fw={600} underline='never' onClick={openEdit}>
+							{task.name}
+						</Anchor>
+						<EntityTypeBadge entityType={task.entityType} ml={6} />
+					</div>
 					{task.description_md && (
 						<div
 							style={{
 								marginTop: 6,
 								color: 'var(--mantine-color-dimmed)',
 								fontSize: 13,
-								maxHeight: 120,
-								overflow: 'hidden',
+								flex: 1,
+								minHeight: 0,
+								overflow: 'auto',
 							}}
 						>
-							<MarkdownPreview content={task.description_md} maxLength={180} variant='preview' />
+							<MarkdownPreview content={task.description_md} variant='preview' />
 						</div>
 					)}
-					{group && (
-						<Group gap={4} mt={6} wrap='nowrap'>
-							<Badge
-								size='xs'
-								variant='light'
-								style={{
-									background: `${group.color}1a`,
-									color: group.color,
-									border: `1px solid ${group.color}66`,
-								}}
-							>
-								{group.name}
-							</Badge>
-							<ActionIcon
-								className='nodrag'
-								size='xs'
-								variant='subtle'
-								color='gray'
-								onClick={ungroup}
-								aria-label={t('tasks.ungroup')}
-							>
-								<IconX size={10} />
-							</ActionIcon>
-						</Group>
-					)}
-					<Group justify='space-between' align='center' mt={10} gap='xs' wrap='nowrap'>
-						<TaskCostPill task={task} />
-						{task.entityType === 'task' && status && (
-							<Group gap={5} align='center' wrap='nowrap' style={{ minWidth: 0 }}>
-								<div
-									style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
-								/>
-								<Text
+					<div style={{ marginTop: 'auto' }}>
+						{group && (
+							<Group gap={4} mt={6} wrap='nowrap'>
+								<Badge
 									size='xs'
-									c='dimmed'
-									style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+									variant='light'
+									style={{
+										background: `${group.color}1a`,
+										color: group.color,
+										border: `1px solid ${group.color}66`,
+									}}
 								>
-									{status.name}
-								</Text>
+									{group.name}
+								</Badge>
+								<ActionIcon
+									className='nodrag'
+									size='xs'
+									variant='subtle'
+									color='gray'
+									onClick={ungroup}
+									aria-label={t('tasks.ungroup')}
+								>
+									<IconX size={10} />
+								</ActionIcon>
 							</Group>
 						)}
-						<Group gap={4} wrap='nowrap'>
-							<ActionIcon
-								className='nodrag'
-								variant='subtle'
-								color='gray'
-								size='sm'
-								onClick={openEdit}
-								aria-label={t('common.edit')}
-							>
-								<IconPencil size={14} />
-							</ActionIcon>
-							<ActionIcon
-								className='nodrag'
-								variant='subtle'
-								color='red'
-								size='sm'
-								onClick={() => confirmDelete(() => deleteTask.mutate(task.id))}
-								aria-label={t('common.delete')}
-							>
-								<IconTrash size={14} />
-							</ActionIcon>
+						<Group justify='space-between' align='center' mt={10} gap='xs' wrap='nowrap'>
+							<TaskCostPill task={task} />
+							{task.entityType === 'task' && status && (
+								<Group gap={5} align='center' wrap='nowrap' style={{ minWidth: 0 }}>
+									<div
+										style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
+									/>
+									<Text
+										size='xs'
+										c='dimmed'
+										style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+									>
+										{status.name}
+									</Text>
+								</Group>
+							)}
+							<Group gap={4} wrap='nowrap'>
+								<ActionIcon
+									className='nodrag'
+									variant='subtle'
+									color='gray'
+									size='sm'
+									onClick={openEdit}
+									aria-label={t('common.edit')}
+								>
+									<IconPencil size={14} />
+								</ActionIcon>
+								<ActionIcon
+									className='nodrag'
+									variant='subtle'
+									color='red'
+									size='sm'
+									onClick={() => confirmDelete(() => deleteTask.mutate(task.id))}
+									aria-label={t('common.delete')}
+								>
+									<IconTrash size={14} />
+								</ActionIcon>
+							</Group>
 						</Group>
-					</Group>
+					</div>
 				</div>
 			</div>
 			<Handle type='source' position={Position.Right} className='nodrag' />

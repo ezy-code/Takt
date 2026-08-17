@@ -118,6 +118,8 @@ export function registerTasksHandlers(db: Db) {
 				hourlyRate,
 				canvasX,
 				canvasY,
+				canvasWidth,
+				canvasHeight,
 				entityType,
 			}: UpdateTaskPayload,
 		) => {
@@ -137,6 +139,8 @@ export function registerTasksHandlers(db: Db) {
 			if (hourlyRate !== undefined) updates.hourly_rate = hourlyRate
 			if (canvasX !== undefined) updates.canvasX = canvasX
 			if (canvasY !== undefined) updates.canvasY = canvasY
+			if (canvasWidth != null) updates.canvasWidth = canvasWidth
+			if (canvasHeight != null) updates.canvasHeight = canvasHeight
 			if (entityType !== undefined) {
 				updates.entityType = entityType
 				if (entityType !== 'task' && statusId === undefined) updates.statusId = null

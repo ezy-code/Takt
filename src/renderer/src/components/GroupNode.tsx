@@ -7,7 +7,7 @@ import type { Group as GroupModel } from '../../../shared/api'
 import { useDeleteGroup, useUpdateGroup } from '../api'
 
 export type GroupNodeData = { group: GroupModel }
-export type GroupNodeType = Node<GroupNodeData, 'group'>
+export type GroupNodeType = Node<GroupNodeData, 'canvasGroup'>
 
 function withAlpha(hex: string, alpha: number): string {
 	const h = hex.replace('#', '')

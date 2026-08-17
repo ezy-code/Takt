@@ -27,7 +27,7 @@ import { CanvasTaskNode, type CanvasTaskNodeType } from './CanvasTaskNode'
 import { GroupNode, type GroupNodeType } from './GroupNode'
 import { TaskPage } from './TaskPage'
 
-const nodeTypes = { canvasTask: CanvasTaskNode, group: GroupNode }
+const nodeTypes = { canvasTask: CanvasTaskNode, canvasGroup: GroupNode }
 
 const UNPLACED_BASE = { x: 100, y: 80 }
 const UNPLACED_COL = 280
@@ -45,7 +45,7 @@ function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
 	let unplaced = 0
 	const groupNodes: GroupNodeType[] = groups.map((g) => ({
 		id: `group-${g.id}`,
-		type: 'group',
+		type: 'canvasGroup',
 		position: { x: g.canvasX ?? NEW_GROUP_POS.x, y: g.canvasY ?? NEW_GROUP_POS.y },
 		width: g.width,
 		height: g.height,
@@ -67,6 +67,8 @@ function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
 			id: `task-${task.id}`,
 			type: 'canvasTask',
 			position,
+			width: task.canvasWidth ?? 260,
+			height: task.canvasHeight ?? 200,
 			data: { task },
 		}
 		if (group) {
@@ -106,7 +108,7 @@ function findGroupAt(nodes: CanvasNode[], node: CanvasNode): GroupNodeType | nul
 	const w = node.measured?.width ?? 0
 	const h = node.measured?.height ?? 0
 	for (const g of nodes) {
-		if (g.type !== 'group') continue
+		if (g.type !== 'canvasGroup') continue
 		const gw = g.measured?.width ?? g.width ?? 0
 		const gh = g.measured?.height ?? g.height ?? 0
 		if (
@@ -180,11 +182,30 @@ function CanvasInner({
 	}
 
 	const handleNodesChange: OnNodesChange = (changes) => {
-		setNodes((nds) => applyNodeChanges(changes, nds) as CanvasNode[])
+		const next = applyNodeChanges(changes, nodes) as CanvasNode[]
+		setNodes(next)
 		for (const change of changes) {
-			if (change.type === 'dimensions' && change.resizing === false && change.id.startsWith('group-')) {
+			if (change.type === 'dimensions' && change.resizing === false) {
 				const dims = change.dimensions
-				if (dims) updateGroup.mutate({ id: groupIdOf(change.id), width: dims.width, height: dims.height })
+				const node = next.find((n) => n.id === change.id)
+				if (!dims || !node) continue
+				if (change.id.startsWith('group-')) {
+					updateGroup.mutate({
+						id: groupIdOf(change.id),
+						canvasX: node.position.x,
+						canvasY: node.position.y,
+						width: dims.width,
+						height: dims.height,
+					})
+				} else if (change.id.startsWith('task-')) {
+					updateTask.mutate({
+						id: taskIdOf(change.id),
+						canvasX: node.position.x,
+						canvasY: node.position.y,
+						canvasWidth: dims.width,
+						canvasHeight: dims.height,
+					})
+				}
 			}
 		}
 	}
@@ -195,7 +216,7 @@ function CanvasInner({
 	}
 
 	const handleNodeDragStop: OnNodeDrag = (_event, node) => {
-		if (node.type === 'group') {
+		if (node.type === 'canvasGroup') {
 			updateGroup.mutate({
 				id: groupIdOf(node.id),
 				canvasX: node.position.x,

@@ -42,6 +42,8 @@ function getRows(db: Db) {
 			position: tasks.position,
 			canvasX: tasks.canvasX,
 			canvasY: tasks.canvasY,
+			canvasWidth: tasks.canvasWidth,
+			canvasHeight: tasks.canvasHeight,
 			groupId: tasks.groupId,
 			hourly_rate: tasks.hourly_rate,
 			entityType: tasks.entityType,

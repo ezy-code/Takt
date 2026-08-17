@@ -42,6 +42,8 @@ export const tasks = sqliteTable('tasks', {
 	descriptionHtml: text('description_html').default(''),
 	canvasX: real('canvas_x'),
 	canvasY: real('canvas_y'),
+	canvasWidth: real('canvas_width').notNull().default(260),
+	canvasHeight: real('canvas_height').notNull().default(200),
 	hourly_rate: real('hourly_rate'),
 	groupId: integer('group_id').references(() => groups.id, { onDelete: 'set null' }),
 	entityType: text('entity_type').notNull().default('task'),

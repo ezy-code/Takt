@@ -32,6 +32,8 @@ export interface Task {
 	total_duration?: number
 	canvasX?: number | null
 	canvasY?: number | null
+	canvasWidth?: number | null
+	canvasHeight?: number | null
 	hourly_rate?: number | null
 	rate?: number | null
 	rateSource?: RateSource
@@ -127,6 +129,8 @@ export interface UpdateTaskPayload extends Partial<AddTaskPayload> {
 	id: number
 	canvasX?: number | null
 	canvasY?: number | null
+	canvasWidth?: number | null
+	canvasHeight?: number | null
 }
 
 export interface Api {
