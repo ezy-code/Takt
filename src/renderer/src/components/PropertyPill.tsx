@@ -18,7 +18,7 @@ export function PropertyPill({ leading, color, children, onClick }: PropertyPill
 			wrap='nowrap'
 			px={8}
 			py={3}
-			w='100%'
+			w='auto'
 			mih={30}
 			style={{ ...PILL_STYLE, cursor: onClick ? 'pointer' : undefined }}
 			c={color}

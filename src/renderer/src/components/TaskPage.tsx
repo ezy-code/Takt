@@ -1,38 +1,32 @@
 import type { ExtensiveEditorRef } from '@lyfie/luthor'
+import type { TreeNodeData } from '@mantine/core'
 import {
+	Box,
 	Button,
 	Container,
 	Group,
 	Modal,
 	NumberInput,
+	Popover,
 	SegmentedControl,
 	Select,
 	Stack,
 	Text,
 	TextInput,
 	Title,
+	TreeSelect,
 } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
-import { useMediaQuery } from '@mantine/hooks'
 import { IconClock, IconCoin, IconFolder, IconTrash } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useBlocker, useNavigate } from '@tanstack/react-router'
 import dayjs from 'dayjs'
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-	useAddTask,
-	useClearMyDay,
-	useDeleteTask,
-	useStatuses,
-	useTask,
-	useTasks,
-	useToggleMyDay,
-	useUpdateTask,
-} from '../api'
+import { useAddTask, useDeleteTask, useGroups, useStatuses, useTask, useTasks, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
 import { lastTasksTab } from '../store/lastTasksTab'
-import type { EntityType, Task } from '../types'
+import type { EntityType, Group as GroupModel, Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
 import { EntityHierarchy } from './EntityHierarchy'
 import { EntityTypeBadge } from './EntityTypeBadge'
@@ -40,7 +34,6 @@ import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
 import { RichTextEditor } from './RichTextEditor'
-import { getMyDayState } from './TaskCard'
 import { TaskCostPill } from './TaskCostPill'
 import { TaskTimeEntriesModal } from './TaskTimeEntriesModal'
 import { TimerControl } from './TimerControl'
@@ -78,6 +71,7 @@ interface TaskSnapshot {
 	name: string
 	statusId: number | null
 	parentId: number | null
+	groupId: number | null
 	addToMyDay: boolean
 	reminderAt: string | null
 	description: string
@@ -107,14 +101,14 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	const { data: task, isLoading } = useTask(id ?? 0)
 	const { data: statuses } = useStatuses()
 	const { data: entities = [] } = useTasks()
+	const { data: groups = [] } = useGroups()
 	const addTask = useAddTask()
 	const updateTask = useUpdateTask()
-	const toggleMyDay = useToggleMyDay()
-	const clearMyDay = useClearMyDay()
 	const deleteTask = useDeleteTask()
 
 	const [statusId, setStatusId] = useState<number | null>(null)
 	const [parentId, setParentId] = useState<number | null>(null)
+	const [groupId, setGroupId] = useState<number | null>(null)
 	const [addToMyDay, setAddToMyDay] = useState(false)
 	const [reminderAt, setReminderAt] = useState<string | null>(null)
 	const [hourlyRate, setHourlyRate] = useState<number | string>('')
@@ -128,15 +122,39 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 		title: t('tasks.deleteTitle'),
 		message: t('tasks.deleteBody'),
 	})
-	const compact = useMediaQuery('(max-width: 900px)')
 	const initialRef = useRef<TaskSnapshot | null>(null)
 	const savedRef = useRef(false)
+
+	const groupTree = useMemo<TreeNodeData[]>(() => {
+		const byParent = new Map<number | null, GroupModel[]>()
+		for (const g of groups) byParent.set(g.parentId ?? null, [...(byParent.get(g.parentId ?? null) ?? []), g])
+		const build = (parentId: number | null): TreeNodeData[] =>
+			(byParent.get(parentId) ?? []).map((g) => ({
+				value: String(g.id),
+				label: g.name,
+				children: build(g.id),
+			}))
+		return build(null)
+	}, [groups])
+
+	const currentGroupId = mode === 'view' ? (task?.groupId ?? null) : groupId
+	const groupChain = useMemo(() => {
+		const byId = new Map(groups.map((g) => [g.id, g]))
+		const names: string[] = []
+		let cur = currentGroupId != null ? byId.get(currentGroupId) : undefined
+		while (cur) {
+			names.unshift(cur.name)
+			cur = cur.parentId != null ? byId.get(cur.parentId) : undefined
+		}
+		return names.join(' - ')
+	}, [groups, currentGroupId])
 
 	useEffect(() => {
 		if (task) setEntityType(task.entityType ?? 'task')
 		if (isEdit && task) {
 			setStatusId(task.entityType === 'task' ? (task.statusId ?? null) : null)
 			setParentId(task.parentId ?? null)
+			setGroupId(task.groupId ?? null)
 			setAddToMyDay(!!task.my_day_date)
 			setReminderAt(task.reminder_at ? dayjs(task.reminder_at).format('YYYY-MM-DD HH:mm:ss') : null)
 			setHourlyRate(task.hourly_rate ?? '')
@@ -146,6 +164,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 			setEntityType(type)
 			setStatusId(type === 'task' ? (defaultStatus?.id ?? null) : null)
 			setParentId(initialParentId ?? null)
+			setGroupId(null)
 			setAddToMyDay(false)
 			setReminderAt(null)
 			setHourlyRate('')
@@ -174,6 +193,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 				description_html,
 				statusId: entityType === 'task' ? statusId : null,
 				parentId: parentId ?? null,
+				groupId: groupId ?? null,
 				myDay: addToMyDay,
 				reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
 				hourlyRate: hourlyRate === '' ? null : Number(hourlyRate),
@@ -214,6 +234,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 						? (statuses?.find((s) => s.is_default)?.id ?? null)
 						: null,
 				parentId: isEdit ? (currentTask!.parentId ?? null) : (initialParentId ?? null),
+				groupId: isEdit ? (currentTask!.groupId ?? null) : null,
 				addToMyDay: isEdit ? !!currentTask!.my_day_date : false,
 				reminderAt: isEdit
 					? currentTask!.reminder_at
@@ -235,6 +256,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 			form.state.values.name !== s.name ||
 			statusId !== s.statusId ||
 			parentId !== s.parentId ||
+			groupId !== s.groupId ||
 			addToMyDay !== s.addToMyDay ||
 			reminderAt !== s.reminderAt ||
 			(hourlyRate === '' ? null : Number(hourlyRate)) !== s.hourlyRate ||
@@ -299,7 +321,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	}
 
 	return (
-		<Container fluid pt='md' pb={isModal ? 0 : 64}>
+		<Container fluid pt='md' pb={isModal ? 0 : 80}>
 			<form onSubmit={(e) => preventEditorSubmit(e, () => form.handleSubmit())}>
 				<Stack>
 					<Group justify='space-between'>
@@ -336,7 +358,203 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 								</>
 							)}
 						</Title>
-						{!isModal && (
+						<Group gap='sm' wrap='nowrap'>
+							{mode !== 'create' && task && <TimerControl taskId={task.id} duration={task.total_duration} />}
+							<SegmentedControl
+								color='blue'
+								value={entityType}
+								onChange={(v) => handleTypeChange(v as EntityType)}
+								data={[
+									{ value: 'task', label: t('entity.task') },
+									{ value: 'note', label: t('entity.note') },
+								]}
+							/>
+						</Group>
+					</Group>
+					<Group gap='sm' wrap='wrap' align='center'>
+						{mode === 'view' ? (
+							<Group gap='xs' wrap='nowrap'>
+								<IconFolder size={14} />
+								<Text size='sm' c={groupChain ? undefined : 'dimmed'}>
+									{groupChain || t('groups.noGroup')}
+								</Text>
+							</Group>
+						) : (
+							<Popover>
+								<Popover.Target>
+									<Group gap='xs' wrap='nowrap' style={{ cursor: 'pointer' }}>
+										<IconFolder size={14} />
+										<Text size='sm' c={groupChain ? undefined : 'dimmed'}>
+											{groupChain || t('groups.noGroup')}
+										</Text>
+									</Group>
+								</Popover.Target>
+								<Popover.Dropdown>
+									<TreeSelect
+										searchable
+										clearable
+										defaultExpandAll
+										nothingFoundMessage={t('groups.nothingFound')}
+										data={groupTree}
+										value={currentGroupId != null ? String(currentGroupId) : null}
+										onChange={(v) => setGroupId(v ? Number(v) : null)}
+										disabled={!groups.length}
+										w={260}
+									/>
+								</Popover.Dropdown>
+							</Popover>
+						)}
+						{mode === 'view' ? (
+							<MyDayControl taskId={task!.id} size='sm' myDayDate={task!.my_day_date} />
+						) : (
+							<MyDayControl inMyDay={addToMyDay} size='sm' onToggle={() => setAddToMyDay((v) => !v)} />
+						)}
+						{mode === 'view' && task && <TaskCostPill task={task} />}
+						{mode !== 'view' && (
+							<PropertyPill leading={<IconCoin size={14} />}>
+								<NumberInput
+									variant='unstyled'
+									placeholder={t('tasks.hourlyRatePlaceholder')}
+									value={hourlyRate}
+									onChange={(v) => setHourlyRate(v)}
+									hideControls
+									w={70}
+									leftSection={<span style={{ display: 'none' }} />}
+									rightSection={<span style={{ display: 'none' }} />}
+									styles={{ input: FIELD_TEXT_STYLE }}
+								/>
+							</PropertyPill>
+						)}
+						{isEdit && task && <TaskCostPill task={task} />}
+						{mode !== 'create' && task && (
+							<PropertyPill leading={<IconClock size={14} />} onClick={() => setShowTimeEntries(true)}>
+								<Text size='sm'>{t('timeEntries.title')}</Text>
+							</PropertyPill>
+						)}
+						{mode === 'view' ? (
+							task!.reminder_at && (
+								<PropertyPill leading={<IconClock size={14} />} color={isPast ? 'red' : 'dimmed'}>
+									<Text size='sm'>
+										{t('tasks.reminder')}:{' '}
+										{new Date(task!.reminder_at).toLocaleString(undefined, {
+											dateStyle: 'short',
+											timeStyle: 'short',
+										})}
+									</Text>
+								</PropertyPill>
+							)
+						) : (
+							<PropertyPill leading={<IconClock size={14} />}>
+								<DateTimePicker
+									variant='unstyled'
+									placeholder={t('tasks.reminder')}
+									value={reminderAt}
+									onChange={setReminderAt}
+									valueFormat='DD.MM.YYYY HH:mm'
+									clearable
+									clearSectionMode='clear'
+									rightSection={<span style={{ display: 'none' }} />}
+									styles={{ input: FIELD_TEXT_STYLE }}
+								/>
+							</PropertyPill>
+						)}
+						{entityType === 'task' &&
+							(mode === 'view' ? (
+								status && (
+									<PropertyPill
+										leading={
+											<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color }} />
+										}
+									>
+										<Text size='sm'>{status.name}</Text>
+									</PropertyPill>
+								)
+							) : (
+								<PropertyPill
+									leading={<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: statusColor }} />}
+								>
+									<Select
+										variant='unstyled'
+										placeholder={t('tasks.selectStatus')}
+										data={statusOptions}
+										value={statusId != null ? String(statusId) : null}
+										onChange={(value) => setStatusId(value ? Number(value) : null)}
+										disabled={!statuses?.length}
+										required
+										rightSection={<span style={{ display: 'none' }} />}
+										styles={{
+											input: { ...FIELD_TEXT_STYLE, width: 60 },
+										}}
+									/>
+								</PropertyPill>
+							))}
+						{mode !== 'view' && (
+							<PropertyPill leading={<IconFolder size={14} />}>
+								<Select
+									variant='unstyled'
+									placeholder={t('entities.parentSearchPlaceholder')}
+									clearable
+									searchable
+									data={parentOptions}
+									value={parentId != null ? String(parentId) : null}
+									onChange={(value) => setParentId(value ? Number(value) : null)}
+									disabled={!entities.length}
+									rightSection={<span style={{ display: 'none' }} />}
+									styles={{ input: FIELD_TEXT_STYLE }}
+								/>
+							</PropertyPill>
+						)}
+					</Group>
+
+					{mode === 'view' ? (
+						task!.description_md && <MarkdownPreview content={task!.description_md} variant='full' />
+					) : (
+						<RichTextEditor
+							ref={editorRef}
+							onReady={() => setEditorReady(true)}
+							placeholder={t('tasks.enterDescription')}
+						/>
+					)}
+					{mode === 'view' && task && (
+						<>
+							<EntityHierarchy
+								entity={task}
+								onAddChild={() => setCreateChildOpen(true)}
+								parentOptions={parentOptions}
+								parentId={task.parentId != null ? String(task.parentId) : null}
+								onParentChange={(value) => updateTask.mutate({ id: task.id, parentId: value ? Number(value) : null })}
+								parentDisabled={updateTask.isPending}
+							/>
+						</>
+					)}
+					{isModal && (
+						<Group justify='flex-end' mt='lg'>
+							<Button variant='default' onClick={goBack}>
+								{t('common.cancel')}
+							</Button>
+							<Button type='submit'>{t('common.create')}</Button>
+						</Group>
+					)}
+				</Stack>
+				{!isModal && (
+					<Box
+						p='md'
+						style={{
+							position: 'fixed',
+							left: 'calc(var(--app-shell-navbar-width) + var(--mantine-spacing-md))',
+							right: 'var(--mantine-spacing-md)',
+							bottom: 0,
+							zIndex: 100,
+							background: 'var(--mantine-color-body)',
+							borderTop: '1px solid var(--mantine-color-default-border)',
+						}}
+					>
+						<Group justify='space-between'>
+							{mode !== 'create' && task && (
+								<Text size='xs' c='dimmed'>
+									{t('common.created', { date: new Date(task.created_at).toLocaleString() })}
+								</Text>
+							)}
 							<Group>
 								{mode === 'view' ? (
 									<>
@@ -373,183 +591,10 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 									</>
 								)}
 							</Group>
-						)}
-					</Group>
-
-					<Group align='flex-start' wrap={compact ? 'wrap' : 'nowrap'} gap='lg'>
-						<div style={{ flex: 1, minWidth: 0, width: compact ? '100%' : undefined }}>
-							{mode === 'view' ? (
-								task!.description_md && <MarkdownPreview content={task!.description_md} variant='full' />
-							) : (
-								<RichTextEditor
-									ref={editorRef}
-									onReady={() => setEditorReady(true)}
-									placeholder={t('tasks.enterDescription')}
-								/>
-							)}
-						</div>
-						<Stack
-							align='flex-start'
-							gap='sm'
-							style={{
-								width: compact ? '100%' : '25%',
-								flexShrink: 0,
-								border: '1px solid var(--mantine-color-default-border)',
-								borderRadius: 'var(--mantine-radius-md)',
-								padding: 'var(--mantine-spacing-md)',
-							}}
-						>
-							{mode !== 'create' && task && <TimerControl taskId={task.id} duration={task.total_duration} />}
-							<SegmentedControl
-								color='blue'
-								value={entityType}
-								onChange={(v) => handleTypeChange(v as EntityType)}
-								data={[
-									{ value: 'task', label: t('entity.task') },
-									{ value: 'note', label: t('entity.note') },
-								]}
-							/>
-							{mode === 'view' && task && <TaskCostPill task={task} />}
-							{mode !== 'view' && (
-								<PropertyPill leading={<IconCoin size={14} />}>
-									<NumberInput
-										variant='unstyled'
-										placeholder={t('tasks.hourlyRatePlaceholder')}
-										value={hourlyRate}
-										onChange={(v) => setHourlyRate(v)}
-										hideControls
-										leftSection={<span style={{ display: 'none' }} />}
-										rightSection={<span style={{ display: 'none' }} />}
-										styles={{ input: FIELD_TEXT_STYLE }}
-									/>
-								</PropertyPill>
-							)}
-							{isEdit && task && <TaskCostPill task={task} />}
-							{mode !== 'create' && task && (
-								<PropertyPill leading={<IconClock size={14} />} onClick={() => setShowTimeEntries(true)}>
-									<Text size='sm'>{t('timeEntries.title')}</Text>
-								</PropertyPill>
-							)}
-							{mode === 'view' ? (
-								<MyDayControl
-									fullWidth
-									inMyDay={!!task!.my_day_date}
-									overdue={getMyDayState(task!.my_day_date ?? null) === 'overdue'}
-									onToggle={() => {
-										if (getMyDayState(task!.my_day_date ?? null) === 'today') clearMyDay.mutate(task!.id)
-										else toggleMyDay.mutate(task!.id)
-									}}
-								/>
-							) : (
-								<MyDayControl fullWidth inMyDay={addToMyDay} onToggle={() => setAddToMyDay((v) => !v)} />
-							)}
-							{mode === 'view' ? (
-								task!.reminder_at && (
-									<PropertyPill leading={<IconClock size={14} />} color={isPast ? 'red' : 'dimmed'}>
-										<Text size='sm'>
-											{t('tasks.reminder')}:{' '}
-											{new Date(task!.reminder_at).toLocaleString(undefined, {
-												dateStyle: 'short',
-												timeStyle: 'short',
-											})}
-										</Text>
-									</PropertyPill>
-								)
-							) : (
-								<PropertyPill leading={<IconClock size={14} />}>
-									<DateTimePicker
-										variant='unstyled'
-										placeholder={t('tasks.reminder')}
-										value={reminderAt}
-										onChange={setReminderAt}
-										valueFormat='DD.MM.YYYY HH:mm'
-										clearable
-										clearSectionMode='clear'
-										rightSection={<span style={{ display: 'none' }} />}
-										styles={{ input: FIELD_TEXT_STYLE }}
-									/>
-								</PropertyPill>
-							)}
-							{entityType === 'task' &&
-								(mode === 'view' ? (
-									status && (
-										<PropertyPill
-											leading={
-												<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color }} />
-											}
-										>
-											<Text size='sm'>{status.name}</Text>
-										</PropertyPill>
-									)
-								) : (
-									<PropertyPill
-										leading={
-											<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: statusColor }} />
-										}
-									>
-										<Select
-											variant='unstyled'
-											placeholder={t('tasks.selectStatus')}
-											data={statusOptions}
-											value={statusId != null ? String(statusId) : null}
-											onChange={(value) => setStatusId(value ? Number(value) : null)}
-											disabled={!statuses?.length}
-											required
-											rightSection={<span style={{ display: 'none' }} />}
-											styles={{ input: FIELD_TEXT_STYLE }}
-										/>
-									</PropertyPill>
-								))}
-							{mode !== 'view' && (
-								<PropertyPill leading={<IconFolder size={14} />}>
-									<Select
-										variant='unstyled'
-										placeholder={t('entities.parentSearchPlaceholder')}
-										clearable
-										searchable
-										data={parentOptions}
-										value={parentId != null ? String(parentId) : null}
-										onChange={(value) => setParentId(value ? Number(value) : null)}
-										disabled={!entities.length}
-										rightSection={<span style={{ display: 'none' }} />}
-										styles={{ input: FIELD_TEXT_STYLE }}
-									/>
-								</PropertyPill>
-							)}
-						</Stack>
-					</Group>
-					{mode === 'view' && task && (
-						<>
-							<EntityHierarchy
-								entity={task}
-								onAddChild={() => setCreateChildOpen(true)}
-								parentOptions={parentOptions}
-								parentId={task.parentId != null ? String(task.parentId) : null}
-								onParentChange={(value) => updateTask.mutate({ id: task.id, parentId: value ? Number(value) : null })}
-								parentDisabled={updateTask.isPending}
-							/>
-						</>
-					)}
-					{isModal && (
-						<Group justify='flex-end' mt='lg'>
-							<Button variant='default' onClick={goBack}>
-								{t('common.cancel')}
-							</Button>
-							<Button type='submit'>{t('common.create')}</Button>
 						</Group>
-					)}
-				</Stack>
+					</Box>
+				)}
 			</form>
-
-			{mode !== 'create' && task && (
-				<Text
-					size='xs'
-					c='dimmed'
-					style={{ position: 'fixed', bottom: 12, right: 16, zIndex: 100, userSelect: 'none' }}
-				>
-					{t('common.created', { date: new Date(task.created_at).toLocaleString() })}
-				</Text>
-			)}
 
 			{editable && (
 				<Modal

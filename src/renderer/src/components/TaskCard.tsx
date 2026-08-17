@@ -2,7 +2,7 @@ import { ActionIcon, Anchor, Badge, Card, Group, Menu, Spoiler, Stack, Text, Uns
 import { IconClock, IconDots, IconEye, IconLayoutBoard, IconPencil, IconSitemap, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useClearMyDay, useDeleteTask, useGroups, useStatuses, useTasks, useToggleMyDay } from '../api'
+import { useDeleteTask, useGroups, useStatuses, useTasks } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
@@ -17,19 +17,10 @@ interface TaskCardProps {
 	task: Task
 }
 
-export function getMyDayState(myDayDate: string | null | undefined): 'none' | 'today' | 'overdue' {
-	if (!myDayDate) return 'none'
-	const today = new Date().toISOString().split('T')[0]
-	if (myDayDate === today) return 'today'
-	return 'overdue'
-}
-
 export function TaskCard({ task }: TaskCardProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const deleteTask = useDeleteTask()
-	const toggleMyDay = useToggleMyDay()
-	const clearMyDay = useClearMyDay()
 	const { data: statuses } = useStatuses()
 	const { data: groups } = useGroups()
 	const { data: tasks } = useTasks()
@@ -41,23 +32,12 @@ export function TaskCard({ task }: TaskCardProps) {
 	const status = statuses?.find((s) => s.id === task.statusId)
 	const parent = task.parentName
 	const group = groups?.find((g) => g.id === task.groupId)
-	const myDayState = getMyDayState(task.my_day_date ?? null)
 	const isPast = task.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 	const children = tasks?.filter((t) => t.parentId === task.id) ?? []
 
-	const handleMyDayToggle = () => {
-		if (myDayState === 'today') clearMyDay.mutate(task.id)
-		else toggleMyDay.mutate(task.id)
-	}
-
 	const menuItems = (
 		<>
-			<MyDayControl
-				variant='menu-item'
-				inMyDay={myDayState !== 'none'}
-				onToggle={handleMyDayToggle}
-				overdue={myDayState === 'overdue'}
-			/>
+			<MyDayControl taskId={task.id} myDayDate={task.my_day_date} variant='menu-item' />
 			<Menu.Divider />
 			<Menu.Item
 				leftSection={<IconEye size={14} />}
@@ -129,11 +109,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
 							<Group gap='md' align='center'>
 								<TaskCostPill task={task} />
-								<MyDayControl
-									inMyDay={myDayState !== 'none'}
-									onToggle={handleMyDayToggle}
-									overdue={myDayState === 'overdue'}
-								/>
+								<MyDayControl taskId={task.id} myDayDate={task.my_day_date} />
 								{task.entityType === 'task' && status && (
 									<Group
 										gap={5}
