@@ -3,17 +3,17 @@ import type { EntitySearchResult, EntitySummary, EntityType, RateSource } from '
 import { costOf } from '../../../shared/cost'
 import type { Db } from '../index'
 import { getDefaultRate } from '../meta'
-import { tasks, timeEntries } from '../schema'
+import { items, timeEntries } from '../schema'
 
 export function resolveRate(
-	taskRate: number | null | undefined,
+	itemRate: number | null | undefined,
 	defaultRate: number,
 ): { rate: number; rateSource: RateSource } {
-	if (taskRate != null && Number.isFinite(taskRate)) return { rate: taskRate, rateSource: 'task' }
+	if (itemRate != null && Number.isFinite(itemRate)) return { rate: itemRate, rateSource: 'item' }
 	return { rate: defaultRate, rateSource: 'default' }
 }
 
-type TaskRateRow = {
+type ItemRateRow = {
 	id: number
 	name: string
 	description: string | null
@@ -29,32 +29,32 @@ type TaskRateRow = {
 function getRows(db: Db) {
 	return db
 		.select({
-			id: tasks.id,
-			name: tasks.name,
-			description: tasks.description,
-			description_md: tasks.descriptionMarkdown,
-			description_html: tasks.descriptionHtml,
-			statusId: tasks.statusId,
-			parentId: tasks.parentId,
-			my_day_date: tasks.my_day_date,
-			reminder_at: tasks.reminderAt,
-			created_at: tasks.created_at,
-			position: tasks.position,
-			canvasX: tasks.canvasX,
-			canvasY: tasks.canvasY,
-			canvasWidth: tasks.canvasWidth,
-			canvasHeight: tasks.canvasHeight,
-			groupId: tasks.groupId,
-			hourly_rate: tasks.hourly_rate,
-			entityType: tasks.entityType,
+			id: items.id,
+			name: items.name,
+			description: items.description,
+			description_md: items.descriptionMarkdown,
+			description_html: items.descriptionHtml,
+			statusId: items.statusId,
+			parentId: items.parentId,
+			my_day_date: items.my_day_date,
+			reminder_at: items.reminderAt,
+			created_at: items.created_at,
+			position: items.position,
+			canvasX: items.canvasX,
+			canvasY: items.canvasY,
+			canvasWidth: items.canvasWidth,
+			canvasHeight: items.canvasHeight,
+			groupId: items.groupId,
+			hourly_rate: items.hourly_rate,
+			entityType: items.entityType,
 			total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 		})
-		.from(tasks)
-		.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
-		.groupBy(tasks.id)
+		.from(items)
+		.leftJoin(timeEntries, eq(items.id, timeEntries.itemId))
+		.groupBy(items.id)
 }
 
-function decorateRows<T extends TaskRateRow>(rows: T[], defaultRate: number) {
+function decorateRows<T extends ItemRateRow>(rows: T[], defaultRate: number) {
 	const byId = new Map(rows.map((row) => [row.id, row]))
 
 	return rows.map((row) => {
@@ -76,30 +76,30 @@ function decorateRows<T extends TaskRateRow>(rows: T[], defaultRate: number) {
 	})
 }
 
-export function getTasksWithRate(db: Db) {
+export function getItemsWithRate(db: Db) {
 	return decorateRows(getRows(db).all(), getDefaultRate()).sort(
 		(a, b) => a.position - b.position || String(b.created_at).localeCompare(String(a.created_at)),
 	)
 }
 
-export function getTaskWithRate(db: Db, id: number) {
-	return getTasksWithRate(db).find((task) => task.id === id) ?? null
+export function getItemWithRate(db: Db, id: number) {
+	return getItemsWithRate(db).find((item) => item.id === id) ?? null
 }
 
-export function getMyDayTasksWithRate(db: Db) {
-	return getTasksWithRate(db).filter((task) => task.my_day_date != null)
+export function getMyDayItemsWithRate(db: Db) {
+	return getItemsWithRate(db).filter((item) => item.my_day_date != null)
 }
 
-export function getTaskForTimer(db: Db, id: number) {
-	return getTaskWithRate(db, id)
+export function getItemForTimer(db: Db, id: number) {
+	return getItemWithRate(db, id)
 }
 
 export function getEntityChildren(db: Db, parentId: number) {
-	return getTasksWithRate(db).filter((task) => task.parentId === parentId)
+	return getItemsWithRate(db).filter((item) => item.parentId === parentId)
 }
 
 export function getEntityAncestors(db: Db, entityId: number): EntitySummary[] {
-	const entities = new Map(getTasksWithRate(db).map((task) => [task.id, task]))
+	const entities = new Map(getItemsWithRate(db).map((item) => [item.id, item]))
 	const ancestors: EntitySummary[] = []
 	let parentId = entities.get(entityId)?.parentId
 	const visited = new Set<number>()
@@ -140,8 +140,8 @@ export function searchEntities(db: Db, value: unknown, requestedLimit?: unknown)
 				parent.name AS parentName,
 				snippet(entity_search_fts, 1, '', '', '...', 18) AS snippet
 			FROM entity_search_fts
-			JOIN tasks AS t ON t.id = entity_search_fts.rowid
-			LEFT JOIN tasks AS parent ON parent.id = t.parent_id
+			JOIN items AS t ON t.id = entity_search_fts.rowid
+			LEFT JOIN items AS parent ON parent.id = t.parent_id
 			WHERE entity_search_fts MATCH ${query}
 			ORDER BY bm25(entity_search_fts, 10.0, 1.0), lower(t.name)
 			LIMIT ${limit}

@@ -111,11 +111,11 @@ function TimeEntriesPage() {
 		message: t('timeEntries.deleteBody'),
 	})
 	const {
-		taskFilter,
+		itemFilter,
 		dateFrom,
 		dateTo,
-		taskOptions,
-		setTaskFilter,
+		itemOptions,
+		setItemFilter,
 		setDateFrom,
 		setDateTo,
 		filteredEntries,
@@ -169,11 +169,11 @@ function TimeEntriesPage() {
 			)}
 
 			<TimeEntryFilters
-				taskFilter={taskFilter}
+				itemFilter={itemFilter}
 				dateFrom={dateFrom}
 				dateTo={dateTo}
-				taskOptions={taskOptions}
-				onTaskChange={setTaskFilter}
+				itemOptions={itemOptions}
+				onItemChange={setItemFilter}
 				onDateFromChange={setDateFrom}
 				onDateToChange={setDateTo}
 				onReset={reset}
@@ -188,7 +188,7 @@ function TimeEntriesPage() {
 				<Table striped highlightOnHover>
 					<Table.Thead>
 						<Table.Tr>
-							<Table.Th>{t('timeEntries.task')}</Table.Th>
+							<Table.Th>{t('timeEntries.item')}</Table.Th>
 							<Table.Th>{t('timeEntries.start')}</Table.Th>
 							<Table.Th>{t('timeEntries.stop')}</Table.Th>
 							<Table.Th>{t('timeEntries.duration')}</Table.Th>
@@ -199,7 +199,7 @@ function TimeEntriesPage() {
 					<Table.Tbody>
 						{filteredEntries.map((entry) => (
 							<Table.Tr key={entry.id}>
-								<Table.Td fw={500}>{entry.taskName}</Table.Td>
+								<Table.Td fw={500}>{entry.itemName}</Table.Td>
 								<Table.Td>
 									<EditableDateTimeCell
 										value={entry.startTime}

@@ -20,14 +20,14 @@ import {
 } from '@xyflow/react'
 import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAddGroup, useGroups, useUpdateCanvasPosition, useUpdateGroup, useUpdateTask } from '../api'
+import { useAddGroup, useGroups, useUpdateCanvasPosition, useUpdateGroup, useUpdateItem } from '../api'
 import { ROUTES } from '../routes'
-import type { Group, Task } from '../types'
-import { CanvasTaskNode, type CanvasTaskNodeType } from './CanvasTaskNode'
+import type { Group, Item } from '../types'
+import { CanvasItemNode, type CanvasItemNodeType } from './CanvasItemNode'
 import { GroupNode, type GroupNodeType } from './GroupNode'
-import { TaskPage } from './TaskPage'
+import { ItemPage } from './ItemPage'
 
-const nodeTypes = { canvasTask: CanvasTaskNode, canvasGroup: GroupNode }
+const nodeTypes = { canvasItem: CanvasItemNode, canvasGroup: GroupNode }
 
 const UNPLACED_BASE = { x: 100, y: 80 }
 const UNPLACED_COL = 280
@@ -37,10 +37,10 @@ const NEW_NOTE_POS = { x: 100, y: 80 }
 // New groups are created at a fixed spot; user drags them anywhere.
 const NEW_GROUP_POS = { x: 60, y: 60 }
 
-type CanvasNode = CanvasTaskNodeType | GroupNodeType
+type CanvasNode = CanvasItemNodeType | GroupNodeType
 
-// Grouped tasks store canvas coords relative to their group; ungrouped ones store absolute coords.
-function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
+// Grouped items store canvas coords relative to their group; ungrouped ones store absolute coords.
+function buildNodes(items: Item[], groups: Group[]): CanvasNode[] {
 	const groupMap = new Map(groups.map((g) => [g.id, g]))
 	let unplaced = 0
 	const groupNodes: GroupNodeType[] = groups.map((g) => ({
@@ -51,11 +51,11 @@ function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
 		height: g.height,
 		data: { group: g },
 	}))
-	const taskNodes: CanvasTaskNodeType[] = tasks.map((task) => {
-		const group = task.groupId != null ? groupMap.get(task.groupId) : undefined
-		const hasPos = task.canvasX != null && task.canvasY != null
+	const itemNodes: CanvasItemNodeType[] = items.map((item) => {
+		const group = item.groupId != null ? groupMap.get(item.groupId) : undefined
+		const hasPos = item.canvasX != null && item.canvasY != null
 		const position = hasPos
-			? { x: task.canvasX!, y: task.canvasY! }
+			? { x: item.canvasX!, y: item.canvasY! }
 			: group
 				? { x: 10, y: 40 }
 				: {
@@ -63,13 +63,13 @@ function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
 						y: UNPLACED_BASE.y + Math.floor(unplaced / 6) * UNPLACED_ROW,
 					}
 		if (!hasPos) unplaced++
-		const node: CanvasTaskNodeType = {
-			id: `task-${task.id}`,
-			type: 'canvasTask',
+		const node: CanvasItemNodeType = {
+			id: `item-${item.id}`,
+			type: 'canvasItem',
 			position,
-			width: task.canvasWidth ?? 260,
-			height: task.canvasHeight ?? 200,
-			data: { task },
+			width: item.canvasWidth ?? 260,
+			height: item.canvasHeight ?? 200,
+			data: { item },
 		}
 		if (group) {
 			node.parentId = `group-${group.id}`
@@ -77,21 +77,21 @@ function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
 		}
 		return node
 	})
-	return [...groupNodes, ...taskNodes]
+	return [...groupNodes, ...itemNodes]
 }
 
-const taskIdOf = (nodeId: string) => Number(nodeId.replace('task-', ''))
+const itemIdOf = (nodeId: string) => Number(nodeId.replace('item-', ''))
 const groupIdOf = (nodeId: string) => Number(nodeId.replace('group-', ''))
 
-function buildEdges(tasks: Task[]): Edge[] {
-	const taskIds = new Set(tasks.map((task) => task.id))
-	return tasks.flatMap((task) =>
-		task.parentId != null && taskIds.has(task.parentId)
+function buildEdges(items: Item[]): Edge[] {
+	const itemIds = new Set(items.map((item) => item.id))
+	return items.flatMap((item) =>
+		item.parentId != null && itemIds.has(item.parentId)
 			? [
 					{
-						id: `parent-${task.parentId}-${task.id}`,
-						source: `task-${task.parentId}`,
-						target: `task-${task.id}`,
+						id: `parent-${item.parentId}-${item.id}`,
+						source: `item-${item.parentId}`,
+						target: `item-${item.id}`,
 						type: 'smoothstep',
 						markerEnd: { type: MarkerType.ArrowClosed },
 						style: { stroke: 'var(--mantine-color-blue-6)', strokeWidth: 2 },
@@ -124,13 +124,13 @@ function findGroupAt(nodes: CanvasNode[], node: CanvasNode): GroupNodeType | nul
 }
 
 function CanvasInner({
-	tasks,
+	items,
 	focusGroupId,
-	focusTaskId,
+	focusItemId,
 }: {
-	tasks: Task[]
+	items: Item[]
 	focusGroupId?: number
-	focusTaskId?: number
+	focusItemId?: number
 }) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
@@ -138,16 +138,16 @@ function CanvasInner({
 	const [nodes, setNodes] = useNodesState<CanvasNode>([])
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 	const updateCanvasPosition = useUpdateCanvasPosition()
-	const updateTask = useUpdateTask()
+	const updateItem = useUpdateItem()
 	const { data: groups } = useGroups()
 	const addGroup = useAddGroup()
 	const updateGroup = useUpdateGroup()
 
 	const [createOpen, setCreateOpen] = useState(false)
 	const lastPaneClick = useRef({ time: 0, x: 0, y: 0 })
-	// Jump to a group/task node once per mount when navigating with a focus search param
+	// Jump to a group/item node once per mount when navigating with a focus search param
 	const focusNodeId =
-		focusGroupId != null ? `group-${focusGroupId}` : focusTaskId != null ? `task-${focusTaskId}` : null
+		focusGroupId != null ? `group-${focusGroupId}` : focusItemId != null ? `item-${focusItemId}` : null
 	const focusedNode = useRef<string | null>(null)
 
 	useEffect(() => {
@@ -159,12 +159,12 @@ function CanvasInner({
 	}, [focusNodeId, nodes, fitView])
 
 	useEffect(() => {
-		setNodes(buildNodes(tasks, groups ?? []))
-	}, [tasks, groups, setNodes])
+		setNodes(buildNodes(items, groups ?? []))
+	}, [items, groups, setNodes])
 
 	useEffect(() => {
-		setEdges(buildEdges(tasks))
-	}, [tasks, setEdges])
+		setEdges(buildEdges(items))
+	}, [items, setEdges])
 
 	const openCreateModal = () => {
 		setCreateOpen(true)
@@ -197,9 +197,9 @@ function CanvasInner({
 						width: dims.width,
 						height: dims.height,
 					})
-				} else if (change.id.startsWith('task-')) {
-					updateTask.mutate({
-						id: taskIdOf(change.id),
+				} else if (change.id.startsWith('item-')) {
+					updateItem.mutate({
+						id: itemIdOf(change.id),
 						canvasX: node.position.x,
 						canvasY: node.position.y,
 						canvasWidth: dims.width,
@@ -211,8 +211,8 @@ function CanvasInner({
 	}
 
 	const handleNodeDoubleClick: NodeMouseHandler = (_event, node) => {
-		if (node.type !== 'canvasTask') return
-		navigate({ to: ROUTES.TASK_EDIT, params: { id: String(node.id).replace('task-', '') } })
+		if (node.type !== 'canvasItem') return
+		navigate({ to: ROUTES.ITEM_EDIT, params: { id: String(node.id).replace('item-', '') } })
 	}
 
 	const handleNodeDragStop: OnNodeDrag = (_event, node) => {
@@ -226,10 +226,10 @@ function CanvasInner({
 			})
 			return
 		}
-		const taskId = taskIdOf(node.id)
-		const task = tasks.find((t) => t.id === taskId)
-		if (!task) return
-		if (task.groupId == null) {
+		const itemId = itemIdOf(node.id)
+		const item = items.find((t) => t.id === itemId)
+		if (!item) return
+		if (item.groupId == null) {
 			const groupNode = findGroupAt(nodes, node as CanvasNode)
 			if (groupNode) {
 				const rel = {
@@ -242,12 +242,12 @@ function CanvasInner({
 					),
 				)
 				// grouped coords are stored relative to the group; single mutation to avoid inconsistent intermediate rebuild
-				updateTask.mutate({ id: taskId, groupId: groupIdOf(groupNode.id), canvasX: rel.x, canvasY: rel.y })
+				updateItem.mutate({ id: itemId, groupId: groupIdOf(groupNode.id), canvasX: rel.x, canvasY: rel.y })
 				return
 			}
 		}
 		// ungrouped: absolute coords; grouped: already relative to parent
-		updateCanvasPosition.mutate({ id: taskId, x: node.position.x, y: node.position.y })
+		updateCanvasPosition.mutate({ id: itemId, x: node.position.x, y: node.position.y })
 	}
 
 	return (
@@ -284,23 +284,23 @@ function CanvasInner({
 					variant='default'
 					leftSection={<IconPlus size={16} />}
 					onClick={() =>
-						addGroup.mutate({ name: t('tasks.newGroup'), canvasX: NEW_GROUP_POS.x, canvasY: NEW_GROUP_POS.y })
+						addGroup.mutate({ name: t('items.newGroup'), canvasX: NEW_GROUP_POS.x, canvasY: NEW_GROUP_POS.y })
 					}
 				>
-					{t('tasks.newGroup')}
+					{t('items.newGroup')}
 				</Button>
 				<Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
-					{t('tasks.newCanvasTask')}
+					{t('items.newCanvasItem')}
 				</Button>
 			</div>
 
-			<Modal opened={createOpen} onClose={() => setCreateOpen(false)} title={t('tasks.newTitle')} size='xl' centered>
-				<TaskPage
+			<Modal opened={createOpen} onClose={() => setCreateOpen(false)} title={t('items.newTitle')} size='xl' centered>
+				<ItemPage
 					mode='create'
 					initialEntityType='note'
 					onCancel={() => setCreateOpen(false)}
-					onCreated={(task) => {
-						updateCanvasPosition.mutate({ id: task.id, x: NEW_NOTE_POS.x, y: NEW_NOTE_POS.y })
+					onCreated={(item) => {
+						updateCanvasPosition.mutate({ id: item.id, x: NEW_NOTE_POS.x, y: NEW_NOTE_POS.y })
 						setCreateOpen(false)
 					}}
 				/>
@@ -310,17 +310,17 @@ function CanvasInner({
 }
 
 export function CanvasBoard({
-	tasks,
+	items,
 	focusGroupId,
-	focusTaskId,
+	focusItemId,
 }: {
-	tasks: Task[]
+	items: Item[]
 	focusGroupId?: number
-	focusTaskId?: number
+	focusItemId?: number
 }) {
 	return (
 		<ReactFlowProvider>
-			<CanvasInner tasks={tasks} focusGroupId={focusGroupId} focusTaskId={focusTaskId} />
+			<CanvasInner items={items} focusGroupId={focusGroupId} focusItemId={focusItemId} />
 		</ReactFlowProvider>
 	)
 }

@@ -2,7 +2,7 @@ import { asc, eq, sql } from 'drizzle-orm'
 import { ipcMain } from 'electron'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
-import { statuses, tasks } from '../schema'
+import { items, statuses } from '../schema'
 
 export function getDefaultStatusId(db: Db): number | undefined {
 	const defaultStatus = db.select({ id: statuses.id }).from(statuses).where(eq(statuses.is_default, true)).get()
@@ -41,8 +41,8 @@ export function registerStatusesHandlers(db: Db) {
 	})
 
 	ipcMain.handle(IPC.DELETE_STATUS, (_event, id: number) => {
-		const taskCount = db.select({ cnt: sql<number>`count(*)` }).from(tasks).where(eq(tasks.statusId, id)).get()
-		if (taskCount!.cnt > 0) return { success: false, reason: 'Has tasks' }
+		const itemCount = db.select({ cnt: sql<number>`count(*)` }).from(items).where(eq(items.statusId, id)).get()
+		if (itemCount!.cnt > 0) return { success: false, reason: 'Has items' }
 		const status = db.select({ is_default: statuses.is_default }).from(statuses).where(eq(statuses.id, id)).get()
 		db.delete(statuses).where(eq(statuses.id, id)).run()
 		if (status?.is_default) {

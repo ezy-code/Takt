@@ -8,38 +8,38 @@ type FilterOption = {
 }
 
 interface TimeEntryFiltersProps {
-	taskFilter: string | null
+	itemFilter: string | null
 	dateFrom: string | null
 	dateTo: string | null
-	taskOptions: FilterOption[]
-	onTaskChange: (value: string | null) => void
+	itemOptions: FilterOption[]
+	onItemChange: (value: string | null) => void
 	onDateFromChange: (value: string | null) => void
 	onDateToChange: (value: string | null) => void
 	onReset: () => void
 }
 
 export function TimeEntryFilters({
-	taskFilter,
+	itemFilter,
 	dateFrom,
 	dateTo,
-	taskOptions,
-	onTaskChange,
+	itemOptions,
+	onItemChange,
 	onDateFromChange,
 	onDateToChange,
 	onReset,
 }: TimeEntryFiltersProps) {
 	const { t } = useTranslation()
-	const hasFilters = taskFilter != null || dateFrom != null || dateTo != null
+	const hasFilters = itemFilter != null || dateFrom != null || dateTo != null
 
 	return (
 		<Group align='flex-end' mb='md' wrap='wrap'>
 			<Select
-				label={t('timeEntries.task')}
-				placeholder={t('timeEntries.allTasks')}
+				label={t('timeEntries.item')}
+				placeholder={t('timeEntries.allItems')}
 				clearable
-				data={taskOptions}
-				value={taskFilter}
-				onChange={onTaskChange}
+				data={itemOptions}
+				value={itemFilter}
+				onChange={onItemChange}
 				w={200}
 				searchable
 			/>

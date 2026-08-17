@@ -58,7 +58,7 @@ export function GroupNode({ data, selected }: NodeProps<GroupNodeType>) {
 						flex={1}
 						miw={0}
 						value={name}
-						placeholder={t('tasks.groupName')}
+						placeholder={t('items.groupName')}
 						onChange={(e) => setName(e.currentTarget.value)}
 						onBlur={() => {
 							if (name.trim() && name !== group.name) updateGroup.mutate({ id: group.id, name: name.trim() })
@@ -74,7 +74,7 @@ export function GroupNode({ data, selected }: NodeProps<GroupNodeType>) {
 						onChangeEnd={(c) => {
 							if (c !== group.color) updateGroup.mutate({ id: group.id, color: c })
 						}}
-						aria-label={t('tasks.groupColor')}
+						aria-label={t('items.groupColor')}
 					/>
 					<ActionIcon
 						className='nodrag'

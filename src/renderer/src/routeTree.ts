@@ -9,34 +9,34 @@ const rootRoute = createRootRoute({
 	component: AppLayout,
 })
 
-const tasksRoute = createRoute({
+const itemsRoute = createRoute({
 	getParentRoute: () => rootRoute,
-	path: ROUTES.TASKS,
-	validateSearch: (search: Record<string, unknown>): { tab?: string; focusGroup?: number; focusTask?: number } => ({
+	path: ROUTES.ITEMS,
+	validateSearch: (search: Record<string, unknown>): { tab?: string; focusGroup?: number; focusItem?: number } => ({
 		tab: (search.tab as string) || 'list',
 		focusGroup: search.focusGroup != null ? Number(search.focusGroup) : undefined,
-		focusTask: search.focusTask != null ? Number(search.focusTask) : undefined,
+		focusItem: search.focusItem != null ? Number(search.focusItem) : undefined,
 	}),
-}).lazy(() => import('./routes/tasks.lazy').then((d) => d.Route))
+}).lazy(() => import('./routes/items.lazy').then((d) => d.Route))
 
-const tasksNewRoute = createRoute({
+const itemsNewRoute = createRoute({
 	getParentRoute: () => rootRoute,
-	path: ROUTES.TASKS_NEW,
+	path: ROUTES.ITEMS_NEW,
 	validateSearch: (search: Record<string, unknown>): { parentId?: number; entityType?: EntityType } => ({
 		parentId: search.parentId != null ? Number(search.parentId) : undefined,
 		entityType: ['task', 'note'].includes(String(search.entityType)) ? (search.entityType as EntityType) : undefined,
 	}),
-}).lazy(() => import('./routes/tasks-new.lazy').then((d) => d.Route))
+}).lazy(() => import('./routes/items-new.lazy').then((d) => d.Route))
 
-const taskDetailRoute = createRoute({
+const itemDetailRoute = createRoute({
 	getParentRoute: () => rootRoute,
-	path: ROUTES.TASK_DETAIL,
-}).lazy(() => import('./routes/task-detail.lazy').then((d) => d.Route))
+	path: ROUTES.ITEM_DETAIL,
+}).lazy(() => import('./routes/item-detail.lazy').then((d) => d.Route))
 
-const taskEditRoute = createRoute({
+const itemEditRoute = createRoute({
 	getParentRoute: () => rootRoute,
-	path: ROUTES.TASK_EDIT,
-}).lazy(() => import('./routes/tasks-edit.lazy').then((d) => d.Route))
+	path: ROUTES.ITEM_EDIT,
+}).lazy(() => import('./routes/items-edit.lazy').then((d) => d.Route))
 
 const myDayRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -70,10 +70,10 @@ const indexRoute = createRoute({
 const routeTree = rootRoute.addChildren([
 	indexRoute,
 	myDayRoute,
-	tasksRoute,
-	tasksNewRoute,
-	taskDetailRoute,
-	taskEditRoute,
+	itemsRoute,
+	itemsNewRoute,
+	itemDetailRoute,
+	itemEditRoute,
 	timeEntriesRoute,
 	settingsRoute,
 ])

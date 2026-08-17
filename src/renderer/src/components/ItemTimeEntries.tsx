@@ -4,19 +4,19 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDeleteTimeEntry } from '../api'
 import { formatDuration } from '../hooks/useTimer'
-import type { TimeEntryWithTask } from '../types'
+import type { TimeEntryWithItem } from '../types'
 import { ConfirmDeleteButton } from './ConfirmDeleteButton'
 import { TimerControl } from './TimerControl'
 
-interface TaskTimeEntriesProps {
-	taskName: string
-	entries: TimeEntryWithTask[]
+interface ItemTimeEntriesProps {
+	itemName: string
+	entries: TimeEntryWithItem[]
 	expanded?: boolean
 	onToggle?: () => void
 	defaultOpen?: boolean
 }
 
-export function TaskTimeEntries({ taskName, entries, expanded, onToggle, defaultOpen = false }: TaskTimeEntriesProps) {
+export function ItemTimeEntries({ itemName, entries, expanded, onToggle, defaultOpen = false }: ItemTimeEntriesProps) {
 	const { t } = useTranslation()
 	const deleteTimeEntry = useDeleteTimeEntry()
 	const [internalOpen, setInternalOpen] = useState(defaultOpen)
@@ -39,7 +39,7 @@ export function TaskTimeEntries({ taskName, entries, expanded, onToggle, default
 							}}
 						/>
 					</ActionIcon>
-					<Text fw={500}>{taskName}</Text>
+					<Text fw={500}>{itemName}</Text>
 				</Group>
 				<Group wrap='nowrap' gap='md'>
 					<Text fw={700} style={{ fontVariantNumeric: 'tabular-nums' }}>
@@ -70,7 +70,7 @@ export function TaskTimeEntries({ taskName, entries, expanded, onToggle, default
 								</Table.Td>
 								<Table.Td>
 									<TimerControl
-										taskId={entry.taskId}
+										itemId={entry.itemId}
 										duration={entry.duration}
 										startTime={entry.stopTime ? null : entry.startTime}
 										isActiveEntry={entry.stopTime === null}

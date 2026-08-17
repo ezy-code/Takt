@@ -3,8 +3,8 @@ import { ipcMain } from 'electron'
 import type { ActiveTimerInfo } from '../../../shared/api'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
-import { getTaskForTimer } from '../repositories/tasks'
-import { tasks, timeEntries } from '../schema'
+import { getItemForTimer } from '../repositories/items'
+import { items, timeEntries } from '../schema'
 import type { OnTimerChange } from '../types'
 
 export function getLastTimeEntry(db: Db): ActiveTimerInfo | null {
@@ -12,44 +12,44 @@ export function getLastTimeEntry(db: Db): ActiveTimerInfo | null {
 
 	if (!entry) return null
 
-	const task = getTaskForTimer(db, entry.taskId)
-	if (!task) return null
+	const item = getItemForTimer(db, entry.itemId)
+	if (!item) return null
 
-	return { entry, task }
+	return { entry, item }
 }
 
-export function getRecentTasks(db: Db, limit = 5) {
+export function getRecentItems(db: Db, limit = 5) {
 	return db
-		.select({ id: tasks.id, name: tasks.name })
+		.select({ id: items.id, name: items.name })
 		.from(timeEntries)
-		.innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
-		.groupBy(tasks.id)
+		.innerJoin(items, eq(timeEntries.itemId, items.id))
+		.groupBy(items.id)
 		.orderBy(desc(max(timeEntries.startTime)))
 		.limit(limit)
 		.all()
 }
 
-export function startTimer(db: Db, taskId: number, onTimerChange?: OnTimerChange) {
+export function startTimer(db: Db, itemId: number, onTimerChange?: OnTimerChange) {
 	const active = db.select().from(timeEntries).where(sql`${timeEntries.stopTime} is null`).limit(1).all()[0]
 
 	if (active) {
-		const activeTask = db.select().from(tasks).where(eq(tasks.id, active.taskId)).get()
-		return { conflict: true, activeEntry: active, activeTask }
+		const activeItem = db.select().from(items).where(eq(items.id, active.itemId)).get()
+		return { conflict: true, activeEntry: active, activeItem }
 	}
 
 	const now = new Date().toISOString()
-	const entry = db.insert(timeEntries).values({ taskId, startTime: now }).returning().get()
+	const entry = db.insert(timeEntries).values({ itemId, startTime: now }).returning().get()
 
-	const task = db.select({ name: tasks.name }).from(tasks).where(eq(tasks.id, taskId)).get()
-	onTimerChange?.({ active: true, startTime: now, taskName: task?.name ?? 'Unknown', taskId })
-	return { conflict: false, entry, task: getTaskForTimer(db, taskId) }
+	const item = db.select({ name: items.name }).from(items).where(eq(items.id, itemId)).get()
+	onTimerChange?.({ active: true, startTime: now, itemName: item?.name ?? 'Unknown', itemId })
+	return { conflict: false, entry, item: getItemForTimer(db, itemId) }
 }
 
-export function stopTimer(db: Db, taskId: number, onTimerChange?: OnTimerChange) {
+export function stopTimer(db: Db, itemId: number, onTimerChange?: OnTimerChange) {
 	const active = db
 		.select()
 		.from(timeEntries)
-		.where(sql`${timeEntries.stopTime} is null and ${timeEntries.taskId} = ${taskId}`)
+		.where(sql`${timeEntries.stopTime} is null and ${timeEntries.itemId} = ${itemId}`)
 		.limit(1)
 		.all()[0]
 
@@ -68,19 +68,19 @@ export function stopTimer(db: Db, taskId: number, onTimerChange?: OnTimerChange)
 		.get()
 
 	onTimerChange?.({ active: false })
-	return { entry, task: getTaskForTimer(db, taskId) }
+	return { entry, item: getItemForTimer(db, itemId) }
 }
 
 export function registerTimerHandlers(db: Db, onTimerChange?: OnTimerChange) {
 	const initialActive = db.select().from(timeEntries).where(sql`${timeEntries.stopTime} is null`).limit(1).all()[0]
 
 	if (initialActive) {
-		const task = db.select({ name: tasks.name }).from(tasks).where(eq(tasks.id, initialActive.taskId)).get()
+		const item = db.select({ name: items.name }).from(items).where(eq(items.id, initialActive.itemId)).get()
 		onTimerChange?.({
 			active: true,
 			startTime: initialActive.startTime,
-			taskName: task?.name ?? 'Unknown',
-			taskId: initialActive.taskId,
+			itemName: item?.name ?? 'Unknown',
+			itemId: initialActive.itemId,
 		})
 	} else {
 		onTimerChange?.({ active: false })
@@ -91,14 +91,14 @@ export function registerTimerHandlers(db: Db, onTimerChange?: OnTimerChange) {
 
 		if (!entry) return null
 
-		const task = getTaskForTimer(db, entry.taskId)
+		const item = getItemForTimer(db, entry.itemId)
 
-		return { entry, task }
+		return { entry, item }
 	})
 
 	ipcMain.handle(IPC.GET_LAST_TIMER, () => getLastTimeEntry(db))
 
-	ipcMain.handle(IPC.START_TIMER, (_event, taskId: number) => startTimer(db, taskId, onTimerChange))
+	ipcMain.handle(IPC.START_TIMER, (_event, itemId: number) => startTimer(db, itemId, onTimerChange))
 
-	ipcMain.handle(IPC.STOP_TIMER, (_event, taskId: number) => stopTimer(db, taskId, onTimerChange))
+	ipcMain.handle(IPC.STOP_TIMER, (_event, itemId: number) => stopTimer(db, itemId, onTimerChange))
 }

@@ -5,26 +5,26 @@ import { formatDuration, useTimer } from '../hooks/useTimer'
 import { useTimerActions } from '../hooks/useTimerActions'
 
 interface TimerControlProps {
-	taskId?: number | null
+	itemId?: number | null
 	duration?: number | null
 	startTime?: string | null
 	isActiveEntry?: boolean
 }
 
-export function TimerControl({ taskId, duration, startTime, isActiveEntry }: TimerControlProps) {
-	const { activeEntry, isActiveForTask } = useActiveTimerState(taskId)
+export function TimerControl({ itemId, duration, startTime, isActiveEntry }: TimerControlProps) {
+	const { activeEntry, isActiveForItem } = useActiveTimerState(itemId)
 	const stopTimer = useStopTimer()
 	const { start, switchingId } = useTimerActions()
 
-	const isActive = taskId != null && (isActiveEntry ?? isActiveForTask)
+	const isActive = itemId != null && (isActiveEntry ?? isActiveForItem)
 	const tickingStart = isActive ? (activeEntry?.startTime ?? startTime ?? null) : null
 	const { elapsed } = useTimer(tickingStart)
 	const shown = formatDuration((duration ?? 0) + elapsed)
 
 	const toggle = () => {
-		if (taskId == null) return
-		if (isActive) stopTimer.mutate(taskId)
-		else start(taskId)
+		if (itemId == null) return
+		if (isActive) stopTimer.mutate(itemId)
+		else start(itemId)
 	}
 
 	return (
@@ -34,7 +34,7 @@ export function TimerControl({ taskId, duration, startTime, isActiveEntry }: Tim
 			color='green'
 			checked={isActive}
 			onChange={toggle}
-			disabled={!taskId || switchingId === taskId}
+			disabled={!itemId || switchingId === itemId}
 			icon={false}
 			styles={{
 				label: {
@@ -44,7 +44,7 @@ export function TimerControl({ taskId, duration, startTime, isActiveEntry }: Tim
 			}}
 		>
 			<span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}>
-				{taskId != null &&
+				{itemId != null &&
 					(isActive ? (
 						<IconPlayerStopFilled size={12} style={{ marginRight: 3 }} />
 					) : (

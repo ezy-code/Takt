@@ -4,7 +4,7 @@ import type { RateSource } from '../../../shared/api'
 import { formatMoney, formatRate } from '../hooks/useCost'
 
 const SOURCE_KEYS = {
-	task: 'cost.source.task',
+	item: 'cost.source.item',
 	default: 'cost.source.default',
 } as const
 

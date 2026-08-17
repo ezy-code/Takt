@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-interface TaskFiltersState {
+interface ItemFiltersState {
 	groupFilter: string | null
 	statusFilter: string | null
 	showOnlyParents: boolean
@@ -13,7 +13,7 @@ interface TaskFiltersState {
 	reset: () => void
 }
 
-export const useTaskFiltersStore = create<TaskFiltersState>()(
+export const useItemFiltersStore = create<ItemFiltersState>()(
 	persist(
 		(set) => ({
 			groupFilter: null,
@@ -32,6 +32,6 @@ export const useTaskFiltersStore = create<TaskFiltersState>()(
 					entityTypeFilter: null,
 				}),
 		}),
-		{ name: 'takt-task-filters' },
+		{ name: 'takt-item-filters' },
 	),
 )

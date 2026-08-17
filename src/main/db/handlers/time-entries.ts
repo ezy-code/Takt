@@ -5,27 +5,27 @@ import { costOf } from '../../../shared/cost'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
 import { getDefaultRate } from '../meta'
-import { getTasksWithRate } from '../repositories/tasks'
+import { getItemsWithRate } from '../repositories/items'
 import { timeEntries } from '../schema'
 
 export function registerTimeEntriesHandlers(db: Db) {
 	ipcMain.handle(IPC.GET_ALL_TIME_ENTRIES, () => {
 		const defaultRate = getDefaultRate()
-		const entities = new Map(getTasksWithRate(db).map((task) => [task.id, task]))
+		const entities = new Map(getItemsWithRate(db).map((item) => [item.id, item]))
 		return db
 			.select()
 			.from(timeEntries)
 			.orderBy(desc(timeEntries.id))
 			.all()
 			.map((entry) => {
-				const task = entities.get(entry.taskId)
-				const rate = task?.rate ?? defaultRate
-				const rateSource = task?.rateSource ?? 'default'
+				const item = entities.get(entry.itemId)
+				const rate = item?.rate ?? defaultRate
+				const rateSource = item?.rateSource ?? 'default'
 				return {
 					...entry,
-					taskName: task?.name ?? '',
-					parentId: task?.parentId ?? null,
-					parentName: task?.parentName ?? null,
+					itemName: item?.name ?? '',
+					parentId: item?.parentId ?? null,
+					parentName: item?.parentName ?? null,
 					rate,
 					rateSource,
 					cost: costOf(entry.duration ?? 0, rate),
@@ -35,7 +35,7 @@ export function registerTimeEntriesHandlers(db: Db) {
 
 	ipcMain.handle(IPC.GET_TIME_SUMMARY, () => {
 		const defaultRate = getDefaultRate()
-		const entities = new Map(getTasksWithRate(db).map((task) => [task.id, task]))
+		const entities = new Map(getItemsWithRate(db).map((item) => [item.id, item]))
 		const rows = db.select().from(timeEntries).all()
 
 		let totalDuration = 0
@@ -48,7 +48,7 @@ export function registerTimeEntriesHandlers(db: Db) {
 
 		for (const row of rows) {
 			const duration = row.duration ?? 0
-			const rate = entities.get(row.taskId)?.rate ?? defaultRate
+			const rate = entities.get(row.itemId)?.rate ?? defaultRate
 			const cost = costOf(duration, rate)
 			totalDuration += duration
 			totalCost += cost

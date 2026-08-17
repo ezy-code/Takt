@@ -75,7 +75,7 @@ function SettingsPage() {
 		queryClient.invalidateQueries({ queryKey: ['meta', key] })
 		queryClient.invalidateQueries({ queryKey: ['time-entries'] })
 		queryClient.invalidateQueries({ queryKey: ['time-summary'] })
-		queryClient.invalidateQueries({ queryKey: ['tasks'] })
+		queryClient.invalidateQueries({ queryKey: ['items'] })
 	}
 
 	useEffect(() => {

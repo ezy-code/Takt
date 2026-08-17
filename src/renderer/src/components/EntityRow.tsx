@@ -1,10 +1,10 @@
 import { ActionIcon, Group, Text, UnstyledButton } from '@mantine/core'
 import { IconTrash } from '@tabler/icons-react'
-import type { Task } from '../types'
+import type { Item } from '../types'
 import { EntityTypeBadge } from './EntityTypeBadge'
 
 interface EntityRowProps {
-	entity: Task
+	entity: Item
 	onOpen: () => void
 	onRemove?: () => void
 	removeLabel?: string

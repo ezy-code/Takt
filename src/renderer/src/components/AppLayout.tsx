@@ -12,7 +12,7 @@ import UpdateSection from './UpdateSection'
 
 const navItems = [
 	{ labelKey: 'nav.myDay', path: ROUTES.MY_DAY, icon: IconCalendarCheck },
-	{ labelKey: 'nav.tasks', path: ROUTES.TASKS, icon: IconList },
+	{ labelKey: 'nav.items', path: ROUTES.ITEMS, icon: IconList },
 	{ labelKey: 'nav.timeEntries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
 	{ labelKey: 'nav.settings', path: ROUTES.SETTINGS, icon: IconSettings },
 ] as const
@@ -40,8 +40,8 @@ export default function AppLayout() {
 	}
 
 	useEffect(() => {
-		return window.api.onNavigateToTask((id) => {
-			navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
+		return window.api.onNavigateToItem((id) => {
+			navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(id) } })
 		})
 	}, [navigate])
 
@@ -61,15 +61,15 @@ export default function AppLayout() {
 								component='button'
 								underline='never'
 								c='var(--mantine-color-text)'
-								onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(timer.task.id) } })}
+								onClick={() => navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(timer.item.id) } })}
 							>
 								<Text size='sm' fw={500}>
-									{timer.task.name}
+									{timer.item.name}
 								</Text>
 							</Anchor>
 							<TimerControl
-								taskId={timer.entry.taskId}
-								duration={timer.task.total_duration}
+								itemId={timer.entry.itemId}
+								duration={timer.item.total_duration}
 								startTime={activeTimer ? timer.entry.startTime : null}
 							/>
 						</Group>
@@ -87,14 +87,14 @@ export default function AppLayout() {
 							active={location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)}
 							onClick={() => navigate({ to: item.path })}
 							rightSection={
-								item.path === ROUTES.TASKS ? (
+								item.path === ROUTES.ITEMS ? (
 									<ActionIcon
 										variant='subtle'
 										color='gray'
 										size='sm'
 										onClick={(e) => {
 											e.stopPropagation()
-											navigate({ to: ROUTES.TASKS_NEW })
+											navigate({ to: ROUTES.ITEMS_NEW })
 										}}
 									>
 										<IconPlus size={14} />

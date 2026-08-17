@@ -1,12 +1,12 @@
 import { Group } from '@mantine/core'
 import { IconCoin } from '@tabler/icons-react'
 import { useCurrency } from '../api'
-import type { Task } from '../types'
+import type { Item } from '../types'
 import { CostInfo } from './CostInfo'
 
-export function TaskCostPill({ task }: { task: Task }) {
+export function ItemCostPill({ item }: { item: Item }) {
 	const { data: currency = '$' } = useCurrency()
-	const cost = task.cost ?? 0
+	const cost = item.cost ?? 0
 	if (cost <= 0) return null
 	return (
 		<Group
@@ -21,8 +21,8 @@ export function TaskCostPill({ task }: { task: Task }) {
 			<IconCoin size={14} />
 			<CostInfo
 				cost={cost}
-				rate={task.rate ?? 0}
-				rateSource={task.rateSource ?? 'default'}
+				rate={item.rate ?? 0}
+				rateSource={item.rateSource ?? 'default'}
 				currency={currency}
 				size='sm'
 			/>

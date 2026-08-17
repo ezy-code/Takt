@@ -2,18 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import type {
 	AddGroupPayload,
-	AddTaskPayload,
+	AddItemPayload,
 	UpdateGroupPayload,
-	UpdateTaskPayload,
+	UpdateItemPayload,
 	UpdateTimeEntryPayload,
 } from '../../shared/api'
 import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
-import type { StartTimerResult, Task } from './types'
+import type { Item, StartTimerResult } from './types'
 
 export const queryKeys = {
-	tasks: ['tasks'] as const,
-	myDayTasks: ['tasks', 'my-day'] as const,
+	items: ['items'] as const,
+	myDayItems: ['items', 'my-day'] as const,
 	groups: ['groups'] as const,
 	activeTimer: ['active-timer'] as const,
 	lastTimer: ['last-timer'] as const,
@@ -25,25 +25,25 @@ export const queryKeys = {
 	entitySearch: (query: string, limit: number) => ['entity-search', query, limit] as const,
 }
 
-export function useTasks() {
+export function useItems() {
 	return useQuery({
-		queryKey: queryKeys.tasks,
-		queryFn: () => window.api.getTasks(),
+		queryKey: queryKeys.items,
+		queryFn: () => window.api.getItems(),
 	})
 }
 
-export function useTask(id: number) {
+export function useItem(id: number) {
 	return useQuery({
-		queryKey: ['tasks', id],
-		queryFn: () => window.api.getTask(id),
+		queryKey: ['items', id],
+		queryFn: () => window.api.getItem(id),
 		enabled: !!id,
 	})
 }
 
-export function useMyDayTasks() {
+export function useMyDayItems() {
 	return useQuery({
-		queryKey: queryKeys.myDayTasks,
-		queryFn: () => window.api.getMyDayTasks(),
+		queryKey: queryKeys.myDayItems,
+		queryFn: () => window.api.getMyDayItems(),
 	})
 }
 
@@ -54,15 +54,15 @@ export function useActiveTimer() {
 	})
 }
 
-export function useActiveTimerState(taskId?: number | null) {
+export function useActiveTimerState(itemId?: number | null) {
 	const { data } = useActiveTimer()
 	const activeEntry = data?.entry ?? null
-	const isActiveForTask = taskId != null && activeEntry?.taskId === taskId
+	const isActiveForItem = itemId != null && activeEntry?.itemId === itemId
 	return {
 		activeTimer: data,
 		activeEntry,
-		isActiveForTask,
-		tickingStart: isActiveForTask ? (activeEntry?.startTime ?? null) : null,
+		isActiveForItem,
+		tickingStart: isActiveForItem ? (activeEntry?.startTime ?? null) : null,
 	}
 }
 
@@ -80,7 +80,7 @@ export function useTimerChangedSync() {
 			window.api.onTimerChanged(() => {
 				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
-				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+				queryClient.invalidateQueries({ queryKey: queryKeys.items })
 				queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 				queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 			}),
@@ -102,14 +102,14 @@ export function useTimeSummary() {
 	})
 }
 
-export function useAddTask() {
+export function useAddItem() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (payload: AddTaskPayload) => window.api.addTask(payload),
+		mutationFn: (payload: AddItemPayload) => window.api.addItem(payload),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
 			queryClient.invalidateQueries({ queryKey: ['entity-search'] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
 			queryClient.invalidateQueries({ queryKey: ['entity-ancestors'] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
@@ -118,15 +118,15 @@ export function useAddTask() {
 	})
 }
 
-export function useUpdateTask() {
+export function useUpdateItem() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (payload: UpdateTaskPayload) => window.api.updateTask(payload),
+		mutationFn: (payload: UpdateItemPayload) => window.api.updateItem(payload),
 		onSuccess: (_data, vars) => {
-			queryClient.invalidateQueries({ queryKey: ['tasks', vars.id] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: ['items', vars.id] })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
 			queryClient.invalidateQueries({ queryKey: ['entity-search'] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
@@ -135,14 +135,14 @@ export function useUpdateTask() {
 	})
 }
 
-export function useDeleteTask() {
+export function useDeleteItem() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (id: number) => window.api.deleteTask(id),
+		mutationFn: (id: number) => window.api.deleteItem(id),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
 			queryClient.invalidateQueries({ queryKey: ['entity-search'] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
@@ -156,11 +156,11 @@ export function useDeleteTask() {
 export function useToggleMyDay() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (id: number) => window.api.toggleMyDayTask(id),
+		mutationFn: (id: number) => window.api.toggleMyDayItem(id),
 		onSuccess: (_data, id) => {
-			queryClient.invalidateQueries({ queryKey: ['tasks', id] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: ['items', id] })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 		},
 	})
 }
@@ -170,9 +170,9 @@ export function useClearMyDay() {
 	return useMutation({
 		mutationFn: (id: number) => window.api.clearMyDayDate(id),
 		onSuccess: (_data, id) => {
-			queryClient.invalidateQueries({ queryKey: ['tasks', id] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: ['items', id] })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 		},
 	})
 }
@@ -184,8 +184,8 @@ export function useUpdateTimeEntry() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 		},
@@ -207,14 +207,14 @@ export function useDeleteTimeEntry() {
 export function useStartTimer() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (taskId: number) => window.api.startTimer(taskId),
+		mutationFn: (itemId: number) => window.api.startTimer(itemId),
 		onSuccess: (result: StartTimerResult) => {
 			if (!result.conflict) {
-				queryClient.setQueryData(queryKeys.activeTimer, { entry: result.entry, task: result.task })
+				queryClient.setQueryData(queryKeys.activeTimer, { entry: result.entry, item: result.item })
 				queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 				queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
-				queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-				queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+				queryClient.invalidateQueries({ queryKey: queryKeys.items })
+				queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 				queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 				queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
 			}
@@ -225,26 +225,26 @@ export function useStartTimer() {
 export function useStopTimer() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (taskId: number) => window.api.stopTimer(taskId),
-		onSuccess: (result, taskId) => {
+		mutationFn: (itemId: number) => window.api.stopTimer(itemId),
+		onSuccess: (result, itemId) => {
 			if (result) {
-				const patchTask = (t: Task): Task => {
+				const patchItem = (t: Item): Item => {
 					const total_duration = (t.total_duration ?? 0) + (result.entry.duration ?? 0)
 					return { ...t, total_duration, cost: costOf(total_duration, t.rate ?? 0) }
 				}
-				const listUpdater = (tasks: Task[] | undefined) => {
-					if (!tasks) return tasks
-					return tasks.map((t) => (t.id === taskId ? patchTask(t) : t))
+				const listUpdater = (items: Item[] | undefined) => {
+					if (!items) return items
+					return items.map((t) => (t.id === itemId ? patchItem(t) : t))
 				}
-				queryClient.setQueryData(queryKeys.tasks, listUpdater)
-				queryClient.setQueryData(queryKeys.myDayTasks, listUpdater)
-				queryClient.setQueryData(['tasks', taskId], (t: Task | undefined) => (t?.id === taskId ? patchTask(t) : t))
+				queryClient.setQueryData(queryKeys.items, listUpdater)
+				queryClient.setQueryData(queryKeys.myDayItems, listUpdater)
+				queryClient.setQueryData(['items', itemId], (t: Item | undefined) => (t?.id === itemId ? patchItem(t) : t))
 				queryClient.setQueryData(queryKeys.activeTimer, null)
 				queryClient.setQueryData(queryKeys.lastTimer, result)
 			}
-			queryClient.invalidateQueries({ queryKey: ['tasks', taskId] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: ['items', itemId] })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 			queryClient.invalidateQueries({ queryKey: queryKeys.activeTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
@@ -311,26 +311,26 @@ export function useSetDefaultStatus() {
 	})
 }
 
-export function useMoveTask() {
+export function useMoveItem() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({ taskId, statusId }: { taskId: number; statusId: number }) => window.api.moveTask(taskId, statusId),
-		onSuccess: (_data, { taskId }) => {
-			queryClient.invalidateQueries({ queryKey: ['tasks', taskId] })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+		mutationFn: ({ itemId, statusId }: { itemId: number; statusId: number }) => window.api.moveItem(itemId, statusId),
+		onSuccess: (_data, { itemId }) => {
+			queryClient.invalidateQueries({ queryKey: ['items', itemId] })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 		},
 	})
 }
 
-export function useReorderTasks() {
+export function useReorderItems() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({ columnId, taskIds }: { columnId: number; taskIds: number[] }) =>
-			window.api.reorderTasks(columnId, taskIds),
+		mutationFn: ({ columnId, itemIds }: { columnId: number; itemIds: number[] }) =>
+			window.api.reorderItems(columnId, itemIds),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 		},
 	})
 }
@@ -338,14 +338,14 @@ export function useReorderTasks() {
 export function useUpdateCanvasPosition() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({ id, x, y }: { id: number; x: number; y: number }) => window.api.updateTaskCanvasPosition(id, x, y),
+		mutationFn: ({ id, x, y }: { id: number; x: number; y: number }) => window.api.updateItemCanvasPosition(id, x, y),
 		onSuccess: (_data, { id, x, y }) => {
-			const updater = (tasks: Task[] | undefined) => {
-				if (!tasks) return tasks
-				return tasks.map((t) => (t.id === id ? { ...t, canvasX: x, canvasY: y } : t))
+			const updater = (items: Item[] | undefined) => {
+				if (!items) return items
+				return items.map((t) => (t.id === id ? { ...t, canvasX: x, canvasY: y } : t))
 			}
-			queryClient.setQueryData(queryKeys.tasks, updater)
-			queryClient.setQueryData(queryKeys.myDayTasks, updater)
+			queryClient.setQueryData(queryKeys.items, updater)
+			queryClient.setQueryData(queryKeys.myDayItems, updater)
 		},
 	})
 }
@@ -409,8 +409,8 @@ export function useDeleteGroup() {
 		mutationFn: (id: number) => window.api.deleteGroup(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.groups })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
+			queryClient.invalidateQueries({ queryKey: queryKeys.items })
+			queryClient.invalidateQueries({ queryKey: queryKeys.myDayItems })
 		},
 	})
 }

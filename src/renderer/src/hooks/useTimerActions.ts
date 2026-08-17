@@ -9,13 +9,13 @@ export function useTimerActions() {
 	const stopTimer = useStopTimer()
 	const [switchingId, setSwitchingId] = useState<number | null>(null)
 
-	const start = async (taskId: number) => {
-		setSwitchingId(taskId)
+	const start = async (itemId: number) => {
+		setSwitchingId(itemId)
 		try {
 			const active = queryClient.getQueryData<ActiveTimerInfo | null>(queryKeys.activeTimer)
 			const activeEntry = active?.entry
-			if (activeEntry) await stopTimer.mutateAsync(activeEntry.taskId)
-			await startTimer.mutateAsync(taskId)
+			if (activeEntry) await stopTimer.mutateAsync(activeEntry.itemId)
+			await startTimer.mutateAsync(itemId)
 		} finally {
 			setSwitchingId(null)
 		}

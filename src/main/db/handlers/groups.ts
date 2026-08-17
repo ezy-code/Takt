@@ -3,7 +3,7 @@ import { ipcMain } from 'electron'
 import type { AddGroupPayload, UpdateGroupPayload } from '../../../shared/api'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
-import { groups, tasks } from '../schema'
+import { groups, items } from '../schema'
 
 export function registerGroupsHandlers(db: Db) {
 	ipcMain.handle(IPC.GET_GROUPS, () => {
@@ -42,13 +42,13 @@ export function registerGroupsHandlers(db: Db) {
 		db.transaction(() => {
 			const group = db.select().from(groups).where(eq(groups.id, id)).get()
 			if (group) {
-				// grouped tasks store canvas coords relative to their group; convert to absolute
-				db.update(tasks)
+				// grouped items store canvas coords relative to their group; convert to absolute
+				db.update(items)
 					.set({
-						canvasX: sql`coalesce(${tasks.canvasX}, 0) + ${group.canvasX ?? 0}`,
-						canvasY: sql`coalesce(${tasks.canvasY}, 0) + ${group.canvasY ?? 0}`,
+						canvasX: sql`coalesce(${items.canvasX}, 0) + ${group.canvasX ?? 0}`,
+						canvasY: sql`coalesce(${items.canvasY}, 0) + ${group.canvasY ?? 0}`,
 					})
-					.where(eq(tasks.groupId, id))
+					.where(eq(items.groupId, id))
 					.run()
 			}
 			db.delete(groups).where(eq(groups.id, id)).run()

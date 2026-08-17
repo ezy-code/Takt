@@ -9,11 +9,11 @@ export interface Status {
 	created_at: string
 }
 
-export type RateSource = 'task' | 'default'
+export type RateSource = 'item' | 'default'
 
 export type EntityType = 'task' | 'note'
 
-export interface Task {
+export interface Item {
 	id: number
 	name: string
 	description: string
@@ -42,14 +42,14 @@ export interface Task {
 
 export interface TimeEntry {
 	id: number
-	taskId: number
+	itemId: number
 	startTime: string
 	stopTime: string | null
 	duration: number | null
 }
 
-export interface TimeEntryWithTask extends TimeEntry {
-	taskName: string
+export interface TimeEntryWithItem extends TimeEntry {
+	itemName: string
 	parentId?: number | null
 	parentName?: string | null
 	rate?: number | null
@@ -73,14 +73,14 @@ export interface TimeSummary {
 
 export interface ActiveTimerInfo {
 	entry: TimeEntry
-	task: Task
+	item: Item
 }
 
 export type StartTimerResult =
-	| { conflict: false; entry: TimeEntry; task: Task }
-	| { conflict: true; activeEntry: TimeEntry; activeTask: Task }
+	| { conflict: false; entry: TimeEntry; item: Item }
+	| { conflict: true; activeEntry: TimeEntry; activeItem: Item }
 
-export type StopTimerResult = { entry: TimeEntry; task: Task } | null
+export type StopTimerResult = { entry: TimeEntry; item: Item } | null
 
 export interface EntitySummary {
 	id: number
@@ -111,7 +111,7 @@ export interface Group {
 export type AddGroupPayload = Partial<Omit<Group, 'id' | 'created_at'>>
 export type UpdateGroupPayload = Partial<Omit<Group, 'created_at'>> & { id: number }
 
-export interface AddTaskPayload {
+export interface AddItemPayload {
 	name: string
 	description: string
 	description_md?: string
@@ -125,7 +125,7 @@ export interface AddTaskPayload {
 	entityType?: EntityType
 }
 
-export interface UpdateTaskPayload extends Partial<AddTaskPayload> {
+export interface UpdateItemPayload extends Partial<AddItemPayload> {
 	id: number
 	canvasX?: number | null
 	canvasY?: number | null
@@ -134,24 +134,24 @@ export interface UpdateTaskPayload extends Partial<AddTaskPayload> {
 }
 
 export interface Api {
-	getTasks: () => Promise<Task[]>
-	getTask: (id: number) => Promise<Task | null>
-	addTask: (payload: AddTaskPayload) => Promise<Task>
-	deleteTask: (id: number) => Promise<{ success: boolean }>
-	updateTask: (payload: UpdateTaskPayload) => Promise<Task>
+	getItems: () => Promise<Item[]>
+	getItem: (id: number) => Promise<Item | null>
+	addItem: (payload: AddItemPayload) => Promise<Item>
+	deleteItem: (id: number) => Promise<{ success: boolean }>
+	updateItem: (payload: UpdateItemPayload) => Promise<Item>
 	getActiveTimer: () => Promise<ActiveTimerInfo | null>
 	getLastTimer: () => Promise<ActiveTimerInfo | null>
-	startTimer: (taskId: number) => Promise<StartTimerResult>
-	stopTimer: (taskId: number) => Promise<StopTimerResult>
-	getAllTimeEntries: () => Promise<TimeEntryWithTask[]>
+	startTimer: (itemId: number) => Promise<StartTimerResult>
+	stopTimer: (itemId: number) => Promise<StopTimerResult>
+	getAllTimeEntries: () => Promise<TimeEntryWithItem[]>
 	getTimeSummary: () => Promise<TimeSummary>
 	updateTimeEntry: (payload: UpdateTimeEntryPayload) => Promise<TimeEntry>
 	deleteTimeEntry: (id: number) => Promise<{ success: boolean }>
 	showNotification: (title: string, body: string) => Promise<void>
-	onNavigateToTask: (callback: (id: number) => void) => () => void
+	onNavigateToItem: (callback: (id: number) => void) => () => void
 	onTimerChanged: (callback: () => void) => () => void
-	toggleMyDayTask: (id: number) => Promise<{ success: boolean }>
-	getMyDayTasks: () => Promise<Task[]>
+	toggleMyDayItem: (id: number) => Promise<{ success: boolean }>
+	getMyDayItems: () => Promise<Item[]>
 	clearMyDayDate: (id: number) => Promise<{ success: boolean }>
 	getStatuses: () => Promise<Status[]>
 	addStatus: (name: string, color: string) => Promise<Status>
@@ -159,10 +159,10 @@ export interface Api {
 	deleteStatus: (id: number) => Promise<{ success: boolean; reason?: string }>
 	reorderStatuses: (ids: number[]) => Promise<{ success: boolean }>
 	setDefaultStatus: (id: number) => Promise<Status>
-	moveTask: (taskId: number, statusId: number) => Promise<Task>
-	reorderTasks: (columnId: number, orderedTaskIds: number[]) => Promise<{ success: boolean }>
-	updateTaskCanvasPosition: (id: number, x: number, y: number) => Promise<Task>
-	getEntityChildren: (parentId: number) => Promise<Task[]>
+	moveItem: (itemId: number, statusId: number) => Promise<Item>
+	reorderItems: (columnId: number, orderedItemIds: number[]) => Promise<{ success: boolean }>
+	updateItemCanvasPosition: (id: number, x: number, y: number) => Promise<Item>
+	getEntityChildren: (parentId: number) => Promise<Item[]>
 	getEntityAncestors: (entityId: number) => Promise<EntitySummary[]>
 	searchEntities: (query: string, limit?: number) => Promise<EntitySearchResult[]>
 	getGroups: () => Promise<Group[]>

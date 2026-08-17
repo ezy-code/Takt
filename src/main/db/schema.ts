@@ -28,12 +28,12 @@ export const groups = sqliteTable('groups', {
 	created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
-export const tasks = sqliteTable('tasks', {
+export const items = sqliteTable('items', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
 	description: text('description').default(''),
 	statusId: integer('status_id').references(() => statuses.id),
-	parentId: integer('parent_id').references((): AnySQLiteColumn => tasks.id, { onDelete: 'set null' }),
+	parentId: integer('parent_id').references((): AnySQLiteColumn => items.id, { onDelete: 'set null' }),
 	my_day_date: text('my_day_date'),
 	reminderAt: text('reminder_at'),
 	created_at: text('created_at').default(sql`(datetime('now'))`),
@@ -51,9 +51,9 @@ export const tasks = sqliteTable('tasks', {
 
 export const timeEntries = sqliteTable('time_entries', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
-	taskId: integer('task_id')
+	itemId: integer('item_id')
 		.notNull()
-		.references(() => tasks.id),
+		.references(() => items.id),
 	startTime: text('start_time').notNull(),
 	stopTime: text('stop_time'),
 	duration: integer('duration'),
@@ -61,7 +61,7 @@ export const timeEntries = sqliteTable('time_entries', {
 })
 
 export const statusesRelations = relations(statuses, ({ many }) => ({
-	tasks: many(tasks),
+	items: many(items),
 }))
 
 export const groupsRelations = relations(groups, ({ many, one }) => ({
@@ -73,32 +73,32 @@ export const groupsRelations = relations(groups, ({ many, one }) => ({
 	children: many(groups, {
 		relationName: 'groupParent',
 	}),
-	tasks: many(tasks),
+	items: many(items),
 }))
 
-export const tasksRelations = relations(tasks, ({ many, one }) => ({
+export const itemsRelations = relations(items, ({ many, one }) => ({
 	status: one(statuses, {
-		fields: [tasks.statusId],
+		fields: [items.statusId],
 		references: [statuses.id],
 	}),
-	parent: one(tasks, {
-		fields: [tasks.parentId],
-		references: [tasks.id],
+	parent: one(items, {
+		fields: [items.parentId],
+		references: [items.id],
 		relationName: 'parent',
 	}),
-	children: many(tasks, {
+	children: many(items, {
 		relationName: 'parent',
 	}),
 	group: one(groups, {
-		fields: [tasks.groupId],
+		fields: [items.groupId],
 		references: [groups.id],
 	}),
 	timeEntries: many(timeEntries),
 }))
 
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
-	task: one(tasks, {
-		fields: [timeEntries.taskId],
-		references: [tasks.id],
+	item: one(items, {
+		fields: [timeEntries.itemId],
+		references: [items.id],
 	}),
 }))

@@ -7,7 +7,7 @@ import { formatDuration } from '../shared/formatDuration'
 import { IPC } from '../shared/ipc'
 import { initAutostart } from './autostart'
 import { createDb, type Db } from './db'
-import { getLastTimeEntry, getRecentTasks, startTimer, stopTimer } from './db/handlers/timer'
+import { getLastTimeEntry, getRecentItems, startTimer, stopTimer } from './db/handlers/timer'
 import { getMeta } from './db/meta'
 import { registerHandlers } from './db/registerHandlers'
 import type { TimerChangeInfo } from './db/types'
@@ -21,10 +21,10 @@ let isQuitting = false
 let db: Db | null = null
 let isTimerActive = false
 let timerStartTime: string | null = null
-let timerTaskName: string | null = null
-let timerTaskId: number | null = null
+let timerItemName: string | null = null
+let timerItemId: number | null = null
 let trayTimerInterval: ReturnType<typeof setInterval> | null = null
-let autoStoppedTaskId: number | null = null
+let autoStoppedItemId: number | null = null
 let linuxSessionId: string | null = null
 let lockCheckInFlight = false
 
@@ -57,7 +57,7 @@ if (!gotTheLock) {
 
 		initUpdater({ checkOnStart: app.isPackaged })
 
-		db = createDb(join(app.getPath('userData'), 'tasks.db'))
+		db = createDb(join(app.getPath('userData'), 'takt.db'))
 		registerHandlers(db, { onTimerChange: handleTimerChange })
 		initAppImageDesktopEntry()
 		createWindow()
@@ -92,9 +92,9 @@ function getTrayIcon(): string {
 function startTrayTimerUpdate() {
 	stopTrayTimerUpdate()
 	const update = () => {
-		if (!timerStartTime || !timerTaskName) return
+		if (!timerStartTime || !timerItemName) return
 		const elapsed = Math.floor((Date.now() - new Date(timerStartTime).getTime()) / 1000)
-		tray?.setToolTip(`⏱ ${timerTaskName} — ${formatDuration(elapsed)}`)
+		tray?.setToolTip(`⏱ ${timerItemName} — ${formatDuration(elapsed)}`)
 	}
 	update()
 	trayTimerInterval = setInterval(update, 1000)
@@ -112,14 +112,14 @@ function handleTimerChange(info: TimerChangeInfo) {
 	if (info.active) {
 		isTimerActive = true
 		timerStartTime = info.startTime
-		timerTaskName = info.taskName
-		timerTaskId = info.taskId
+		timerItemName = info.itemName
+		timerItemId = info.itemId
 		startTrayTimerUpdate()
 	} else {
 		isTimerActive = false
 		timerStartTime = null
-		timerTaskName = null
-		timerTaskId = null
+		timerItemName = null
+		timerItemId = null
 		stopTrayTimerUpdate()
 	}
 	updateTrayIcon()
@@ -136,37 +136,37 @@ function showMainWindow() {
 	}
 }
 
-function continueLastTask() {
+function continueLastItem() {
 	if (!db) return
 	const last = getLastTimeEntry(db)
-	if (last) startTimer(db, last.entry.taskId, handleTimerChange)
+	if (last) startTimer(db, last.entry.itemId, handleTimerChange)
 }
 
 function stopActiveTimer() {
-	if (db && timerTaskId != null) stopTimer(db, timerTaskId, handleTimerChange)
+	if (db && timerItemId != null) stopTimer(db, timerItemId, handleTimerChange)
 }
 
 function handleIdleStart() {
-	if (!db || !isTimerActive || timerTaskId == null) return
+	if (!db || !isTimerActive || timerItemId == null) return
 	if (getMeta(META_TIMER_AUTO_STOP_KEY) !== '1') return
-	const taskId = timerTaskId
-	stopTimer(db, taskId, handleTimerChange)
-	autoStoppedTaskId = taskId
+	const itemId = timerItemId
+	stopTimer(db, itemId, handleTimerChange)
+	autoStoppedItemId = itemId
 }
 
 function handleIdleEnd() {
-	if (autoStoppedTaskId == null) return
-	const taskId = autoStoppedTaskId
-	autoStoppedTaskId = null
+	if (autoStoppedItemId == null) return
+	const itemId = autoStoppedItemId
+	autoStoppedItemId = null
 	if (getMeta(META_TIMER_AUTO_RESUME_KEY) === '1' && db) {
-		startTimer(db, taskId, handleTimerChange)
+		startTimer(db, itemId, handleTimerChange)
 	}
 	BrowserWindow.getAllWindows()[0]?.webContents.send(IPC.TIMER_CHANGED)
 }
 
 function onResume() {
 	// Linux: after wake the screen may still be locked — defer to the lock poll.
-	if (process.platform === 'linux' && autoStoppedTaskId != null) {
+	if (process.platform === 'linux' && autoStoppedItemId != null) {
 		pollLinuxLock()
 		return
 	}
@@ -182,7 +182,7 @@ function pollLinuxLock() {
 		const value = stdout.trim()
 		if (value === 'yes') {
 			handleIdleStart()
-		} else if (value === 'no' && autoStoppedTaskId != null) {
+		} else if (value === 'no' && autoStoppedItemId != null) {
 			handleIdleEnd()
 		}
 	})
@@ -201,7 +201,7 @@ function initLinuxLockDetection() {
 	linuxSessionId = process.env['XDG_SESSION_ID'] ?? readLinuxSessionId()
 	if (!linuxSessionId) return // ponytail: no logind session id, rely on suspend/resume only
 	setInterval(() => {
-		if (isTimerActive || autoStoppedTaskId != null) pollLinuxLock()
+		if (isTimerActive || autoStoppedItemId != null) pollLinuxLock()
 	}, 5000)
 }
 
@@ -224,16 +224,16 @@ function buildTrayMenu(): Menu {
 
 	if (isTimerActive) {
 		template.push(
-			{ label: `⏱ ${timerTaskName ?? ''}`, enabled: false },
+			{ label: `⏱ ${timerItemName ?? ''}`, enabled: false },
 			{ label: 'Stop timer', click: stopActiveTimer },
 		)
 	} else {
 		const last = db ? getLastTimeEntry(db) : null
-		if (last) template.push({ label: `Continue last task: ${last.task.name}`, click: continueLastTask })
+		if (last) template.push({ label: `Continue last task: ${last.item.name}`, click: continueLastItem })
 
 		const dbRef = db
 		if (dbRef) {
-			const recent = getRecentTasks(dbRef)
+			const recent = getRecentItems(dbRef)
 			if (recent.length) {
 				template.push({
 					label: 'Start timer for…',

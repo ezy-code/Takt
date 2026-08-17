@@ -3,15 +3,15 @@ import { CSS } from '@dnd-kit/utilities'
 import { Badge, Group, Paper, Stack, Text } from '@mantine/core'
 import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Status, Task } from '../types'
+import type { Item, Status } from '../types'
 import { KanbanCard } from './KanbanCard'
 
 interface KanbanColumnProps {
 	status: Status
-	tasks: Task[]
+	items: Item[]
 }
 
-export const KanbanColumn = memo(function KanbanColumn({ status, tasks }: KanbanColumnProps) {
+export const KanbanColumn = memo(function KanbanColumn({ status, items }: KanbanColumnProps) {
 	const { t } = useTranslation()
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: `column-${status.id}`,
@@ -24,7 +24,7 @@ export const KanbanColumn = memo(function KanbanColumn({ status, tasks }: Kanban
 		opacity: isDragging ? 0.4 : 1,
 	}
 
-	const itemIds = useMemo(() => tasks.map((t) => `task-${t.id}`), [tasks])
+	const itemIds = useMemo(() => items.map((t) => `item-${t.id}`), [items])
 
 	return (
 		<div ref={setNodeRef} style={style}>
@@ -62,7 +62,7 @@ export const KanbanColumn = memo(function KanbanColumn({ status, tasks }: Kanban
 						</Text>
 					</Group>
 					<Badge size='sm' variant='light'>
-						{tasks.length}
+						{items.length}
 					</Badge>
 				</Group>
 
@@ -77,12 +77,12 @@ export const KanbanColumn = memo(function KanbanColumn({ status, tasks }: Kanban
 				>
 					<SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
 						<Stack gap='xs' style={{ minHeight: 100 }}>
-							{tasks.length === 0 ? (
+							{items.length === 0 ? (
 								<Text c='dimmed' size='sm' ta='center' py='xl' style={{ pointerEvents: 'none' }}>
 									{t('kanban.dropHere')}
 								</Text>
 							) : (
-								tasks.map((task) => <KanbanCard key={task.id} task={task} />)
+								items.map((item) => <KanbanCard key={item.id} item={item} />)
 							)}
 						</Stack>
 					</SortableContext>

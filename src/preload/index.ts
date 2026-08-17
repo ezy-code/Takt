@@ -4,32 +4,32 @@ import { IPC } from '../shared/ipc'
 import type { UpdaterState } from '../shared/updater'
 
 const api: Api = {
-	getTasks: () => ipcRenderer.invoke(IPC.GET_TASKS),
-	getTask: (id: number) => ipcRenderer.invoke(IPC.GET_TASK, id),
-	addTask: (payload) => ipcRenderer.invoke(IPC.ADD_TASK, payload),
-	deleteTask: (id: number) => ipcRenderer.invoke(IPC.DELETE_TASK, id),
-	updateTask: (payload) => ipcRenderer.invoke(IPC.UPDATE_TASK, payload),
+	getItems: () => ipcRenderer.invoke(IPC.GET_ITEMS),
+	getItem: (id: number) => ipcRenderer.invoke(IPC.GET_ITEM, id),
+	addItem: (payload) => ipcRenderer.invoke(IPC.ADD_ITEM, payload),
+	deleteItem: (id: number) => ipcRenderer.invoke(IPC.DELETE_ITEM, id),
+	updateItem: (payload) => ipcRenderer.invoke(IPC.UPDATE_ITEM, payload),
 	getActiveTimer: () => ipcRenderer.invoke(IPC.GET_ACTIVE_TIMER),
 	getLastTimer: () => ipcRenderer.invoke(IPC.GET_LAST_TIMER),
-	startTimer: (taskId: number) => ipcRenderer.invoke(IPC.START_TIMER, taskId),
-	stopTimer: (taskId: number) => ipcRenderer.invoke(IPC.STOP_TIMER, taskId),
+	startTimer: (itemId: number) => ipcRenderer.invoke(IPC.START_TIMER, itemId),
+	stopTimer: (itemId: number) => ipcRenderer.invoke(IPC.STOP_TIMER, itemId),
 	getAllTimeEntries: () => ipcRenderer.invoke(IPC.GET_ALL_TIME_ENTRIES),
 	getTimeSummary: () => ipcRenderer.invoke(IPC.GET_TIME_SUMMARY),
 	updateTimeEntry: (payload) => ipcRenderer.invoke(IPC.UPDATE_TIME_ENTRY, payload),
 	deleteTimeEntry: (id: number) => ipcRenderer.invoke(IPC.DELETE_TIME_ENTRY, id),
 	showNotification: (title, body) => ipcRenderer.invoke(IPC.SHOW_NOTIFICATION, title, body),
-	onNavigateToTask: (callback: (id: number) => void) => {
+	onNavigateToItem: (callback: (id: number) => void) => {
 		const listener = (_event: IpcRendererEvent, id: number) => callback(id)
-		ipcRenderer.on(IPC.NAVIGATE_TO_TASK, listener)
-		return () => ipcRenderer.removeListener(IPC.NAVIGATE_TO_TASK, listener)
+		ipcRenderer.on(IPC.NAVIGATE_TO_ITEM, listener)
+		return () => ipcRenderer.removeListener(IPC.NAVIGATE_TO_ITEM, listener)
 	},
 	onTimerChanged: (callback: () => void) => {
 		const listener = () => callback()
 		ipcRenderer.on(IPC.TIMER_CHANGED, listener)
 		return () => ipcRenderer.removeListener(IPC.TIMER_CHANGED, listener)
 	},
-	toggleMyDayTask: (id: number) => ipcRenderer.invoke(IPC.TOGGLE_MY_DAY, id),
-	getMyDayTasks: () => ipcRenderer.invoke(IPC.GET_MY_DAY_TASKS),
+	toggleMyDayItem: (id: number) => ipcRenderer.invoke(IPC.TOGGLE_MY_DAY, id),
+	getMyDayItems: () => ipcRenderer.invoke(IPC.GET_MY_DAY_ITEMS),
 	clearMyDayDate: (id: number) => ipcRenderer.invoke(IPC.CLEAR_MY_DAY, id),
 	getStatuses: () => ipcRenderer.invoke(IPC.GET_STATUSES),
 	addStatus: (name, color) => ipcRenderer.invoke(IPC.ADD_STATUS, name, color),
@@ -37,11 +37,11 @@ const api: Api = {
 	deleteStatus: (id: number) => ipcRenderer.invoke(IPC.DELETE_STATUS, id),
 	reorderStatuses: (ids: number[]) => ipcRenderer.invoke(IPC.REORDER_STATUSES, ids),
 	setDefaultStatus: (id: number) => ipcRenderer.invoke(IPC.SET_DEFAULT_STATUS, id),
-	moveTask: (taskId: number, statusId: number) => ipcRenderer.invoke(IPC.MOVE_TASK, taskId, statusId),
-	reorderTasks: (columnId: number, orderedTaskIds: number[]) =>
-		ipcRenderer.invoke(IPC.REORDER_TASKS, columnId, orderedTaskIds),
-	updateTaskCanvasPosition: (id: number, x: number, y: number) =>
-		ipcRenderer.invoke(IPC.UPDATE_TASK_CANVAS_POSITION, id, x, y),
+	moveItem: (itemId: number, statusId: number) => ipcRenderer.invoke(IPC.MOVE_ITEM, itemId, statusId),
+	reorderItems: (columnId: number, orderedItemIds: number[]) =>
+		ipcRenderer.invoke(IPC.REORDER_ITEMS, columnId, orderedItemIds),
+	updateItemCanvasPosition: (id: number, x: number, y: number) =>
+		ipcRenderer.invoke(IPC.UPDATE_ITEM_CANVAS_POSITION, id, x, y),
 	getEntityChildren: (parentId: number) => ipcRenderer.invoke(IPC.GET_ENTITY_CHILDREN, parentId),
 	getEntityAncestors: (entityId: number) => ipcRenderer.invoke(IPC.GET_ENTITY_ANCESTORS, entityId),
 	searchEntities: (query: string, limit?: number) => ipcRenderer.invoke(IPC.SEARCH_ENTITIES, query, limit),

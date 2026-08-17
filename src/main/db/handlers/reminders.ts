@@ -3,9 +3,9 @@ import { app, BrowserWindow, Notification } from 'electron'
 import { META_LANGUAGE_KEY } from '../../../shared/constants'
 import { IPC } from '../../../shared/ipc'
 import type { Db } from '../index'
-import { appMeta, tasks } from '../schema'
+import { appMeta, items } from '../schema'
 
-function showTaskReminderNotification(db: Db, task: { id: number; name: string }) {
+function showItemReminderNotification(db: Db, item: { id: number; name: string }) {
 	const savedLang = db
 		.select({ value: appMeta.value })
 		.from(appMeta)
@@ -13,7 +13,7 @@ function showTaskReminderNotification(db: Db, task: { id: number; name: string }
 		.get()?.value
 	const isRu = savedLang === 'ru' || (!savedLang && app.getLocale().startsWith('ru'))
 	const notification = new Notification({
-		title: task.name,
+		title: item.name,
 		body: isRu ? '⏰ Напоминание' : '⏰ Reminder',
 	})
 	notification.on('click', () => {
@@ -22,7 +22,7 @@ function showTaskReminderNotification(db: Db, task: { id: number; name: string }
 		if (win.isMinimized()) win.restore()
 		win.show()
 		win.focus()
-		win.webContents.send(IPC.NAVIGATE_TO_TASK, task.id)
+		win.webContents.send(IPC.NAVIGATE_TO_ITEM, item.id)
 	})
 	notification.show()
 }
@@ -34,17 +34,17 @@ export function startReminderPoller(db: Db) {
 	const notifiedReminders = new Set<number>()
 	setInterval(() => {
 		const now = Date.now()
-		const reminderTasks = db
-			.select({ id: tasks.id, name: tasks.name, reminder_at: tasks.reminderAt })
-			.from(tasks)
-			.where(sql`${tasks.reminderAt} is not null`)
+		const reminderItems = db
+			.select({ id: items.id, name: items.name, reminder_at: items.reminderAt })
+			.from(items)
+			.where(sql`${items.reminderAt} is not null`)
 			.all()
-		for (const task of reminderTasks) {
-			if (!task.reminder_at || notifiedReminders.has(task.id)) continue
-			const remindAt = new Date(task.reminder_at).getTime()
+		for (const item of reminderItems) {
+			if (!item.reminder_at || notifiedReminders.has(item.id)) continue
+			const remindAt = new Date(item.reminder_at).getTime()
 			if (remindAt - now > 20_000 || remindAt - now <= -10_000) continue
-			notifiedReminders.add(task.id)
-			showTaskReminderNotification(db, task)
+			notifiedReminders.add(item.id)
+			showItemReminderNotification(db, item)
 		}
 	}, 20_000)
 }

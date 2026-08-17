@@ -1,17 +1,17 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { memo } from 'react'
-import type { Task } from '../types'
-import { TaskCard } from './TaskCard'
+import type { Item } from '../types'
+import { ItemCard } from './ItemCard'
 
 interface KanbanCardProps {
-	task: Task
+	item: Item
 }
 
-export const KanbanCard = memo(function KanbanCard({ task }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({ item }: KanbanCardProps) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-		id: `task-${task.id}`,
-		data: { type: 'task', task },
+		id: `item-${item.id}`,
+		data: { type: 'item', item },
 	})
 
 	const style: React.CSSProperties = {
@@ -23,7 +23,7 @@ export const KanbanCard = memo(function KanbanCard({ task }: KanbanCardProps) {
 
 	return (
 		<div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-			<TaskCard task={task} />
+			<ItemCard item={item} />
 		</div>
 	)
 })

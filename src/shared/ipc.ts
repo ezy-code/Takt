@@ -5,18 +5,18 @@ export const IPC = {
 	GET_META: 'get-meta',
 	SET_META: 'set-meta',
 
-	// tasks
-	GET_TASKS: 'get-tasks',
-	GET_TASK: 'get-task',
-	ADD_TASK: 'add-task',
-	DELETE_TASK: 'delete-task',
-	UPDATE_TASK: 'update-task',
-	GET_MY_DAY_TASKS: 'get-my-day-tasks',
+	// items
+	GET_ITEMS: 'get-items',
+	GET_ITEM: 'get-item',
+	ADD_ITEM: 'add-item',
+	DELETE_ITEM: 'delete-item',
+	UPDATE_ITEM: 'update-item',
+	GET_MY_DAY_ITEMS: 'get-my-day-items',
 	TOGGLE_MY_DAY: 'toggle-my-day',
 	CLEAR_MY_DAY: 'clear-my-day-date',
-	REORDER_TASKS: 'reorder-tasks',
-	MOVE_TASK: 'move-task',
-	UPDATE_TASK_CANVAS_POSITION: 'update-task-canvas-position',
+	REORDER_ITEMS: 'reorder-items',
+	MOVE_ITEM: 'move-item',
+	UPDATE_ITEM_CANVAS_POSITION: 'update-item-canvas-position',
 	GET_ENTITY_CHILDREN: 'get-entity-children',
 	GET_ENTITY_ANCESTORS: 'get-entity-ancestors',
 	SEARCH_ENTITIES: 'search-entities',
@@ -47,7 +47,7 @@ export const IPC = {
 
 	// notifications / navigation
 	SHOW_NOTIFICATION: 'show-notification',
-	NAVIGATE_TO_TASK: 'navigate-to-task',
+	NAVIGATE_TO_ITEM: 'navigate-to-item',
 	TIMER_CHANGED: 'timer-changed',
 
 	// autostart

@@ -6,11 +6,11 @@ export type {
 	EntitySummary,
 	EntityType,
 	Group,
+	Item,
 	StartTimerResult,
 	Status,
-	Task,
 	TimeEntry,
-	TimeEntryWithTask,
+	TimeEntryWithItem,
 	TimeSummary,
 } from '../../shared/api'
 

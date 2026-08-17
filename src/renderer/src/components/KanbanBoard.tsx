@@ -18,28 +18,28 @@ import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-
 import { Group, Loader, ScrollArea, Text } from '@mantine/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMoveTask, useReorderStatuses, useReorderTasks, useStatuses, useTasks } from '../api'
-import type { Status, Task } from '../types'
+import { useItems, useMoveItem, useReorderItems, useReorderStatuses, useStatuses } from '../api'
+import type { Item, Status } from '../types'
 import { AddStatusColumn } from './AddStatusColumn'
+import { ItemCard } from './ItemCard'
 import { KanbanColumn } from './KanbanColumn'
-import { TaskCard } from './TaskCard'
 
 export function KanbanBoard() {
 	const { t } = useTranslation()
-	const [activeTask, setActiveTask] = useState<Task | null>(null)
+	const [activeItem, setActiveItem] = useState<Item | null>(null)
 	const [activeColumn, setActiveColumn] = useState<Status | null>(null)
 	const [localStatuses, setLocalStatuses] = useState<Status[]>([])
-	const [columnTasks, setColumnTasks] = useState<Record<number, Task[]>>({})
+	const [columnItems, setColumnItems] = useState<Record<number, Item[]>>({})
 
-	const { data: tasks, isLoading: tasksLoading } = useTasks()
+	const { data: items, isLoading: itemsLoading } = useItems()
 	const { data: statuses, isLoading: statusesLoading } = useStatuses()
-	const moveTask = useMoveTask()
+	const moveItem = useMoveItem()
 	const reorderStatuses = useReorderStatuses()
-	const reorderTasks = useReorderTasks()
+	const reorderItems = useReorderItems()
 
-	const dragOrigin = useRef<{ taskId: number; statusId: number | null } | null>(null)
+	const dragOrigin = useRef<{ itemId: number; statusId: number | null } | null>(null)
 	const isDraggingRef = useRef(false)
-	isDraggingRef.current = activeTask != null
+	isDraggingRef.current = activeItem != null
 
 	useEffect(() => {
 		if (statuses) setLocalStatuses(statuses)
@@ -47,14 +47,14 @@ export function KanbanBoard() {
 
 	useEffect(() => {
 		if (isDraggingRef.current) return
-		if (!statuses || !tasks) return
+		if (!statuses || !items) return
 
-		const grouped: Record<number, Task[]> = {}
+		const grouped: Record<number, Item[]> = {}
 		for (const s of statuses) {
-			grouped[s.id] = (tasks ?? []).filter((t) => (t.statusId ?? null) === s.id)
+			grouped[s.id] = (items ?? []).filter((t) => (t.statusId ?? null) === s.id)
 		}
-		setColumnTasks(grouped)
-	}, [statuses, tasks])
+		setColumnItems(grouped)
+	}, [statuses, items])
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -70,15 +70,15 @@ export function KanbanBoard() {
 				return Number(idStr.replace('column-', ''))
 			}
 
-			for (const [statusId, taskList] of Object.entries(columnTasks)) {
-				if (taskList.some((t) => `task-${t.id}` === idStr)) {
+			for (const [statusId, itemList] of Object.entries(columnItems)) {
+				if (itemList.some((t) => `item-${t.id}` === idStr)) {
 					return Number(statusId)
 				}
 			}
 
 			return null
 		},
-		[columnTasks],
+		[columnItems],
 	)
 
 	const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
@@ -98,10 +98,10 @@ export function KanbanBoard() {
 		const { active } = event
 		const data = active.data.current
 
-		if (data?.type === 'task') {
-			const task = data.task as Task
-			setActiveTask(task)
-			dragOrigin.current = { taskId: task.id, statusId: task.statusId ?? null }
+		if (data?.type === 'item') {
+			const item = data.item as Item
+			setActiveItem(item)
+			dragOrigin.current = { itemId: item.id, statusId: item.statusId ?? null }
 		} else if (data?.type === 'column') {
 			setActiveColumn(data.status as Status)
 		}
@@ -117,7 +117,7 @@ export function KanbanBoard() {
 
 		const activeData = active.data.current
 		const overData = over.data.current
-		if (activeData?.type !== 'task') return
+		if (activeData?.type !== 'item') return
 
 		const activeContainer = findContainer(activeId)
 		const overContainer =
@@ -126,32 +126,32 @@ export function KanbanBoard() {
 		if (!activeContainer || !overContainer) return
 
 		if (activeContainer !== overContainer) {
-			setColumnTasks((prev) => {
+			setColumnItems((prev) => {
 				const activeItems = prev[activeContainer] ?? []
 				const overItems = prev[overContainer] ?? []
 
-				const activeIndex = activeItems.findIndex((t) => `task-${t.id}` === activeId)
+				const activeIndex = activeItems.findIndex((t) => `item-${t.id}` === activeId)
 				if (activeIndex === -1) return prev
 
-				const taskToMove = activeItems[activeIndex]
-				const updatedTask = { ...taskToMove, statusId: overContainer }
+				const itemToMove = activeItems[activeIndex]
+				const updatedItem = { ...itemToMove, statusId: overContainer }
 
 				let overIndex =
-					overData?.type === 'task' ? overItems.findIndex((t) => `task-${t.id}` === overId) : overItems.length
+					overData?.type === 'item' ? overItems.findIndex((t) => `item-${t.id}` === overId) : overItems.length
 
 				if (overIndex === -1) overIndex = overItems.length
 
 				return {
 					...prev,
-					[activeContainer]: activeItems.filter((t) => `task-${t.id}` !== activeId),
-					[overContainer]: [...overItems.slice(0, overIndex), updatedTask, ...overItems.slice(overIndex)],
+					[activeContainer]: activeItems.filter((t) => `item-${t.id}` !== activeId),
+					[overContainer]: [...overItems.slice(0, overIndex), updatedItem, ...overItems.slice(overIndex)],
 				}
 			})
-		} else if (overData?.type === 'task') {
-			setColumnTasks((prev) => {
+		} else if (overData?.type === 'item') {
+			setColumnItems((prev) => {
 				const items = prev[activeContainer] ?? []
-				const oldIndex = items.findIndex((t) => `task-${t.id}` === activeId)
-				const newIndex = items.findIndex((t) => `task-${t.id}` === overId)
+				const oldIndex = items.findIndex((t) => `item-${t.id}` === activeId)
+				const newIndex = items.findIndex((t) => `item-${t.id}` === overId)
 
 				if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
 					return {
@@ -167,11 +167,11 @@ export function KanbanBoard() {
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event
 
-		const task = activeTask
+		const item = activeItem
 		const column = activeColumn
 		const origin = dragOrigin.current
 
-		setActiveTask(null)
+		setActiveItem(null)
 		setActiveColumn(null)
 		dragOrigin.current = null
 
@@ -189,22 +189,22 @@ export function KanbanBoard() {
 			return
 		}
 
-		if (task && origin) {
-			const finalContainer = findContainer(`task-${task.id}`)
+		if (item && origin) {
+			const finalContainer = findContainer(`item-${item.id}`)
 			if (finalContainer == null) return
 
-			const finalItems = columnTasks[finalContainer] ?? []
+			const finalItems = columnItems[finalContainer] ?? []
 
 			if (origin.statusId === finalContainer) {
-				reorderTasks.mutate({ columnId: finalContainer, taskIds: finalItems.map((t) => t.id) })
+				reorderItems.mutate({ columnId: finalContainer, itemIds: finalItems.map((t) => t.id) })
 			} else {
-				moveTask.mutate({ taskId: task.id, statusId: finalContainer })
-				reorderTasks.mutate({ columnId: finalContainer, taskIds: finalItems.map((t) => t.id) })
+				moveItem.mutate({ itemId: item.id, statusId: finalContainer })
+				reorderItems.mutate({ columnId: finalContainer, itemIds: finalItems.map((t) => t.id) })
 			}
 		}
 	}
 
-	if (tasksLoading || statusesLoading) {
+	if (itemsLoading || statusesLoading) {
 		return <Loader mt='xl' />
 	}
 
@@ -225,7 +225,7 @@ export function KanbanBoard() {
 				onDragOver={handleDragOver}
 				onDragEnd={handleDragEnd}
 				onDragCancel={() => {
-					setActiveTask(null)
+					setActiveItem(null)
 					setActiveColumn(null)
 					dragOrigin.current = null
 				}}
@@ -233,16 +233,16 @@ export function KanbanBoard() {
 				<Group wrap='nowrap' align='stretch' gap='md'>
 					<SortableContext items={localStatuses.map((s) => `column-${s.id}`)} strategy={horizontalListSortingStrategy}>
 						{localStatuses.map((status) => (
-							<KanbanColumn key={status.id} status={status} tasks={columnTasks[status.id] ?? []} />
+							<KanbanColumn key={status.id} status={status} items={columnItems[status.id] ?? []} />
 						))}
 					</SortableContext>
 					<AddStatusColumn />
 				</Group>
 
 				<DragOverlay dropAnimation={null}>
-					{activeTask ? (
+					{activeItem ? (
 						<div style={{ transform: 'rotate(2deg)', cursor: 'grabbing' }}>
-							<TaskCard task={activeTask} />
+							<ItemCard item={activeItem} />
 						</div>
 					) : null}
 				</DragOverlay>

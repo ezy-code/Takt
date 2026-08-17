@@ -10,7 +10,7 @@ function getMyDayState(myDayDate: string | null | undefined): 'none' | 'today' |
 }
 
 interface MyDayControlProps {
-	taskId?: number
+	itemId?: number
 	myDayDate?: string | null
 	inMyDay?: boolean
 	onToggle?: () => void
@@ -20,7 +20,7 @@ interface MyDayControlProps {
 }
 
 export function MyDayControl({
-	taskId,
+	itemId,
 	myDayDate,
 	inMyDay,
 	onToggle,
@@ -31,13 +31,13 @@ export function MyDayControl({
 	const { t } = useTranslation()
 	const toggleMyDay = useToggleMyDay()
 	const clearMyDay = useClearMyDay()
-	const state = taskId != null ? getMyDayState(myDayDate) : null
+	const state = itemId != null ? getMyDayState(myDayDate) : null
 	const active = state != null ? state !== 'none' : !!inMyDay
 	const overdue = state === 'overdue'
 	const handleToggle = () => {
-		if (taskId != null) {
-			if (state === 'today') clearMyDay.mutate(taskId)
-			else toggleMyDay.mutate(taskId)
+		if (itemId != null) {
+			if (state === 'today') clearMyDay.mutate(itemId)
+			else toggleMyDay.mutate(itemId)
 		} else {
 			onToggle?.()
 		}

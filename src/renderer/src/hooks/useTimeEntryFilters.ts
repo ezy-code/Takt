@@ -1,5 +1,5 @@
-import type { Task, TimeEntryWithTask } from '../../../shared/api'
-import { useTasks, useTimeEntries } from '../api'
+import type { Item, TimeEntryWithItem } from '../../../shared/api'
+import { useItems, useTimeEntries } from '../api'
 import { useTimeEntryFiltersStore } from '../store/timeEntryFilters'
 
 function startOfDay(date: string): number {
@@ -12,13 +12,13 @@ function localDayStart(iso: string): number {
 }
 
 export function filterTimeEntries(
-	entries: TimeEntryWithTask[],
-	taskFilter: string | null,
+	entries: TimeEntryWithItem[],
+	itemFilter: string | null,
 	dateFrom: string | null,
 	dateTo: string | null,
-): TimeEntryWithTask[] {
+): TimeEntryWithItem[] {
 	return entries.filter((entry) => {
-		if (taskFilter && entry.taskId !== Number(taskFilter)) return false
+		if (itemFilter && entry.itemId !== Number(itemFilter)) return false
 		const ts = localDayStart(entry.startTime)
 		if (dateFrom && ts < startOfDay(dateFrom)) return false
 		if (dateTo && ts > startOfDay(dateTo)) return false
@@ -28,23 +28,23 @@ export function filterTimeEntries(
 
 export function useTimeEntryFilters() {
 	const { data: entries = [] } = useTimeEntries()
-	const { data: tasks = [] } = useTasks()
-	const { taskFilter, dateFrom, dateTo, setTaskFilter, setDateFrom, setDateTo, reset } = useTimeEntryFiltersStore()
+	const { data: items = [] } = useItems()
+	const { itemFilter, dateFrom, dateTo, setItemFilter, setDateFrom, setDateTo, reset } = useTimeEntryFiltersStore()
 
-	const taskOptions = tasks
-		.filter((task) => task.id != null)
-		.map((task) => ({ value: String(task.id), label: task.name }))
+	const itemOptions = items
+		.filter((item) => item.id != null)
+		.map((item) => ({ value: String(item.id), label: item.name }))
 
-	const filteredEntries = filterTimeEntries(entries, taskFilter, dateFrom, dateTo)
+	const filteredEntries = filterTimeEntries(entries, itemFilter, dateFrom, dateTo)
 	const filteredDuration = filteredEntries.reduce((acc, e) => acc + (e.duration ?? 0), 0)
 	const filteredCost = filteredEntries.reduce((acc, e) => acc + (e.cost ?? 0), 0)
 
 	return {
-		taskFilter,
+		itemFilter,
 		dateFrom,
 		dateTo,
-		taskOptions,
-		setTaskFilter,
+		itemOptions,
+		setItemFilter,
 		setDateFrom,
 		setDateTo,
 		filteredEntries,

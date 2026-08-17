@@ -2,22 +2,22 @@ import { ActionIcon, Box, Group, Text, Title } from '@mantine/core'
 import { IconChevronDown } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Task } from '../types'
-import { TaskGrid } from './TaskGrid'
+import type { Item } from '../types'
+import { ItemGrid } from './ItemGrid'
 
-interface OtherTasksSectionProps {
-	tasks: Task[]
+interface OtherItemsSectionProps {
+	items: Item[]
 }
 
-export function OtherTasksSection({ tasks }: OtherTasksSectionProps) {
+export function OtherItemsSection({ items }: OtherItemsSectionProps) {
 	const { t } = useTranslation()
 	const [expanded, setExpanded] = useState(false)
 
-	return tasks.length > 0 ? (
+	return items.length > 0 ? (
 		<>
 			<Group gap='xs' mb='sm' style={{ cursor: 'pointer' }} onClick={() => setExpanded((v) => !v)}>
 				<Title order={2} size='h3'>
-					{t('myDay.otherTasks')}
+					{t('myDay.otherItems')}
 				</Title>
 				<ActionIcon variant='subtle' color='gray' size='sm'>
 					<IconChevronDown
@@ -30,7 +30,7 @@ export function OtherTasksSection({ tasks }: OtherTasksSectionProps) {
 			</Group>
 			<Box style={{ position: 'relative' }}>
 				<Box style={expanded ? { maxHeight: '60vh', overflowY: 'auto' } : { maxHeight: 40, overflow: 'hidden' }}>
-					<TaskGrid tasks={expanded ? tasks : tasks.slice(0, 3)} />
+					<ItemGrid items={expanded ? items : items.slice(0, 3)} />
 				</Box>
 				{!expanded && (
 					<Box
@@ -48,6 +48,6 @@ export function OtherTasksSection({ tasks }: OtherTasksSectionProps) {
 			</Box>
 		</>
 	) : (
-		<Text c='dimmed'>{t('myDay.noOtherTasks')}</Text>
+		<Text c='dimmed'>{t('myDay.noOtherItems')}</Text>
 	)
 }

@@ -1,21 +1,21 @@
 import { Box, Container, Text, Title } from '@mantine/core'
 import { createLazyRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useMyDayTasks, useTasks } from '../api'
-import { OtherTasksSection } from '../components/OtherTasksSection'
-import { TaskGrid } from '../components/TaskGrid'
+import { useItems, useMyDayItems } from '../api'
+import { ItemGrid } from '../components/ItemGrid'
+import { OtherItemsSection } from '../components/OtherItemsSection'
 import { ROUTES } from '../routes'
 
 function MyDayPage() {
 	const { t } = useTranslation()
-	const { data: myDayTasks } = useMyDayTasks()
-	const { data: allTasks } = useTasks()
+	const { data: myDayItems } = useMyDayItems()
+	const { data: allItems } = useItems()
 
 	const today = new Date().toISOString().split('T')[0]
-	const tasks = myDayTasks ?? []
-	const overdue = tasks.filter((t) => t.my_day_date && t.my_day_date < today)
-	const current = tasks.filter((t) => t.my_day_date === today)
-	const otherTasks = (allTasks ?? []).filter((t) => !t.my_day_date)
+	const items = myDayItems ?? []
+	const overdue = items.filter((t) => t.my_day_date && t.my_day_date < today)
+	const current = items.filter((t) => t.my_day_date === today)
+	const otherItems = (allItems ?? []).filter((t) => !t.my_day_date)
 
 	return (
 		<Container
@@ -39,7 +39,7 @@ function MyDayPage() {
 							{t('myDay.overdue')}
 						</Title>
 						<Box mb='xl'>
-							<TaskGrid tasks={overdue} />
+							<ItemGrid items={overdue} />
 						</Box>
 					</>
 				)}
@@ -50,7 +50,7 @@ function MyDayPage() {
 							{t('myDay.today')}
 						</Title>
 						<Box mb='xl'>
-							<TaskGrid tasks={current} />
+							<ItemGrid items={current} />
 						</Box>
 					</>
 				) : (
@@ -59,7 +59,7 @@ function MyDayPage() {
 			</Box>
 
 			<Box pt='md'>
-				<OtherTasksSection tasks={otherTasks} />
+				<OtherItemsSection items={otherItems} />
 			</Box>
 		</Container>
 	)

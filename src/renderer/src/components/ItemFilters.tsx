@@ -2,9 +2,9 @@ import { Button, Group, Pill, Popover, SegmentedControl, Select, Stack, Switch }
 import { useDisclosure } from '@mantine/hooks'
 import { IconAdjustments } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
-import { useTaskFilters } from '../hooks/useTaskFilters'
+import { useItemFilters } from '../hooks/useItemFilters'
 
-export function TaskFilters() {
+export function ItemFilters() {
 	const { t } = useTranslation()
 	const [opened, { toggle, open, close }] = useDisclosure(false)
 	const {
@@ -19,7 +19,7 @@ export function TaskFilters() {
 		reset,
 		groupOptions,
 		statusOptions,
-	} = useTaskFilters()
+	} = useItemFilters()
 	const hasFilters = groupFilter != null || statusFilter != null || showOnlyParents || entityTypeFilter != null
 	const filterCount =
 		[groupFilter, statusFilter, entityTypeFilter].filter((value) => value != null).length + (showOnlyParents ? 1 : 0)
@@ -41,7 +41,7 @@ export function TaskFilters() {
 				/>
 				{statusOptions.length > 4 ? (
 					<Select
-						placeholder={t('tasks.allStatuses')}
+						placeholder={t('items.allStatuses')}
 						clearable
 						data={statusOptions}
 						value={statusFilter}
@@ -57,7 +57,7 @@ export function TaskFilters() {
 					/>
 				)}
 				<Switch
-					label={t('tasks.showOnlyParents')}
+					label={t('items.showOnlyParents')}
 					checked={showOnlyParents}
 					onChange={(event) => setShowOnlyParents(event.currentTarget.checked)}
 				/>
@@ -75,15 +75,15 @@ export function TaskFilters() {
 							onClick={toggle}
 							style={{ marginLeft: 'auto' }}
 						>
-							{t('tasks.moreFilters')}
+							{t('items.moreFilters')}
 							{hasFilters ? ` (${filterCount})` : ''}
 						</Button>
 					</Popover.Target>
 					<Popover.Dropdown>
 						<Stack gap='sm'>
 							<Select
-								label={t('tasks.filterByGroup')}
-								placeholder={t('tasks.allGroups')}
+								label={t('items.filterByGroup')}
+								placeholder={t('items.allGroups')}
 								clearable
 								data={groupOptions}
 								value={groupFilter}
@@ -99,7 +99,7 @@ export function TaskFilters() {
 				<Pill.Group gap='xs'>
 					{groupFilter != null && (
 						<Pill size='sm' withRemoveButton onRemove={() => setGroupFilter(null)}>
-							{`${t('tasks.group')}: ${optionLabel(groupOptions, groupFilter)}`}
+							{`${t('items.group')}: ${optionLabel(groupOptions, groupFilter)}`}
 						</Pill>
 					)}
 				</Pill.Group>

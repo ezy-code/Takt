@@ -1,9 +1,9 @@
 import { registerGroupsHandlers } from './handlers/groups'
+import { registerItemsHandlers } from './handlers/items'
 import { registerMetaHandlers } from './handlers/meta'
 import { registerMyDayHandlers } from './handlers/my-day'
 import { startReminderPoller } from './handlers/reminders'
 import { registerStatusesHandlers } from './handlers/statuses'
-import { registerTasksHandlers } from './handlers/tasks'
 import { registerTimeEntriesHandlers } from './handlers/time-entries'
 import { registerTimerHandlers } from './handlers/timer'
 import type { Db } from './index'
@@ -14,7 +14,7 @@ export function registerHandlers(db: Db, opts: { onTimerChange?: OnTimerChange }
 	initMetaDb(db)
 	registerMetaHandlers()
 	registerStatusesHandlers(db)
-	registerTasksHandlers(db)
+	registerItemsHandlers(db)
 	registerGroupsHandlers(db)
 	registerTimerHandlers(db, opts.onTimerChange)
 	registerTimeEntriesHandlers(db)

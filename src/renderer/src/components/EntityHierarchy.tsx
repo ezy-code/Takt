@@ -4,11 +4,11 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useEntityAncestors, useEntityChildren } from '../api'
 import { ROUTES } from '../routes'
-import type { Task } from '../types'
+import type { Item } from '../types'
 import { EntityRow } from './EntityRow'
 
 interface EntityHierarchyProps {
-	entity: Task
+	entity: Item
 	onAddChild: () => void
 	parentOptions: { value: string; label: string }[]
 	parentId: string | null
@@ -29,7 +29,7 @@ export function EntityHierarchy({
 	const { data: ancestors = [] } = useEntityAncestors(entity.id)
 	const { data: children = [] } = useEntityChildren(entity.id)
 
-	const open = (id: number) => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
+	const open = (id: number) => navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(id) } })
 	const groups = (['task', 'note'] as const)
 		.map((type) => ({ type, items: children.filter((child) => (child.entityType ?? 'task') === type) }))
 		.filter((group) => group.items.length > 0)

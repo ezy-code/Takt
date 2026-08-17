@@ -20,7 +20,7 @@ export function SpotlightSearch() {
 
 	const openResult = (id: number) => {
 		spotlight.close()
-		navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
+		navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(id) } })
 	}
 
 	return (

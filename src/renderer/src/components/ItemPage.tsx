@@ -23,19 +23,19 @@ import { useBlocker, useNavigate } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAddTask, useDeleteTask, useGroups, useStatuses, useTask, useTasks, useUpdateTask } from '../api'
+import { useAddItem, useDeleteItem, useGroups, useItem, useItems, useStatuses, useUpdateItem } from '../api'
 import { ROUTES } from '../routes'
-import { lastTasksTab } from '../store/lastTasksTab'
-import type { EntityType, Group as GroupModel, Task } from '../types'
+import { lastItemsTab } from '../store/lastItemsTab'
+import type { EntityType, Group as GroupModel, Item } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
 import { EntityHierarchy } from './EntityHierarchy'
 import { EntityTypeBadge } from './EntityTypeBadge'
+import { ItemCostPill } from './ItemCostPill'
+import { ItemTimeEntriesModal } from './ItemTimeEntriesModal'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
 import { RichTextEditor } from './RichTextEditor'
-import { TaskCostPill } from './TaskCostPill'
-import { TaskTimeEntriesModal } from './TaskTimeEntriesModal'
 import { TimerControl } from './TimerControl'
 
 function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) {
@@ -45,7 +45,7 @@ function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) 
 	submit()
 }
 
-function isDescendant(entities: Task[], entityId: number | undefined, candidateParentId: number) {
+function isDescendant(entities: Item[], entityId: number | undefined, candidateParentId: number) {
 	if (entityId == null) return false
 	const byId = new Map(entities.map((entity) => [entity.id, entity]))
 	let currentId: number | null = candidateParentId
@@ -58,16 +58,16 @@ function isDescendant(entities: Task[], entityId: number | undefined, candidateP
 	return false
 }
 
-interface TaskPageProps {
+interface ItemPageProps {
 	id?: number
 	mode: 'view' | 'edit' | 'create'
-	onCreated?: (task: Task) => void
+	onCreated?: (item: Item) => void
 	onCancel?: () => void
 	initialEntityType?: EntityType
 	initialParentId?: number | null
 }
 
-interface TaskSnapshot {
+interface ItemSnapshot {
 	name: string
 	statusId: number | null
 	parentId: number | null
@@ -89,7 +89,7 @@ const FIELD_TEXT_STYLE = {
 	cursor: 'pointer',
 } as const
 
-export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, initialParentId }: TaskPageProps) {
+export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, initialParentId }: ItemPageProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const editorRef = useRef<ExtensiveEditorRef>(null)
@@ -98,13 +98,13 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	const isModal = onCreated != null
 	const [editorReady, setEditorReady] = useState(false)
 
-	const { data: task, isLoading } = useTask(id ?? 0)
+	const { data: item, isLoading } = useItem(id ?? 0)
 	const { data: statuses } = useStatuses()
-	const { data: entities = [] } = useTasks()
+	const { data: entities = [] } = useItems()
 	const { data: groups = [] } = useGroups()
-	const addTask = useAddTask()
-	const updateTask = useUpdateTask()
-	const deleteTask = useDeleteTask()
+	const addItem = useAddItem()
+	const updateItem = useUpdateItem()
+	const deleteItem = useDeleteItem()
 
 	const [statusId, setStatusId] = useState<number | null>(null)
 	const [parentId, setParentId] = useState<number | null>(null)
@@ -119,10 +119,10 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	const [addChildMode, setAddChildMode] = useState<'create' | 'attach'>('create')
 	const [attachChildId, setAttachChildId] = useState<string | null>(null)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
-		title: t('tasks.deleteTitle'),
-		message: t('tasks.deleteBody'),
+		title: t('items.deleteTitle'),
+		message: t('items.deleteBody'),
 	})
-	const initialRef = useRef<TaskSnapshot | null>(null)
+	const initialRef = useRef<ItemSnapshot | null>(null)
 	const savedRef = useRef(false)
 
 	const groupTree = useMemo<TreeNodeData[]>(() => {
@@ -137,7 +137,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 		return build(null)
 	}, [groups])
 
-	const currentGroupId = mode === 'view' ? (task?.groupId ?? null) : groupId
+	const currentGroupId = mode === 'view' ? (item?.groupId ?? null) : groupId
 	const groupChain = useMemo(() => {
 		const byId = new Map(groups.map((g) => [g.id, g]))
 		const names: string[] = []
@@ -150,14 +150,14 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	}, [groups, currentGroupId])
 
 	useEffect(() => {
-		if (task) setEntityType(task.entityType ?? 'task')
-		if (isEdit && task) {
-			setStatusId(task.entityType === 'task' ? (task.statusId ?? null) : null)
-			setParentId(task.parentId ?? null)
-			setGroupId(task.groupId ?? null)
-			setAddToMyDay(!!task.my_day_date)
-			setReminderAt(task.reminder_at ? dayjs(task.reminder_at).format('YYYY-MM-DD HH:mm:ss') : null)
-			setHourlyRate(task.hourly_rate ?? '')
+		if (item) setEntityType(item.entityType ?? 'task')
+		if (isEdit && item) {
+			setStatusId(item.entityType === 'task' ? (item.statusId ?? null) : null)
+			setParentId(item.parentId ?? null)
+			setGroupId(item.groupId ?? null)
+			setAddToMyDay(!!item.my_day_date)
+			setReminderAt(item.reminder_at ? dayjs(item.reminder_at).format('YYYY-MM-DD HH:mm:ss') : null)
+			setHourlyRate(item.hourly_rate ?? '')
 		} else if (mode === 'create' && statuses) {
 			const defaultStatus = statuses.find((s) => s.is_default) ?? statuses[0]
 			const type = initialEntityType ?? 'task'
@@ -169,13 +169,13 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 			setReminderAt(null)
 			setHourlyRate('')
 		}
-	}, [isEdit, mode, task, statuses])
+	}, [isEdit, mode, item, statuses])
 
 	useEffect(() => {
-		if (isEdit && task && editorReady) {
-			editorRef.current?.injectJSON(task.description ?? '')
+		if (isEdit && item && editorReady) {
+			editorRef.current?.injectJSON(item.description ?? '')
 		}
-	}, [isEdit, task, editorReady])
+	}, [isEdit, item, editorReady])
 
 	const form = useForm({
 		defaultValues: { name: '' },
@@ -200,54 +200,54 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 				entityType,
 			}
 			if (isEdit) {
-				await updateTask.mutateAsync({ id: id!, ...payload })
+				await updateItem.mutateAsync({ id: id!, ...payload })
 				savedRef.current = true
-				navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
+				navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(id) } })
 			} else if (mode === 'create') {
-				const created = await addTask.mutateAsync(payload)
+				const created = await addItem.mutateAsync(payload)
 				savedRef.current = true
 				if (onCreated) onCreated(created)
-				else navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(created.id) } })
+				else navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(created.id) } })
 			}
 		},
 	})
 
 	useEffect(() => {
-		if (isEdit && task) {
-			form.setFieldValue('name', task.name)
+		if (isEdit && item) {
+			form.setFieldValue('name', item.name)
 		}
-	}, [isEdit, task, form])
+	}, [isEdit, item, form])
 
 	useEffect(() => {
 		if (!editable) return
-		if (isEdit && (!task || !editorReady)) return
+		if (isEdit && (!item || !editorReady)) return
 		if (mode === 'create' && (!statuses || !editorReady)) return
 		const timer = setTimeout(() => {
-			const currentTask = isEdit && task ? task : null
+			const currentItem = isEdit && item ? item : null
 			initialRef.current = {
-				name: isEdit ? currentTask!.name : '',
+				name: isEdit ? currentItem!.name : '',
 				statusId: isEdit
-					? currentTask!.entityType === 'task'
-						? (currentTask!.statusId ?? null)
+					? currentItem!.entityType === 'task'
+						? (currentItem!.statusId ?? null)
 						: null
 					: (initialEntityType ?? 'task') === 'task'
 						? (statuses?.find((s) => s.is_default)?.id ?? null)
 						: null,
-				parentId: isEdit ? (currentTask!.parentId ?? null) : (initialParentId ?? null),
-				groupId: isEdit ? (currentTask!.groupId ?? null) : null,
-				addToMyDay: isEdit ? !!currentTask!.my_day_date : false,
+				parentId: isEdit ? (currentItem!.parentId ?? null) : (initialParentId ?? null),
+				groupId: isEdit ? (currentItem!.groupId ?? null) : null,
+				addToMyDay: isEdit ? !!currentItem!.my_day_date : false,
 				reminderAt: isEdit
-					? currentTask!.reminder_at
-						? dayjs(currentTask!.reminder_at).format('YYYY-MM-DD HH:mm:ss')
+					? currentItem!.reminder_at
+						? dayjs(currentItem!.reminder_at).format('YYYY-MM-DD HH:mm:ss')
 						: null
 					: null,
-				hourlyRate: isEdit ? (currentTask!.hourly_rate ?? null) : null,
-				entityType: isEdit ? (currentTask!.entityType ?? 'task') : (initialEntityType ?? 'task'),
+				hourlyRate: isEdit ? (currentItem!.hourly_rate ?? null) : null,
+				entityType: isEdit ? (currentItem!.entityType ?? 'task') : (initialEntityType ?? 'task'),
 				description: editorRef.current?.getJSON() ?? '',
 			}
 		}, 150)
 		return () => clearTimeout(timer)
-	}, [editable, isEdit, mode, task, statuses, editorReady, initialParentId])
+	}, [editable, isEdit, mode, item, statuses, editorReady, initialParentId])
 
 	const isDirty = () => {
 		const s = initialRef.current
@@ -278,15 +278,15 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 				<Text c='dimmed'>{t('common.loading')}</Text>
 			</Container>
 		)
-	if (mode !== 'create' && !task)
+	if (mode !== 'create' && !item)
 		return (
 			<Container fluid py='md'>
-				<Text c='red'>{t('tasks.notFound')}</Text>
+				<Text c='red'>{t('items.notFound')}</Text>
 			</Container>
 		)
 
-	const status = statuses?.find((s) => s.id === (mode === 'view' ? task?.statusId : statusId))
-	const isPast = task?.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
+	const status = statuses?.find((s) => s.id === (mode === 'view' ? item?.statusId : statusId))
+	const isPast = item?.reminder_at != null && new Date(item.reminder_at).getTime() < Date.now()
 	const statusColor = statuses?.find((s) => s.id === statusId)?.color ?? '#868e96'
 
 	const statusOptions = (statuses ?? []).map((s) => ({
@@ -295,7 +295,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 	}))
 
 	const parentOptions = entities
-		.filter((entity) => entity.id !== task?.id && !isDescendant(entities, task?.id, entity.id))
+		.filter((entity) => entity.id !== item?.id && !isDescendant(entities, item?.id, entity.id))
 		.map((entity) => ({
 			value: String(entity.id),
 			label: `${entity.name} · ${t(`entity.${entity.entityType ?? 'task'}`)}`,
@@ -303,20 +303,20 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 
 	const goBack = () => {
 		if (onCancel) onCancel()
-		else if (isEdit) navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
-		else navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })
+		else if (isEdit) navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(id) } })
+		else navigate({ to: ROUTES.ITEMS, search: { tab: lastItemsTab } })
 	}
 
 	const goToPrevious = () => {
 		if (window.history.length > 1) window.history.back()
-		else navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } })
+		else navigate({ to: ROUTES.ITEMS, search: { tab: lastItemsTab } })
 	}
 
 	const handleTypeChange = (next: EntityType) => {
 		setEntityType(next)
 		if (next !== 'task') setStatusId(null)
-		if (mode === 'view' && task) {
-			updateTask.mutate({ id: task.id, entityType: next, statusId: next === 'task' ? undefined : null })
+		if (mode === 'view' && item) {
+			updateItem.mutate({ id: item.id, entityType: next, statusId: next === 'task' ? undefined : null })
 		}
 	}
 
@@ -353,13 +353,13 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 								</form.Field>
 							) : (
 								<>
-									{task!.name}
-									<EntityTypeBadge entityType={task!.entityType} />
+									{item!.name}
+									<EntityTypeBadge entityType={item!.entityType} />
 								</>
 							)}
 						</Title>
 						<Group gap='sm' wrap='nowrap'>
-							{mode !== 'create' && task && <TimerControl taskId={task.id} duration={task.total_duration} />}
+							{mode !== 'create' && item && <TimerControl itemId={item.id} duration={item.total_duration} />}
 							<SegmentedControl
 								color='blue'
 								value={entityType}
@@ -405,16 +405,16 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 							</Popover>
 						)}
 						{mode === 'view' ? (
-							<MyDayControl taskId={task!.id} size='sm' myDayDate={task!.my_day_date} />
+							<MyDayControl itemId={item!.id} size='sm' myDayDate={item!.my_day_date} />
 						) : (
 							<MyDayControl inMyDay={addToMyDay} size='sm' onToggle={() => setAddToMyDay((v) => !v)} />
 						)}
-						{mode === 'view' && task && <TaskCostPill task={task} />}
+						{mode === 'view' && item && <ItemCostPill item={item} />}
 						{mode !== 'view' && (
 							<PropertyPill leading={<IconCoin size={14} />}>
 								<NumberInput
 									variant='unstyled'
-									placeholder={t('tasks.hourlyRatePlaceholder')}
+									placeholder={t('items.hourlyRatePlaceholder')}
 									value={hourlyRate}
 									onChange={(v) => setHourlyRate(v)}
 									hideControls
@@ -425,18 +425,18 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 								/>
 							</PropertyPill>
 						)}
-						{isEdit && task && <TaskCostPill task={task} />}
-						{mode !== 'create' && task && (
+						{isEdit && item && <ItemCostPill item={item} />}
+						{mode !== 'create' && item && (
 							<PropertyPill leading={<IconClock size={14} />} onClick={() => setShowTimeEntries(true)}>
 								<Text size='sm'>{t('timeEntries.title')}</Text>
 							</PropertyPill>
 						)}
 						{mode === 'view' ? (
-							task!.reminder_at && (
+							item!.reminder_at && (
 								<PropertyPill leading={<IconClock size={14} />} color={isPast ? 'red' : 'dimmed'}>
 									<Text size='sm'>
-										{t('tasks.reminder')}:{' '}
-										{new Date(task!.reminder_at).toLocaleString(undefined, {
+										{t('items.reminder')}:{' '}
+										{new Date(item!.reminder_at).toLocaleString(undefined, {
 											dateStyle: 'short',
 											timeStyle: 'short',
 										})}
@@ -447,7 +447,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 							<PropertyPill leading={<IconClock size={14} />}>
 								<DateTimePicker
 									variant='unstyled'
-									placeholder={t('tasks.reminder')}
+									placeholder={t('items.reminder')}
 									value={reminderAt}
 									onChange={setReminderAt}
 									valueFormat='DD.MM.YYYY HH:mm'
@@ -475,7 +475,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 								>
 									<Select
 										variant='unstyled'
-										placeholder={t('tasks.selectStatus')}
+										placeholder={t('items.selectStatus')}
 										data={statusOptions}
 										value={statusId != null ? String(statusId) : null}
 										onChange={(value) => setStatusId(value ? Number(value) : null)}
@@ -507,23 +507,23 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 					</Group>
 
 					{mode === 'view' ? (
-						task!.description_md && <MarkdownPreview content={task!.description_md} variant='full' />
+						item!.description_md && <MarkdownPreview content={item!.description_md} variant='full' />
 					) : (
 						<RichTextEditor
 							ref={editorRef}
 							onReady={() => setEditorReady(true)}
-							placeholder={t('tasks.enterDescription')}
+							placeholder={t('items.enterDescription')}
 						/>
 					)}
-					{mode === 'view' && task && (
+					{mode === 'view' && item && (
 						<>
 							<EntityHierarchy
-								entity={task}
+								entity={item}
 								onAddChild={() => setCreateChildOpen(true)}
 								parentOptions={parentOptions}
-								parentId={task.parentId != null ? String(task.parentId) : null}
-								onParentChange={(value) => updateTask.mutate({ id: task.id, parentId: value ? Number(value) : null })}
-								parentDisabled={updateTask.isPending}
+								parentId={item.parentId != null ? String(item.parentId) : null}
+								onParentChange={(value) => updateItem.mutate({ id: item.id, parentId: value ? Number(value) : null })}
+								parentDisabled={updateItem.isPending}
 							/>
 						</>
 					)}
@@ -550,9 +550,9 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 						}}
 					>
 						<Group justify='space-between'>
-							{mode !== 'create' && task && (
+							{mode !== 'create' && item && (
 								<Text size='xs' c='dimmed'>
-									{t('common.created', { date: new Date(task.created_at).toLocaleString() })}
+									{t('common.created', { date: new Date(item.created_at).toLocaleString() })}
 								</Text>
 							)}
 							<Group>
@@ -560,7 +560,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 									<>
 										<Button
 											variant='default'
-											onClick={() => navigate({ to: ROUTES.TASK_EDIT, params: { id: String(task!.id) } })}
+											onClick={() => navigate({ to: ROUTES.ITEM_EDIT, params: { id: String(item!.id) } })}
 										>
 											{t('common.edit')}
 										</Button>
@@ -573,8 +573,8 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 											leftSection={<IconTrash size={16} />}
 											onClick={() =>
 												confirmDelete(() =>
-													deleteTask.mutate(task!.id, {
-														onSuccess: () => navigate({ to: ROUTES.TASKS, search: { tab: lastTasksTab } }),
+													deleteItem.mutate(item!.id, {
+														onSuccess: () => navigate({ to: ROUTES.ITEMS, search: { tab: lastItemsTab } }),
 													}),
 												)
 											}
@@ -600,10 +600,10 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 				<Modal
 					opened={blocker.status === 'blocked'}
 					onClose={() => blocker.reset?.()}
-					title={t('tasks.unsavedTitle')}
+					title={t('items.unsavedTitle')}
 					centered
 				>
-					<Text>{t('tasks.unsavedBody')}</Text>
+					<Text>{t('items.unsavedBody')}</Text>
 					<Group justify='flex-end' mt='lg'>
 						<Button variant='default' onClick={() => blocker.reset?.()}>
 							{t('common.cancel')}
@@ -625,7 +625,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 
 			{confirmDeleteModal}
 
-			{task && (
+			{item && (
 				<Modal
 					opened={createChildOpen}
 					onClose={() => {
@@ -646,9 +646,9 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 						]}
 					/>
 					{addChildMode === 'create' ? (
-						<TaskPage
+						<ItemPage
 							mode='create'
-							initialParentId={task.id}
+							initialParentId={item.id}
 							onCancel={() => setCreateChildOpen(false)}
 							onCreated={() => setCreateChildOpen(false)}
 						/>
@@ -665,7 +665,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 							<Button
 								disabled={attachChildId == null}
 								onClick={() => {
-									updateTask.mutate({ id: Number(attachChildId), parentId: task.id })
+									updateItem.mutate({ id: Number(attachChildId), parentId: item.id })
 									setCreateChildOpen(false)
 									setAddChildMode('create')
 									setAttachChildId(null)
@@ -678,7 +678,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 				</Modal>
 			)}
 
-			{showTimeEntries && task && <TaskTimeEntriesModal task={task} onClose={() => setShowTimeEntries(false)} />}
+			{showTimeEntries && item && <ItemTimeEntriesModal item={item} onClose={() => setShowTimeEntries(false)} />}
 		</Container>
 	)
 }
