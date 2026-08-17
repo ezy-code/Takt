@@ -265,7 +265,6 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 		)
 
 	const status = statuses?.find((s) => s.id === (mode === 'view' ? task?.statusId : statusId))
-	const parent = entities.find((entity) => entity.id === (mode === 'view' ? task?.parentId : parentId))
 	const isPast = task?.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
 	const statusColor = statuses?.find((s) => s.id === statusId)?.color ?? '#868e96'
 
@@ -503,16 +502,7 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 										/>
 									</PropertyPill>
 								))}
-							{mode === 'view' ? (
-								parent && (
-									<PropertyPill leading={<IconFolder size={14} />} color='dimmed'>
-										<Group gap='xs' wrap='nowrap'>
-											<Text size='sm'>{parent.name}</Text>
-											<EntityTypeBadge entityType={parent.entityType} />
-										</Group>
-									</PropertyPill>
-								)
-							) : (
+							{mode !== 'view' && (
 								<PropertyPill leading={<IconFolder size={14} />}>
 									<Select
 										variant='unstyled'
@@ -532,7 +522,14 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 					</Group>
 					{mode === 'view' && task && (
 						<>
-							<EntityHierarchy entity={task} onAddChild={() => setCreateChildOpen(true)} />
+							<EntityHierarchy
+								entity={task}
+								onAddChild={() => setCreateChildOpen(true)}
+								parentOptions={parentOptions}
+								parentId={task.parentId != null ? String(task.parentId) : null}
+								onParentChange={(value) => updateTask.mutate({ id: task.id, parentId: value ? Number(value) : null })}
+								parentDisabled={updateTask.isPending}
+							/>
 							<RelatedEntities entity={task} />
 						</>
 					)}

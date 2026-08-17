@@ -1,4 +1,4 @@
-import { Breadcrumbs, Button, Group, Stack, Text } from '@mantine/core'
+import { Badge, Breadcrumbs, Button, Group, Select, Stack, Text } from '@mantine/core'
 import { IconPlus } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -10,9 +10,20 @@ import { EntityRow } from './EntityRow'
 interface EntityHierarchyProps {
 	entity: Task
 	onAddChild: () => void
+	parentOptions: { value: string; label: string }[]
+	parentId: string | null
+	onParentChange: (value: string | null) => void
+	parentDisabled?: boolean
 }
 
-export function EntityHierarchy({ entity, onAddChild }: EntityHierarchyProps) {
+export function EntityHierarchy({
+	entity,
+	onAddChild,
+	parentOptions,
+	parentId,
+	onParentChange,
+	parentDisabled,
+}: EntityHierarchyProps) {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const { data: ancestors = [] } = useEntityAncestors(entity.id)
@@ -29,28 +40,27 @@ export function EntityHierarchy({ entity, onAddChild }: EntityHierarchyProps) {
 				<Text size='sm' fw={500}>
 					{t('entities.parent')}
 				</Text>
-				{ancestors.length === 0 ? (
-					<Text size='sm' c='dimmed'>
-						{t('entities.noParent')}
-					</Text>
-				) : (
-					<Breadcrumbs separator='/'>
-						{ancestors.map((parent) => (
-							<Text key={parent.id} component='button' onClick={() => open(parent.id)}>
-								{parent.name}
-							</Text>
-						))}
-					</Breadcrumbs>
-				)}
+				<Select
+					variant='unstyled'
+					placeholder={t('entities.parentSearchPlaceholder')}
+					clearable
+					searchable
+					data={parentOptions}
+					value={parentId}
+					onChange={onParentChange}
+					disabled={parentDisabled}
+				/>
 			</Stack>
 			<Stack gap={4}>
 				<Group justify='space-between' gap='xs'>
-					<Text size='sm' fw={500}>
-						{t('entities.children')}
-					</Text>
-					<Text size='sm' c='dimmed'>
-						({children.length})
-					</Text>
+					<Group gap='xs'>
+						<Text size='sm' fw={500}>
+							{t('entities.children')}
+						</Text>
+						<Badge size='xs' variant='light' circle>
+							{children.length}
+						</Badge>
+					</Group>
 					<Button size='xs' variant='light' leftSection={<IconPlus size={14} />} onClick={onAddChild}>
 						{t('entities.addChild')}
 					</Button>
