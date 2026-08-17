@@ -9,11 +9,9 @@ import {
 	type Edge,
 	MarkerType,
 	type NodeMouseHandler,
-	type OnConnect,
 	type OnEdgesChange,
 	type OnNodeDrag,
 	type OnNodesChange,
-	type OnReconnect,
 	ReactFlow,
 	ReactFlowProvider,
 	useEdgesState,
@@ -22,23 +20,14 @@ import {
 } from '@xyflow/react'
 import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-	useAddCanvasGroup,
-	useAddTaskLink,
-	useCanvasGroups,
-	useDeleteTaskLink,
-	useTaskLinks,
-	useUpdateCanvasGroup,
-	useUpdateCanvasPosition,
-	useUpdateTask,
-} from '../api'
+import { useAddGroup, useGroups, useUpdateCanvasPosition, useUpdateGroup, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
-import type { CanvasGroup, Task } from '../types'
-import { CanvasGroupNode, type CanvasGroupNodeType } from './CanvasGroupNode'
+import type { Group, Task } from '../types'
 import { CanvasTaskNode, type CanvasTaskNodeType } from './CanvasTaskNode'
+import { GroupNode, type GroupNodeType } from './GroupNode'
 import { TaskPage } from './TaskPage'
 
-const nodeTypes = { canvasTask: CanvasTaskNode, canvasGroup: CanvasGroupNode }
+const nodeTypes = { canvasTask: CanvasTaskNode, group: GroupNode }
 
 const UNPLACED_BASE = { x: 100, y: 80 }
 const UNPLACED_COL = 280
@@ -48,15 +37,15 @@ const NEW_NOTE_POS = { x: 100, y: 80 }
 // New groups are created at a fixed spot; user drags them anywhere.
 const NEW_GROUP_POS = { x: 60, y: 60 }
 
-type CanvasNode = CanvasTaskNodeType | CanvasGroupNodeType
+type CanvasNode = CanvasTaskNodeType | GroupNodeType
 
 // Grouped tasks store canvas coords relative to their group; ungrouped ones store absolute coords.
-function buildNodes(tasks: Task[], groups: CanvasGroup[]): CanvasNode[] {
+function buildNodes(tasks: Task[], groups: Group[]): CanvasNode[] {
 	const groupMap = new Map(groups.map((g) => [g.id, g]))
 	let unplaced = 0
-	const groupNodes: CanvasGroupNodeType[] = groups.map((g) => ({
+	const groupNodes: GroupNodeType[] = groups.map((g) => ({
 		id: `group-${g.id}`,
-		type: 'canvasGroup',
+		type: 'group',
 		position: { x: g.canvasX ?? NEW_GROUP_POS.x, y: g.canvasY ?? NEW_GROUP_POS.y },
 		width: g.width,
 		height: g.height,
@@ -91,11 +80,10 @@ function buildNodes(tasks: Task[], groups: CanvasGroup[]): CanvasNode[] {
 
 const taskIdOf = (nodeId: string) => Number(nodeId.replace('task-', ''))
 const groupIdOf = (nodeId: string) => Number(nodeId.replace('group-', ''))
-const edgeLinkId = (edge: Edge) => Number(edge.id.replace('link-', ''))
 
-function buildEdges(tasks: Task[], links: { id: number; sourceTaskId: number; targetTaskId: number }[]): Edge[] {
+function buildEdges(tasks: Task[]): Edge[] {
 	const taskIds = new Set(tasks.map((task) => task.id))
-	const parentEdges = tasks.flatMap((task) =>
+	return tasks.flatMap((task) =>
 		task.parentId != null && taskIds.has(task.parentId)
 			? [
 					{
@@ -111,23 +99,14 @@ function buildEdges(tasks: Task[], links: { id: number; sourceTaskId: number; ta
 				]
 			: [],
 	)
-	const relatedEdges = links
-		.filter((link) => taskIds.has(link.sourceTaskId) && taskIds.has(link.targetTaskId))
-		.map((link) => ({
-			id: `link-${link.id}`,
-			source: `task-${link.sourceTaskId}`,
-			target: `task-${link.targetTaskId}`,
-			style: { stroke: 'var(--mantine-color-gray-6)', strokeDasharray: '6 4' },
-		}))
-	return [...parentEdges, ...relatedEdges]
 }
 
 // ponytail: O(n*m) AABB intersect, sufficient for typical canvas sizes.
-function findGroupAt(nodes: CanvasNode[], node: CanvasNode): CanvasGroupNodeType | null {
+function findGroupAt(nodes: CanvasNode[], node: CanvasNode): GroupNodeType | null {
 	const w = node.measured?.width ?? 0
 	const h = node.measured?.height ?? 0
 	for (const g of nodes) {
-		if (g.type !== 'canvasGroup') continue
+		if (g.type !== 'group') continue
 		const gw = g.measured?.width ?? g.width ?? 0
 		const gh = g.measured?.height ?? g.height ?? 0
 		if (
@@ -136,7 +115,7 @@ function findGroupAt(nodes: CanvasNode[], node: CanvasNode): CanvasGroupNodeType
 			node.position.y < g.position.y + gh &&
 			node.position.y + h > g.position.y
 		) {
-			return g as CanvasGroupNodeType
+			return g as GroupNodeType
 		}
 	}
 	return null
@@ -158,12 +137,9 @@ function CanvasInner({
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 	const updateCanvasPosition = useUpdateCanvasPosition()
 	const updateTask = useUpdateTask()
-	const { data: links } = useTaskLinks()
-	const addTaskLink = useAddTaskLink()
-	const deleteTaskLink = useDeleteTaskLink()
-	const { data: groups } = useCanvasGroups()
-	const addCanvasGroup = useAddCanvasGroup()
-	const updateCanvasGroup = useUpdateCanvasGroup()
+	const { data: groups } = useGroups()
+	const addGroup = useAddGroup()
+	const updateGroup = useUpdateGroup()
 
 	const [createOpen, setCreateOpen] = useState(false)
 	const lastPaneClick = useRef({ time: 0, x: 0, y: 0 })
@@ -185,8 +161,8 @@ function CanvasInner({
 	}, [tasks, groups, setNodes])
 
 	useEffect(() => {
-		setEdges(buildEdges(tasks, links ?? []))
-	}, [links, tasks, setEdges])
+		setEdges(buildEdges(tasks))
+	}, [tasks, setEdges])
 
 	const openCreateModal = () => {
 		setCreateOpen(true)
@@ -208,7 +184,7 @@ function CanvasInner({
 		for (const change of changes) {
 			if (change.type === 'dimensions' && change.resizing === false && change.id.startsWith('group-')) {
 				const dims = change.dimensions
-				if (dims) updateCanvasGroup.mutate({ id: groupIdOf(change.id), width: dims.width, height: dims.height })
+				if (dims) updateGroup.mutate({ id: groupIdOf(change.id), width: dims.width, height: dims.height })
 			}
 		}
 	}
@@ -219,8 +195,8 @@ function CanvasInner({
 	}
 
 	const handleNodeDragStop: OnNodeDrag = (_event, node) => {
-		if (node.type === 'canvasGroup') {
-			updateCanvasGroup.mutate({
+		if (node.type === 'group') {
+			updateGroup.mutate({
 				id: groupIdOf(node.id),
 				canvasX: node.position.x,
 				canvasY: node.position.y,
@@ -253,38 +229,6 @@ function CanvasInner({
 		updateCanvasPosition.mutate({ id: taskId, x: node.position.x, y: node.position.y })
 	}
 
-	const handleConnect: OnConnect = (connection) => {
-		if (!connection.source || !connection.target || connection.source === connection.target) return
-		addTaskLink.mutate(
-			{ sourceTaskId: taskIdOf(connection.source), targetTaskId: taskIdOf(connection.target) },
-			{
-				onSuccess: (link) => {
-					if (link)
-						setEdges((eds) => [
-							...eds,
-							{ id: `link-${link.id}`, source: `task-${link.sourceTaskId}`, target: `task-${link.targetTaskId}` },
-						])
-				},
-			},
-		)
-	}
-
-	const handleEdgesDelete = (deleted: Edge[]) => {
-		deleted.filter((edge) => edge.id.startsWith('link-')).forEach((edge) => deleteTaskLink.mutate(edgeLinkId(edge)))
-	}
-
-	const handleReconnect: OnReconnect = (_oldEdge, newConnection) => {
-		if (!_oldEdge.id.startsWith('link-')) return
-		if (!newConnection.source || !newConnection.target || newConnection.source === newConnection.target) return
-		const old = edges.find((e) => e.id === _oldEdge.id)
-		if (!old) return
-		deleteTaskLink.mutate(edgeLinkId(old))
-		addTaskLink.mutate({
-			sourceTaskId: taskIdOf(newConnection.source),
-			targetTaskId: taskIdOf(newConnection.target),
-		})
-	}
-
 	return (
 		<div
 			style={{
@@ -304,10 +248,6 @@ function CanvasInner({
 				onPaneClick={handlePaneClick}
 				onNodeDoubleClick={handleNodeDoubleClick}
 				onNodeDragStop={handleNodeDragStop}
-				onConnect={handleConnect}
-				onEdgesDelete={handleEdgesDelete}
-				onReconnect={handleReconnect}
-				deleteKeyCode={['Backspace', 'Delete']}
 				zoomOnDoubleClick={false}
 				fitView
 				minZoom={0.1}
@@ -323,7 +263,7 @@ function CanvasInner({
 					variant='default'
 					leftSection={<IconPlus size={16} />}
 					onClick={() =>
-						addCanvasGroup.mutate({ name: t('tasks.newGroup'), canvasX: NEW_GROUP_POS.x, canvasY: NEW_GROUP_POS.y })
+						addGroup.mutate({ name: t('tasks.newGroup'), canvasX: NEW_GROUP_POS.x, canvasY: NEW_GROUP_POS.y })
 					}
 				>
 					{t('tasks.newGroup')}

@@ -1,0 +1,1 @@
+ALTER TABLE `canvas_groups` ADD `parent_id` integer REFERENCES canvas_groups(id) ON DELETE SET NULL;

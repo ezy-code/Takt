@@ -21,7 +21,7 @@ function TasksPage() {
 	const navigate = Route.useNavigate()
 	const { t } = useTranslation()
 	const { tab, focusGroup, focusTask } = Route.useSearch()
-	const { isLoading, filteredTasks, projectFilter } = useTaskFilters()
+	const { isLoading, filteredTasks } = useTaskFilters()
 
 	useEffect(() => {
 		setLastTasksTab(tab ?? 'list')
@@ -65,7 +65,7 @@ function TasksPage() {
 					{isLoading ? (
 						<Text c='dimmed'>{t('common.loading')}</Text>
 					) : filteredTasks.length === 0 ? (
-						<Text c='dimmed'>{projectFilter ? t('tasks.noTasksInProject') : t('tasks.noTasksYet')}</Text>
+						<Text c='dimmed'>{t('tasks.noTasksYet')}</Text>
 					) : (
 						<TaskGrid tasks={filteredTasks} />
 					)}

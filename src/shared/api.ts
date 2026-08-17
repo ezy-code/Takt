@@ -9,9 +9,9 @@ export interface Status {
 	created_at: string
 }
 
-export type RateSource = 'task' | 'project' | 'default'
+export type RateSource = 'task' | 'default'
 
-export type EntityType = 'task' | 'note' | 'project'
+export type EntityType = 'task' | 'note'
 
 export interface Task {
 	id: number
@@ -36,7 +36,6 @@ export interface Task {
 	rate?: number | null
 	rateSource?: RateSource
 	cost?: number
-	relatedCount?: number
 }
 
 export interface TimeEntry {
@@ -81,13 +80,6 @@ export type StartTimerResult =
 
 export type StopTimerResult = { entry: TimeEntry; task: Task } | null
 
-export interface TaskLink {
-	id: number
-	sourceTaskId: number
-	targetTaskId: number
-	created_at?: string | null
-}
-
 export interface EntitySummary {
 	id: number
 	name: string
@@ -102,13 +94,10 @@ export interface EntitySearchResult {
 	snippet: string | null
 }
 
-export interface RelatedEntity extends Task {
-	linkId: number
-}
-
-export interface CanvasGroup {
+export interface Group {
 	id: number
 	name: string
+	parentId?: number | null
 	canvasX?: number | null
 	canvasY?: number | null
 	width: number
@@ -117,8 +106,8 @@ export interface CanvasGroup {
 	created_at?: string | null
 }
 
-export type AddCanvasGroupPayload = Partial<Omit<CanvasGroup, 'id' | 'created_at'>>
-export type UpdateCanvasGroupPayload = Partial<Omit<CanvasGroup, 'created_at'>> & { id: number }
+export type AddGroupPayload = Partial<Omit<Group, 'id' | 'created_at'>>
+export type UpdateGroupPayload = Partial<Omit<Group, 'created_at'>> & { id: number }
 
 export interface AddTaskPayload {
 	name: string
@@ -169,17 +158,13 @@ export interface Api {
 	moveTask: (taskId: number, statusId: number) => Promise<Task>
 	reorderTasks: (columnId: number, orderedTaskIds: number[]) => Promise<{ success: boolean }>
 	updateTaskCanvasPosition: (id: number, x: number, y: number) => Promise<Task>
-	getTaskLinks: () => Promise<TaskLink[]>
-	addTaskLink: (sourceTaskId: number, targetTaskId: number) => Promise<TaskLink>
-	deleteTaskLink: (id: number) => Promise<{ success: boolean }>
-	getTaskRelatedItems: (taskId: number) => Promise<RelatedEntity[]>
 	getEntityChildren: (parentId: number) => Promise<Task[]>
 	getEntityAncestors: (entityId: number) => Promise<EntitySummary[]>
 	searchEntities: (query: string, limit?: number) => Promise<EntitySearchResult[]>
-	getCanvasGroups: () => Promise<CanvasGroup[]>
-	addCanvasGroup: (payload: AddCanvasGroupPayload) => Promise<CanvasGroup>
-	updateCanvasGroup: (payload: UpdateCanvasGroupPayload) => Promise<CanvasGroup>
-	deleteCanvasGroup: (id: number) => Promise<{ success: boolean }>
+	getGroups: () => Promise<Group[]>
+	addGroup: (payload: AddGroupPayload) => Promise<Group>
+	updateGroup: (payload: UpdateGroupPayload) => Promise<Group>
+	deleteGroup: (id: number) => Promise<{ success: boolean }>
 	getAutostart: () => Promise<boolean>
 	setAutostart: (enabled: boolean) => Promise<void>
 	getAppImageDesktopEntryStatus: () => Promise<{ supported: boolean; enabled: boolean | null }>

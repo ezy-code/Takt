@@ -17,19 +17,15 @@ export const IPC = {
 	REORDER_TASKS: 'reorder-tasks',
 	MOVE_TASK: 'move-task',
 	UPDATE_TASK_CANVAS_POSITION: 'update-task-canvas-position',
-	GET_TASK_LINKS: 'get-task-links',
-	ADD_TASK_LINK: 'add-task-link',
-	DELETE_TASK_LINK: 'delete-task-link',
-	GET_TASK_RELATED_ITEMS: 'get-task-related-items',
 	GET_ENTITY_CHILDREN: 'get-entity-children',
 	GET_ENTITY_ANCESTORS: 'get-entity-ancestors',
 	SEARCH_ENTITIES: 'search-entities',
 
-	// canvas groups
-	GET_CANVAS_GROUPS: 'get-canvas-groups',
-	ADD_CANVAS_GROUP: 'add-canvas-group',
-	UPDATE_CANVAS_GROUP: 'update-canvas-group',
-	DELETE_CANVAS_GROUP: 'delete-canvas-group',
+	// groups
+	GET_GROUPS: 'get-groups',
+	ADD_GROUP: 'add-group',
+	UPDATE_GROUP: 'update-group',
+	DELETE_GROUP: 'delete-group',
 
 	// statuses
 	GET_STATUSES: 'get-statuses',

@@ -8,13 +8,10 @@ type FilterOption = {
 }
 
 interface TimeEntryFiltersProps {
-	projectFilter: string | null
 	taskFilter: string | null
 	dateFrom: string | null
 	dateTo: string | null
-	projectOptions: FilterOption[]
 	taskOptions: FilterOption[]
-	onProjectChange: (value: string | null) => void
 	onTaskChange: (value: string | null) => void
 	onDateFromChange: (value: string | null) => void
 	onDateToChange: (value: string | null) => void
@@ -22,33 +19,20 @@ interface TimeEntryFiltersProps {
 }
 
 export function TimeEntryFilters({
-	projectFilter,
 	taskFilter,
 	dateFrom,
 	dateTo,
-	projectOptions,
 	taskOptions,
-	onProjectChange,
 	onTaskChange,
 	onDateFromChange,
 	onDateToChange,
 	onReset,
 }: TimeEntryFiltersProps) {
 	const { t } = useTranslation()
-	const hasFilters = projectFilter != null || taskFilter != null || dateFrom != null || dateTo != null
+	const hasFilters = taskFilter != null || dateFrom != null || dateTo != null
 
 	return (
 		<Group align='flex-end' mb='md' wrap='wrap'>
-			<Select
-				label={t('projects.title')}
-				placeholder={t('timeEntries.allProjects')}
-				clearable
-				data={projectOptions}
-				value={projectFilter}
-				onChange={onProjectChange}
-				w={200}
-				searchable
-			/>
 			<Select
 				label={t('timeEntries.task')}
 				placeholder={t('timeEntries.allTasks')}

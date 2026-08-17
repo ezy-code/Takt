@@ -5,7 +5,6 @@ import type { EntityType } from '../types'
 const ENTITY_BADGE_COLORS: Record<EntityType, string> = {
 	task: 'blue',
 	note: 'yellow',
-	project: 'violet',
 }
 
 interface EntityTypeBadgeProps extends BadgeProps {
@@ -14,9 +13,10 @@ interface EntityTypeBadgeProps extends BadgeProps {
 
 export function EntityTypeBadge({ entityType, ...props }: EntityTypeBadgeProps) {
 	const { t } = useTranslation()
+	const type: EntityType = entityType === 'task' || entityType === 'note' ? entityType : 'task'
 	return (
-		<Badge size='xs' variant='outline' color={ENTITY_BADGE_COLORS[entityType ?? 'task']} {...props}>
-			{t(`entity.${entityType ?? 'task'}`)}
+		<Badge size='xs' variant='outline' color={ENTITY_BADGE_COLORS[type]} {...props}>
+			{t(`entity.${type}`)}
 		</Badge>
 	)
 }

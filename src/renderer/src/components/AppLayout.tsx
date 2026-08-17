@@ -1,5 +1,5 @@
 import { ActionIcon, Alert, Anchor, AppShell, Box, Button, Group, NavLink, Text, Title } from '@mantine/core'
-import { IconCalendarCheck, IconClock, IconFolder, IconList, IconPlus, IconSettings } from '@tabler/icons-react'
+import { IconCalendarCheck, IconClock, IconList, IconPlus, IconSettings } from '@tabler/icons-react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,7 +13,6 @@ import UpdateSection from './UpdateSection'
 const navItems = [
 	{ labelKey: 'nav.myDay', path: ROUTES.MY_DAY, icon: IconCalendarCheck },
 	{ labelKey: 'nav.tasks', path: ROUTES.TASKS, icon: IconList },
-	{ labelKey: 'nav.projects', path: ROUTES.PROJECTS, icon: IconFolder },
 	{ labelKey: 'nav.timeEntries', path: ROUTES.TIME_ENTRIES, icon: IconClock },
 	{ labelKey: 'nav.settings', path: ROUTES.SETTINGS, icon: IconSettings },
 ] as const

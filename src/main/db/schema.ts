@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { relations } from 'drizzle-orm/_relations'
-import { type AnySQLiteColumn, integer, real, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
+import { type AnySQLiteColumn, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const appMeta = sqliteTable('app_meta', {
 	key: text('key').primaryKey(),
@@ -16,9 +16,10 @@ export const statuses = sqliteTable('statuses', {
 	created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
-export const canvasGroups = sqliteTable('canvas_groups', {
+export const groups = sqliteTable('groups', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
+	parentId: integer('parent_id').references((): AnySQLiteColumn => groups.id, { onDelete: 'set null' }),
 	canvasX: real('canvas_x'),
 	canvasY: real('canvas_y'),
 	width: real('width').notNull().default(320),
@@ -42,26 +43,9 @@ export const tasks = sqliteTable('tasks', {
 	canvasX: real('canvas_x'),
 	canvasY: real('canvas_y'),
 	hourly_rate: real('hourly_rate'),
-	groupId: integer('group_id').references(() => canvasGroups.id, { onDelete: 'set null' }),
+	groupId: integer('group_id').references(() => groups.id, { onDelete: 'set null' }),
 	entityType: text('entity_type').notNull().default('task'),
 })
-
-export const taskLinks = sqliteTable(
-	'task_links',
-	{
-		id: integer('id').primaryKey({ autoIncrement: true }),
-		sourceTaskId: integer('source_task_id')
-			.notNull()
-			.references(() => tasks.id),
-		targetTaskId: integer('target_task_id')
-			.notNull()
-			.references(() => tasks.id),
-		created_at: text('created_at').default(sql`(datetime('now'))`),
-	},
-	(t) => ({
-		uniquePair: unique().on(t.sourceTaskId, t.targetTaskId),
-	}),
-)
 
 export const timeEntries = sqliteTable('time_entries', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
@@ -78,7 +62,15 @@ export const statusesRelations = relations(statuses, ({ many }) => ({
 	tasks: many(tasks),
 }))
 
-export const canvasGroupsRelations = relations(canvasGroups, ({ many }) => ({
+export const groupsRelations = relations(groups, ({ many, one }) => ({
+	parent: one(groups, {
+		fields: [groups.parentId],
+		references: [groups.id],
+		relationName: 'groupParent',
+	}),
+	children: many(groups, {
+		relationName: 'groupParent',
+	}),
 	tasks: many(tasks),
 }))
 
@@ -95,9 +87,9 @@ export const tasksRelations = relations(tasks, ({ many, one }) => ({
 	children: many(tasks, {
 		relationName: 'parent',
 	}),
-	group: one(canvasGroups, {
+	group: one(groups, {
 		fields: [tasks.groupId],
-		references: [canvasGroups.id],
+		references: [groups.id],
 	}),
 	timeEntries: many(timeEntries),
 }))

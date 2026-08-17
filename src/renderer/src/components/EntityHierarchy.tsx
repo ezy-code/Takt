@@ -30,7 +30,7 @@ export function EntityHierarchy({
 	const { data: children = [] } = useEntityChildren(entity.id)
 
 	const open = (id: number) => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(id) } })
-	const groups = (['task', 'note', 'project'] as const)
+	const groups = (['task', 'note'] as const)
 		.map((type) => ({ type, items: children.filter((child) => (child.entityType ?? 'task') === type) }))
 		.filter((group) => group.items.length > 0)
 

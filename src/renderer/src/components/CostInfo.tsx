@@ -5,7 +5,6 @@ import { formatMoney, formatRate } from '../hooks/useCost'
 
 const SOURCE_KEYS = {
 	task: 'cost.source.task',
-	project: 'cost.source.project',
 	default: 'cost.source.default',
 } as const
 

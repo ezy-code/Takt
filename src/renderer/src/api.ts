@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import type {
-	AddCanvasGroupPayload,
+	AddGroupPayload,
 	AddTaskPayload,
-	UpdateCanvasGroupPayload,
+	UpdateGroupPayload,
 	UpdateTaskPayload,
 	UpdateTimeEntryPayload,
 } from '../../shared/api'
@@ -14,9 +14,7 @@ import type { StartTimerResult, Task } from './types'
 export const queryKeys = {
 	tasks: ['tasks'] as const,
 	myDayTasks: ['tasks', 'my-day'] as const,
-	taskLinks: ['task-links'] as const,
-	taskRelatedItems: (taskId: number) => ['task-related-items', taskId] as const,
-	canvasGroups: ['canvas-groups'] as const,
+	groups: ['groups'] as const,
 	activeTimer: ['active-timer'] as const,
 	lastTimer: ['last-timer'] as const,
 	timeEntries: ['time-entries'] as const,
@@ -149,8 +147,6 @@ export function useDeleteTask() {
 			queryClient.invalidateQueries({ queryKey: queryKeys.lastTimer })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeEntries })
 			queryClient.invalidateQueries({ queryKey: queryKeys.timeSummary })
-			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
-			queryClient.invalidateQueries({ queryKey: ['task-related-items'] })
 			queryClient.invalidateQueries({ queryKey: ['entity-children'] })
 			queryClient.invalidateQueries({ queryKey: ['entity-ancestors'] })
 		},
@@ -354,21 +350,6 @@ export function useUpdateCanvasPosition() {
 	})
 }
 
-export function useTaskLinks() {
-	return useQuery({
-		queryKey: queryKeys.taskLinks,
-		queryFn: () => window.api.getTaskLinks(),
-	})
-}
-
-export function useTaskRelatedItems(taskId: number) {
-	return useQuery({
-		queryKey: queryKeys.taskRelatedItems(taskId),
-		queryFn: () => window.api.getTaskRelatedItems(taskId),
-		enabled: !!taskId,
-	})
-}
-
 export function useEntityChildren(parentId: number) {
 	return useQuery({
 		queryKey: queryKeys.entityChildren(parentId),
@@ -395,75 +376,43 @@ export function useEntitySearch(query: string, limit = 20, enabled = true) {
 	})
 }
 
-export function useAddTaskLink() {
-	const queryClient = useQueryClient()
-	return useMutation({
-		mutationFn: ({ sourceTaskId, targetTaskId }: { sourceTaskId: number; targetTaskId: number }) =>
-			window.api.addTaskLink(sourceTaskId, targetTaskId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
-			queryClient.invalidateQueries({ queryKey: ['task-related-items'] })
-		},
-	})
-}
-
-export function useDeleteTaskLink() {
-	const queryClient = useQueryClient()
-	return useMutation({
-		mutationFn: (id: number) => window.api.deleteTaskLink(id),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.taskLinks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
-			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
-			queryClient.invalidateQueries({ queryKey: ['task-related-items'] })
-		},
-	})
-}
-
-export function useCanvasGroups() {
+export function useGroups() {
 	return useQuery({
-		queryKey: queryKeys.canvasGroups,
-		queryFn: () => window.api.getCanvasGroups(),
+		queryKey: queryKeys.groups,
+		queryFn: () => window.api.getGroups(),
 	})
 }
 
-export function useAddCanvasGroup() {
+export function useAddGroup() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (payload: AddCanvasGroupPayload) => window.api.addCanvasGroup(payload),
+		mutationFn: (payload: AddGroupPayload) => window.api.addGroup(payload),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.canvasGroups })
+			queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 		},
 	})
 }
 
-export function useUpdateCanvasGroup() {
+export function useUpdateGroup() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (payload: UpdateCanvasGroupPayload) => window.api.updateCanvasGroup(payload),
+		mutationFn: (payload: UpdateGroupPayload) => window.api.updateGroup(payload),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.canvasGroups })
+			queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 		},
 	})
 }
 
-export function useDeleteCanvasGroup() {
+export function useDeleteGroup() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (id: number) => window.api.deleteCanvasGroup(id),
+		mutationFn: (id: number) => window.api.deleteGroup(id),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.canvasGroups })
+			queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 			queryClient.invalidateQueries({ queryKey: queryKeys.tasks })
 			queryClient.invalidateQueries({ queryKey: queryKeys.myDayTasks })
 		},
 	})
-}
-
-export function useProjectEntities() {
-	const query = useTasks()
-	return { ...query, data: query.data?.filter((entity) => entity.entityType === 'project') }
 }
 
 export function useCurrency() {

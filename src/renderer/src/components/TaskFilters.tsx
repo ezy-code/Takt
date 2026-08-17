@@ -8,26 +8,21 @@ export function TaskFilters() {
 	const { t } = useTranslation()
 	const [opened, { toggle, open, close }] = useDisclosure(false)
 	const {
-		projectFilter,
 		groupFilter,
 		statusFilter,
 		showOnlyParents,
 		entityTypeFilter,
-		setProjectFilter,
 		setGroupFilter,
 		setStatusFilter,
 		setShowOnlyParents,
 		setEntityTypeFilter,
 		reset,
-		projectOptions,
 		groupOptions,
 		statusOptions,
 	} = useTaskFilters()
-	const hasFilters =
-		projectFilter != null || groupFilter != null || statusFilter != null || showOnlyParents || entityTypeFilter != null
+	const hasFilters = groupFilter != null || statusFilter != null || showOnlyParents || entityTypeFilter != null
 	const filterCount =
-		[projectFilter, groupFilter, statusFilter, entityTypeFilter].filter((value) => value != null).length +
-		(showOnlyParents ? 1 : 0)
+		[groupFilter, statusFilter, entityTypeFilter].filter((value) => value != null).length + (showOnlyParents ? 1 : 0)
 	const optionLabel = (options: { value: string; label: string }[], value: string | null) =>
 		options.find((option) => option.value === value)?.label ?? value
 
@@ -37,12 +32,11 @@ export function TaskFilters() {
 				<SegmentedControl
 					color='blue'
 					value={entityTypeFilter ?? ''}
-					onChange={(value) => setEntityTypeFilter(value === '' ? null : (value as 'task' | 'note' | 'project'))}
+					onChange={(value) => setEntityTypeFilter(value === '' ? null : (value as 'task' | 'note'))}
 					data={[
 						{ value: '', label: t('common.all') },
 						{ value: 'task', label: t('entity.task') },
 						{ value: 'note', label: t('entity.note') },
-						{ value: 'project', label: t('entity.project') },
 					]}
 				/>
 				{statusOptions.length > 4 ? (
@@ -88,15 +82,6 @@ export function TaskFilters() {
 					<Popover.Dropdown>
 						<Stack gap='sm'>
 							<Select
-								label={t('tasks.filterByProject')}
-								placeholder={t('tasks.allProjects')}
-								clearable
-								data={projectOptions}
-								value={projectFilter}
-								onChange={setProjectFilter}
-								searchable
-							/>
-							<Select
 								label={t('tasks.filterByGroup')}
 								placeholder={t('tasks.allGroups')}
 								clearable
@@ -112,11 +97,6 @@ export function TaskFilters() {
 
 			<Group gap='xs' wrap='wrap'>
 				<Pill.Group gap='xs'>
-					{projectFilter != null && (
-						<Pill size='sm' withRemoveButton onRemove={() => setProjectFilter(null)}>
-							{`${t('tasks.project')}: ${optionLabel(projectOptions, projectFilter)}`}
-						</Pill>
-					)}
 					{groupFilter != null && (
 						<Pill size='sm' withRemoveButton onRemove={() => setGroupFilter(null)}>
 							{`${t('tasks.group')}: ${optionLabel(groupOptions, groupFilter)}`}

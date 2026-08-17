@@ -3,9 +3,9 @@ import type { Api } from '../../shared/api'
 export type {
 	ActiveTimerInfo,
 	Api,
-	CanvasGroup,
 	EntitySummary,
 	EntityType,
+	Group,
 	StartTimerResult,
 	Status,
 	Task,

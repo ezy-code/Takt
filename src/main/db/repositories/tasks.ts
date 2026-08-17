@@ -3,15 +3,13 @@ import type { EntitySearchResult, EntitySummary, EntityType, RateSource } from '
 import { costOf } from '../../../shared/cost'
 import type { Db } from '../index'
 import { getDefaultRate } from '../meta'
-import { taskLinks, tasks, timeEntries } from '../schema'
+import { tasks, timeEntries } from '../schema'
 
 export function resolveRate(
 	taskRate: number | null | undefined,
-	projectRate: number | null | undefined,
 	defaultRate: number,
 ): { rate: number; rateSource: RateSource } {
 	if (taskRate != null && Number.isFinite(taskRate)) return { rate: taskRate, rateSource: 'task' }
-	if (projectRate != null && Number.isFinite(projectRate)) return { rate: projectRate, rateSource: 'project' }
 	return { rate: defaultRate, rateSource: 'default' }
 }
 
@@ -26,7 +24,6 @@ type TaskRateRow = {
 	entityType: string
 	hourly_rate: number | null
 	total_duration: number
-	project_rate?: never
 }
 
 function getRows(db: Db) {
@@ -49,11 +46,6 @@ function getRows(db: Db) {
 			hourly_rate: tasks.hourly_rate,
 			entityType: tasks.entityType,
 			total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
-			relatedCount: sql<number>`(
-				select count(*)
-				from ${taskLinks}
-				where ${taskLinks.sourceTaskId} = ${tasks.id} or ${taskLinks.targetTaskId} = ${tasks.id}
-			)`,
 		})
 		.from(tasks)
 		.leftJoin(timeEntries, eq(tasks.id, timeEntries.taskId))
@@ -64,23 +56,8 @@ function decorateRows<T extends TaskRateRow>(rows: T[], defaultRate: number) {
 	const byId = new Map(rows.map((row) => [row.id, row]))
 
 	return rows.map((row) => {
-		let parentId = row.parentId
-		let projectRate: number | null = null
-		const visited = new Set<number>()
-
-		while (parentId != null && !visited.has(parentId)) {
-			visited.add(parentId)
-			const parent = byId.get(parentId)
-			if (!parent) break
-			if (parent.entityType === 'project' && parent.hourly_rate != null && Number.isFinite(parent.hourly_rate)) {
-				projectRate = parent.hourly_rate
-				break
-			}
-			parentId = parent.parentId
-		}
-
-		const { rate, rateSource } = resolveRate(row.hourly_rate, projectRate, defaultRate)
 		const parent = row.parentId == null ? null : byId.get(row.parentId)
+		const { rate, rateSource } = resolveRate(row.hourly_rate, defaultRate)
 		return {
 			...row,
 			description: row.description ?? '',

@@ -2,7 +2,7 @@ import { ActionIcon, Anchor, Badge, Card, Group, Menu, Spoiler, Stack, Text, Uns
 import { IconClock, IconDots, IconEye, IconLayoutBoard, IconPencil, IconSitemap, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useCanvasGroups, useClearMyDay, useDeleteTask, useStatuses, useTasks, useToggleMyDay } from '../api'
+import { useClearMyDay, useDeleteTask, useGroups, useStatuses, useTasks, useToggleMyDay } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
@@ -10,7 +10,6 @@ import { EntityRow } from './EntityRow'
 import { EntityTypeBadge } from './EntityTypeBadge'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
-import { RelatedCount } from './RelatedCount'
 import { TaskCostPill } from './TaskCostPill'
 import { TimerControl } from './TimerControl'
 
@@ -32,7 +31,7 @@ export function TaskCard({ task }: TaskCardProps) {
 	const toggleMyDay = useToggleMyDay()
 	const clearMyDay = useClearMyDay()
 	const { data: statuses } = useStatuses()
-	const { data: groups } = useCanvasGroups()
+	const { data: groups } = useGroups()
 	const { data: tasks } = useTasks()
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
@@ -134,10 +133,6 @@ export function TaskCard({ task }: TaskCardProps) {
 									inMyDay={myDayState !== 'none'}
 									onToggle={handleMyDayToggle}
 									overdue={myDayState === 'overdue'}
-								/>
-								<RelatedCount
-									count={task.relatedCount}
-									onClick={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(task.id) } })}
 								/>
 								{task.entityType === 'task' && status && (
 									<Group

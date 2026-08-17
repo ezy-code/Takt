@@ -111,13 +111,10 @@ function TimeEntriesPage() {
 		message: t('timeEntries.deleteBody'),
 	})
 	const {
-		projectFilter,
 		taskFilter,
 		dateFrom,
 		dateTo,
-		projectOptions,
 		taskOptions,
-		handleProjectChange,
 		setTaskFilter,
 		setDateFrom,
 		setDateTo,
@@ -172,13 +169,10 @@ function TimeEntriesPage() {
 			)}
 
 			<TimeEntryFilters
-				projectFilter={projectFilter}
 				taskFilter={taskFilter}
 				dateFrom={dateFrom}
 				dateTo={dateTo}
-				projectOptions={projectOptions}
 				taskOptions={taskOptions}
-				onProjectChange={handleProjectChange}
 				onTaskChange={setTaskFilter}
 				onDateFromChange={setDateFrom}
 				onDateToChange={setDateTo}

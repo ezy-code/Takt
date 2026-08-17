@@ -3,7 +3,7 @@ import { IconPencil, IconTrash, IconX } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
 import { useTranslation } from 'react-i18next'
-import { useCanvasGroups, useDeleteTask, useStatuses, useUpdateTask } from '../api'
+import { useDeleteTask, useGroups, useStatuses, useUpdateTask } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
@@ -21,7 +21,7 @@ export function CanvasTaskNode({ data }: NodeProps<CanvasTaskNodeType>) {
 	const deleteTask = useDeleteTask()
 	const updateTask = useUpdateTask()
 	const { data: statuses } = useStatuses()
-	const { data: groups } = useCanvasGroups()
+	const { data: groups } = useGroups()
 	const status = statuses?.find((s) => s.id === task.statusId)
 	const group = groups?.find((g) => g.id === task.groupId)
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({

@@ -1,4 +1,4 @@
-import { eq, isNull, or, sql } from 'drizzle-orm'
+import { eq, isNull, sql } from 'drizzle-orm'
 import { ipcMain } from 'electron'
 import type { AddTaskPayload, UpdateTaskPayload } from '../../../shared/api'
 import { IPC } from '../../../shared/ipc'
@@ -10,7 +10,7 @@ import {
 	getTaskWithRate,
 	searchEntities,
 } from '../repositories/tasks'
-import { taskLinks, tasks, timeEntries } from '../schema'
+import { tasks, timeEntries } from '../schema'
 import { getDefaultStatusId } from './statuses'
 
 function resolveMyDayDate(myDay?: boolean | string | null): string | null {
@@ -69,7 +69,7 @@ export function registerTasksHandlers(db: Db) {
 			}: AddTaskPayload,
 		) => {
 			const resolvedEntityType = entityType ?? 'task'
-			if (!['task', 'note', 'project'].includes(resolvedEntityType)) throw new Error('Invalid entity type')
+			if (!['task', 'note'].includes(resolvedEntityType)) throw new Error('Invalid entity type')
 			validateParent(db, null, parentId)
 			const resolvedStatusId = resolvedEntityType === 'task' ? (statusId ?? getDefaultStatusId(db)) : null
 			if (resolvedEntityType === 'task' && resolvedStatusId == null) throw new Error('No statuses configured')
@@ -151,9 +151,6 @@ export function registerTasksHandlers(db: Db) {
 
 	ipcMain.handle(IPC.DELETE_TASK, (_event, id: number) => {
 		db.delete(timeEntries).where(eq(timeEntries.taskId, id)).run()
-		db.delete(taskLinks)
-			.where(or(eq(taskLinks.sourceTaskId, id), eq(taskLinks.targetTaskId, id)))
-			.run()
 		db.update(tasks).set({ parentId: null }).where(eq(tasks.parentId, id)).run()
 		db.delete(tasks).where(eq(tasks.id, id)).run()
 		return { success: true }

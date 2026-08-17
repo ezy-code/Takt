@@ -24,9 +24,7 @@ const tasksNewRoute = createRoute({
 	path: ROUTES.TASKS_NEW,
 	validateSearch: (search: Record<string, unknown>): { parentId?: number; entityType?: EntityType } => ({
 		parentId: search.parentId != null ? Number(search.parentId) : undefined,
-		entityType: ['task', 'note', 'project'].includes(String(search.entityType))
-			? (search.entityType as EntityType)
-			: undefined,
+		entityType: ['task', 'note'].includes(String(search.entityType)) ? (search.entityType as EntityType) : undefined,
 	}),
 }).lazy(() => import('./routes/tasks-new.lazy').then((d) => d.Route))
 
@@ -44,21 +42,6 @@ const myDayRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: ROUTES.MY_DAY,
 }).lazy(() => import('./routes/my-day.lazy').then((d) => d.Route))
-
-const projectsRoute = createRoute({
-	getParentRoute: () => rootRoute,
-	path: ROUTES.PROJECTS,
-}).lazy(() => import('./routes/projects.lazy').then((d) => d.Route))
-
-const projectNewRoute = createRoute({
-	getParentRoute: () => rootRoute,
-	path: ROUTES.PROJECTS_NEW,
-}).lazy(() => import('./routes/projects-new.lazy').then((d) => d.Route))
-
-const projectEditRoute = createRoute({
-	getParentRoute: () => rootRoute,
-	path: ROUTES.PROJECT_EDIT,
-}).lazy(() => import('./routes/projects-edit.lazy').then((d) => d.Route))
 
 const timeEntriesRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -91,9 +74,6 @@ const routeTree = rootRoute.addChildren([
 	tasksNewRoute,
 	taskDetailRoute,
 	taskEditRoute,
-	projectsRoute,
-	projectNewRoute,
-	projectEditRoute,
 	timeEntriesRoute,
 	settingsRoute,
 ])

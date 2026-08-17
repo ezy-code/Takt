@@ -39,7 +39,6 @@ import { EntityTypeBadge } from './EntityTypeBadge'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
-import { RelatedEntities } from './RelatedEntities'
 import { RichTextEditor } from './RichTextEditor'
 import { getMyDayState } from './TaskCard'
 import { TaskCostPill } from './TaskCostPill'
@@ -408,7 +407,6 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 								data={[
 									{ value: 'task', label: t('entity.task') },
 									{ value: 'note', label: t('entity.note') },
-									{ value: 'project', label: t('entity.project') },
 								]}
 							/>
 							{mode === 'view' && task && <TaskCostPill task={task} />}
@@ -530,7 +528,6 @@ export function TaskPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 								onParentChange={(value) => updateTask.mutate({ id: task.id, parentId: value ? Number(value) : null })}
 								parentDisabled={updateTask.isPending}
 							/>
-							<RelatedEntities entity={task} />
 						</>
 					)}
 					{isModal && (

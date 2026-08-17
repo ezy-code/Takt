@@ -3,11 +3,11 @@ import { IconTrash } from '@tabler/icons-react'
 import { type Node, type NodeProps, NodeResizer } from '@xyflow/react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { CanvasGroup } from '../../../shared/api'
-import { useDeleteCanvasGroup, useUpdateCanvasGroup } from '../api'
+import type { Group as GroupModel } from '../../../shared/api'
+import { useDeleteGroup, useUpdateGroup } from '../api'
 
-export type CanvasGroupNodeData = { group: CanvasGroup }
-export type CanvasGroupNodeType = Node<CanvasGroupNodeData, 'canvasGroup'>
+export type GroupNodeData = { group: GroupModel }
+export type GroupNodeType = Node<GroupNodeData, 'group'>
 
 function withAlpha(hex: string, alpha: number): string {
 	const h = hex.replace('#', '')
@@ -22,10 +22,10 @@ function withAlpha(hex: string, alpha: number): string {
 	return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
 }
 
-export function CanvasGroupNode({ data, selected }: NodeProps<CanvasGroupNodeType>) {
+export function GroupNode({ data, selected }: NodeProps<GroupNodeType>) {
 	const { group } = data
-	const updateGroup = useUpdateCanvasGroup()
-	const deleteGroup = useDeleteCanvasGroup()
+	const updateGroup = useUpdateGroup()
+	const deleteGroup = useDeleteGroup()
 	const { t } = useTranslation()
 	const [name, setName] = useState(group.name)
 	const [color, setColor] = useState(group.color)
