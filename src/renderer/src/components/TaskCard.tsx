@@ -2,10 +2,11 @@ import { ActionIcon, Anchor, Badge, Card, Group, Menu, Spoiler, Stack, Text, Uns
 import { IconClock, IconDots, IconEye, IconLayoutBoard, IconPencil, IconSitemap, IconTrash } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useCanvasGroups, useClearMyDay, useDeleteTask, useStatuses, useToggleMyDay } from '../api'
+import { useCanvasGroups, useClearMyDay, useDeleteTask, useStatuses, useTasks, useToggleMyDay } from '../api'
 import { ROUTES } from '../routes'
 import type { Task } from '../types'
 import { useConfirmDelete } from './ConfirmDeleteModal'
+import { EntityRow } from './EntityRow'
 import { EntityTypeBadge } from './EntityTypeBadge'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
@@ -32,6 +33,7 @@ export function TaskCard({ task }: TaskCardProps) {
 	const clearMyDay = useClearMyDay()
 	const { data: statuses } = useStatuses()
 	const { data: groups } = useCanvasGroups()
+	const { data: tasks } = useTasks()
 	const [confirmDeleteModal, confirmDelete] = useConfirmDelete({
 		title: t('tasks.deleteTitle'),
 		message: t('tasks.deleteBody'),
@@ -42,6 +44,7 @@ export function TaskCard({ task }: TaskCardProps) {
 	const group = groups?.find((g) => g.id === task.groupId)
 	const myDayState = getMyDayState(task.my_day_date ?? null)
 	const isPast = task.reminder_at != null && new Date(task.reminder_at).getTime() < Date.now()
+	const children = tasks?.filter((t) => t.parentId === task.id) ?? []
 
 	const handleMyDayToggle = () => {
 		if (myDayState === 'today') clearMyDay.mutate(task.id)
@@ -214,6 +217,25 @@ export function TaskCard({ task }: TaskCardProps) {
 									{new Date(task.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
 								</Text>
 							</Group>
+							{children.length > 0 && (
+								<Stack gap={2}>
+									<Group gap='xs'>
+										<Text size='xs' fw={600} c='dimmed'>
+											{t('entities.children')}
+										</Text>
+										<Badge size='xs' variant='light' circle>
+											{children.length}
+										</Badge>
+									</Group>
+									{children.map((child) => (
+										<EntityRow
+											key={child.id}
+											entity={child}
+											onOpen={() => navigate({ to: ROUTES.TASK_DETAIL, params: { id: String(child.id) } })}
+										/>
+									))}
+								</Stack>
+							)}
 						</Stack>
 					</Menu.ContextMenu>
 					<Menu.Dropdown>{menuItems}</Menu.Dropdown>
