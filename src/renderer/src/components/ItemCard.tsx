@@ -11,6 +11,7 @@ import { EntityTypeBadge } from './EntityTypeBadge'
 import { ItemCostPill } from './ItemCostPill'
 import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
+import { StatusBadge } from './StatusBadge'
 import { TimerControl } from './TimerControl'
 
 interface ItemCardProps {
@@ -130,20 +131,7 @@ export function ItemCard({ item }: ItemCardProps) {
 							<Group gap='md' align='center' justify='space-between'>
 								<ItemCostPill item={item} />
 								<MyDayControl itemId={item.id} myDayDate={item.my_day_date} />
-								{item.entityType === 'task' && status && (
-									<Group
-										gap={5}
-										align='center'
-										px={6}
-										py={2}
-										style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
-									>
-										<div
-											style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
-										/>
-										<Text size='xs'>{status.name}</Text>
-									</Group>
-								)}
+								{item.entityType === 'task' && status && <StatusBadge status={status} itemId={item.id} />}
 								{group && (
 									<Badge
 										component='button'

@@ -1,4 +1,4 @@
-import { ActionIcon, Anchor, Badge, Group, Text } from '@mantine/core'
+import { ActionIcon, Anchor, Badge, Group } from '@mantine/core'
 import { IconPencil, IconTrash, IconX } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import { Handle, type Node, type NodeProps, NodeResizer, Position } from '@xyflow/react'
@@ -10,6 +10,7 @@ import { useConfirmDelete } from './ConfirmDeleteModal'
 import { EntityTypeBadge } from './EntityTypeBadge'
 import { ItemCostPill } from './ItemCostPill'
 import { MarkdownPreview } from './MarkdownPreview'
+import { StatusBadge } from './StatusBadge'
 
 export type CanvasItemNodeData = { item: Item }
 export type CanvasItemNodeType = Node<CanvasItemNodeData, 'canvasItem'>
@@ -127,18 +128,7 @@ export function CanvasItemNode({ data, selected }: NodeProps<CanvasItemNodeType>
 						<Group justify='space-between' align='center' mt={10} gap='xs' wrap='nowrap'>
 							<ItemCostPill item={item} />
 							{item.entityType === 'task' && status && (
-								<Group gap={5} align='center' wrap='nowrap' style={{ minWidth: 0 }}>
-									<div
-										style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
-									/>
-									<Text
-										size='xs'
-										c='dimmed'
-										style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-									>
-										{status.name}
-									</Text>
-								</Group>
+								<StatusBadge status={status} itemId={item.id} dimmed ellipsis className='nodrag' />
 							)}
 							<Group gap={4} wrap='nowrap'>
 								<ActionIcon

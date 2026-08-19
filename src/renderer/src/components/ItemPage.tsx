@@ -47,6 +47,7 @@ import { MarkdownPreview } from './MarkdownPreview'
 import { MyDayControl } from './MyDayControl'
 import { PropertyPill } from './PropertyPill'
 import { RichTextEditor } from './RichTextEditor'
+import { StatusBadge } from './StatusBadge'
 import { TimerControl } from './TimerControl'
 
 function preventEditorSubmit(e: FormEvent<HTMLFormElement>, submit: () => void) {
@@ -298,12 +299,6 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 
 	const status = statuses?.find((s) => s.id === (mode === 'view' ? item?.statusId : statusId))
 	const isPast = item?.reminder_at != null && new Date(item.reminder_at).getTime() < Date.now()
-	const statusColor = statuses?.find((s) => s.id === statusId)?.color ?? '#868e96'
-
-	const statusOptions = (statuses ?? []).map((s) => ({
-		value: String(s.id),
-		label: s.name,
-	}))
 
 	const parentOptions = entities
 		.filter((entity) => entity.id !== item?.id && !isDescendant(entities, item?.id, entity.id))
@@ -470,34 +465,11 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 							</PropertyPill>
 						)}
 						{entityType === 'task' &&
-							(mode === 'view' ? (
-								status && (
-									<PropertyPill
-										leading={
-											<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: status.color }} />
-										}
-									>
-										<Text size='sm'>{status.name}</Text>
-									</PropertyPill>
-								)
+							status &&
+							(editable ? (
+								<StatusBadge status={status} onStatusChange={(id) => setStatusId(id)} size='sm' />
 							) : (
-								<PropertyPill
-									leading={<div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: statusColor }} />}
-								>
-									<Select
-										variant='unstyled'
-										placeholder={t('items.selectStatus')}
-										data={statusOptions}
-										value={statusId != null ? String(statusId) : null}
-										onChange={(value) => setStatusId(value ? Number(value) : null)}
-										disabled={!statuses?.length}
-										required
-										rightSection={<span style={{ display: 'none' }} />}
-										styles={{
-											input: { ...FIELD_TEXT_STYLE, width: 60 },
-										}}
-									/>
-								</PropertyPill>
+								<StatusBadge status={status} itemId={item!.id} size='sm' />
 							))}
 						{mode !== 'view' && (
 							<PropertyPill leading={<IconFolder size={14} />}>
