@@ -107,7 +107,27 @@ export function ItemCard({ item }: ItemCardProps) {
 							</Spoiler>
 						)} */}
 
-							<Group gap='md' align='center'>
+							{children.length > 0 && (
+								<Stack gap={2}>
+									<Group gap='xs'>
+										<Text size='xs' fw={600} c='dimmed'>
+											{t('entities.children')}
+										</Text>
+										<Badge size='xs' variant='light' circle>
+											{children.length}
+										</Badge>
+									</Group>
+									{children.map((child) => (
+										<EntityRow
+											key={child.id}
+											entity={child}
+											onOpen={() => navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(child.id) } })}
+										/>
+									))}
+								</Stack>
+							)}
+
+							<Group gap='md' align='center' justify='space-between'>
 								<ItemCostPill item={item} />
 								<MyDayControl itemId={item.id} myDayDate={item.my_day_date} />
 								{item.entityType === 'task' && status && (
@@ -145,8 +165,6 @@ export function ItemCard({ item }: ItemCardProps) {
 										component={UnstyledButton}
 										gap={5}
 										align='center'
-										px={6}
-										py={2}
 										style={{
 											borderRadius: 999,
 											background: 'var(--mantine-color-default-light)',
@@ -161,15 +179,12 @@ export function ItemCard({ item }: ItemCardProps) {
 										<Text size='xs' c='dimmed'>
 											{parent}
 										</Text>
-										{item.parentType && <EntityTypeBadge entityType={item.parentType} />}
 									</Group>
 								)}
 								{item.reminder_at && (
 									<Group
 										gap={5}
 										align='center'
-										px={6}
-										py={2}
 										style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)' }}
 									>
 										<IconClock
@@ -188,25 +203,6 @@ export function ItemCard({ item }: ItemCardProps) {
 									{new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
 								</Text>
 							</Group>
-							{children.length > 0 && (
-								<Stack gap={2}>
-									<Group gap='xs'>
-										<Text size='xs' fw={600} c='dimmed'>
-											{t('entities.children')}
-										</Text>
-										<Badge size='xs' variant='light' circle>
-											{children.length}
-										</Badge>
-									</Group>
-									{children.map((child) => (
-										<EntityRow
-											key={child.id}
-											entity={child}
-											onOpen={() => navigate({ to: ROUTES.ITEM_DETAIL, params: { id: String(child.id) } })}
-										/>
-									))}
-								</Stack>
-							)}
 						</Stack>
 					</Menu.ContextMenu>
 					<Menu.Dropdown>{menuItems}</Menu.Dropdown>
