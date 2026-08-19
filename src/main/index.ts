@@ -57,7 +57,8 @@ if (!gotTheLock) {
 
 		initUpdater({ checkOnStart: app.isPackaged })
 
-		db = createDb(join(app.getPath('userData'), 'takt.db'))
+		const dbFile = app.isPackaged ? 'takt.db' : 'takt-dev.db'
+		db = createDb(join(app.getPath('userData'), dbFile))
 		registerHandlers(db, { onTimerChange: handleTimerChange })
 		initAppImageDesktopEntry()
 		createWindow()
