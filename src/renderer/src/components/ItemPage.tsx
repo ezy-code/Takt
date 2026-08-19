@@ -358,6 +358,7 @@ export function ItemPage({ id, mode, onCancel, isModal }: ItemPageProps) {
 		)
 
 	const status = statuses?.find((s) => s.id === (mode === 'view' ? item?.statusId : statusId))
+	const displayedEntityType = mode === 'view' ? (item?.entityType ?? 'task') : entityType
 	const isPast = item?.reminderAt != null && new Date(item.reminderAt).getTime() < Date.now()
 
 	const parentOptions = entities
@@ -380,9 +381,11 @@ export function ItemPage({ id, mode, onCancel, isModal }: ItemPageProps) {
 
 	const handleTypeChange = (next: EntityType) => {
 		setEntityType(next)
-		if (next !== 'task') setStatusId(null)
 		if (mode === 'view') {
 			updateItem.mutate({ id: item.id, entityType: next, statusId: next === 'task' ? undefined : null })
+		} else if (next === 'task' && statusId == null) {
+			const def = statuses?.find((s) => s.isDefault) ?? statuses?.[0]
+			if (def) setStatusId(def.id)
 		}
 	}
 
@@ -442,7 +445,7 @@ export function ItemPage({ id, mode, onCancel, isModal }: ItemPageProps) {
 						{item && <TimerControl itemId={item.id} duration={item.totalDuration} />}
 						<SegmentedControl
 							color='blue'
-							value={entityType}
+							value={displayedEntityType}
 							onChange={(v) => handleTypeChange(v as EntityType)}
 							data={[
 								{ value: 'task', label: t('entity.task') },
@@ -538,7 +541,7 @@ export function ItemPage({ id, mode, onCancel, isModal }: ItemPageProps) {
 							/>
 						</PropertyPill>
 					)}
-					{entityType === 'task' &&
+					{displayedEntityType === 'task' &&
 						status &&
 						(editable ? (
 							<StatusBadge status={status} onStatusChange={(id) => setStatusId(id)} size='sm' />

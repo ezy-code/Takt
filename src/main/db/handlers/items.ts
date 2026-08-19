@@ -123,7 +123,11 @@ export function registerItemsHandlers(db: Db) {
 				entityType,
 			}: UpdateItemPayload,
 		) => {
-			const existing = db.select({ id: items.id }).from(items).where(eq(items.id, id)).get()
+			const existing = db
+				.select({ id: items.id, entityType: items.entityType, statusId: items.statusId })
+				.from(items)
+				.where(eq(items.id, id))
+				.get()
 			if (!existing) throw new Error('Entity not found')
 			validateParent(db, id, parentId)
 			const updates: Partial<typeof items.$inferInsert> = {}
@@ -144,6 +148,15 @@ export function registerItemsHandlers(db: Db) {
 			if (entityType !== undefined) {
 				updates.entityType = entityType
 				if (entityType !== 'task' && statusId === undefined) updates.statusId = null
+			}
+			const finalType = updates.entityType ?? existing.entityType
+			if (finalType === 'task') {
+				const finalStatus = updates.statusId !== undefined ? updates.statusId : existing.statusId
+				if (finalStatus == null) {
+					const def = getDefaultStatusId(db)
+					if (def == null) throw new Error('No statuses configured')
+					updates.statusId = def
+				}
 			}
 			return db.update(items).set(updates).where(eq(items.id, id)).returning().get()
 		},
