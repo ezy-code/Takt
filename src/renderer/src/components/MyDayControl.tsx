@@ -56,15 +56,15 @@ export function MyDayControl({
 				gap={5}
 				align='center'
 				justify='center'
-				px={6}
-				py={2}
 				w={fullWidth ? '100%' : undefined}
 				c={color}
 				onClick={handleToggle}
 				style={{ borderRadius: 999, background: 'var(--mantine-color-default-light)', cursor: 'pointer' }}
 			>
 				<IconSun size={14} />
-				<Text size={size}>{t('myDay.title')}</Text>
+				<Text size={size} lh={1}>
+					{t('myDay.title')}
+				</Text>
 			</Group>
 		</Tooltip>
 	)
