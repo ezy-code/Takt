@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
 	AddGroupPayload,
 	AddItemPayload,
@@ -7,9 +9,39 @@ import type {
 	UpdateItemPayload,
 	UpdateTimeEntryPayload,
 } from '../../shared/api'
-import { META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
+import { EMPTY_DESCRIPTION, META_CURRENCY_KEY, META_DEFAULT_RATE_KEY } from '../../shared/constants'
 import { costOf } from '../../shared/cost'
-import type { Item, StartTimerResult } from './types'
+import { ROUTES } from './routes'
+import type { EntityType, Item, StartTimerResult } from './types'
+
+function patchFromVars({ id: _id, myDay, ...rest }: UpdateItemPayload): Partial<Item> {
+	const patch: Partial<Item> = { ...rest }
+	if (myDay !== undefined) {
+		if (myDay === true) patch.myDayDate = new Date().toISOString().split('T')[0]
+		else if (typeof myDay === 'string') patch.myDayDate = myDay
+		else patch.myDayDate = null
+	}
+	return patch
+}
+
+export function useCreateItem() {
+	const addItem = useAddItem()
+	const navigate = useNavigate()
+	const { t } = useTranslation()
+	return useCallback(
+		async (options: { parentId?: number | null; entityType?: EntityType } = {}) => {
+			const created = await addItem.mutateAsync({
+				name: t('items.defaultName'),
+				description: EMPTY_DESCRIPTION,
+				parentId: options.parentId ?? null,
+				entityType: options.entityType ?? 'task',
+			})
+			navigate({ to: ROUTES.ITEM_EDIT, params: { id: String(created.id) } })
+			return created
+		},
+		[addItem, navigate, t],
+	)
+}
 
 export const queryKeys = {
 	items: ['items'] as const,
@@ -122,6 +154,20 @@ export function useUpdateItem() {
 	const queryClient = useQueryClient()
 	return useMutation({
 		mutationFn: (payload: UpdateItemPayload) => window.api.updateItem(payload),
+		onMutate: async (vars) => {
+			await queryClient.cancelQueries({ queryKey: ['items', vars.id] })
+			const prev = queryClient.getQueryData<Item>(['items', vars.id])
+			if (prev) {
+				queryClient.setQueryData(['items', vars.id], {
+					...prev,
+					...patchFromVars(vars),
+				})
+			}
+			return { prev }
+		},
+		onError: (_error, vars, ctx) => {
+			if (ctx?.prev) queryClient.setQueryData(['items', vars.id], ctx.prev)
+		},
 		onSuccess: (_data, vars) => {
 			queryClient.invalidateQueries({ queryKey: ['items', vars.id] })
 			queryClient.invalidateQueries({ queryKey: queryKeys.items })

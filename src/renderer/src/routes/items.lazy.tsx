@@ -3,6 +3,7 @@ import { IconColumns, IconLayoutBoard, IconList, IconPlus } from '@tabler/icons-
 import { createLazyRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCreateItem } from '../api'
 import { CanvasBoard } from '../components/CanvasBoard'
 import { ItemFilters } from '../components/ItemFilters'
 import { ItemGrid } from '../components/ItemGrid'
@@ -22,6 +23,7 @@ function ItemsPage() {
 	const { t } = useTranslation()
 	const { tab, focusGroup, focusItem } = Route.useSearch()
 	const { isLoading, filteredItems } = useItemFilters()
+	const createItem = useCreateItem()
 
 	useEffect(() => {
 		setLastItemsTab(tab ?? 'list')
@@ -35,11 +37,7 @@ function ItemsPage() {
 					<ManageGroupsModal />
 					<ManageStatusesModal />
 					{tab === 'list' ? (
-						<Button
-							variant='light'
-							leftSection={<IconPlus size={16} />}
-							onClick={() => navigate({ to: ROUTES.ITEMS_NEW })}
-						>
+						<Button variant='light' leftSection={<IconPlus size={16} />} onClick={() => void createItem()}>
 							{t('items.newItem')}
 						</Button>
 					) : null}

@@ -20,7 +20,8 @@ import {
 } from '@xyflow/react'
 import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAddGroup, useGroups, useUpdateCanvasPosition, useUpdateGroup, useUpdateItem } from '../api'
+import { EMPTY_DESCRIPTION } from '../../../shared/constants'
+import { useAddGroup, useAddItem, useGroups, useUpdateCanvasPosition, useUpdateGroup, useUpdateItem } from '../api'
 import { ROUTES } from '../routes'
 import type { Group, Item } from '../types'
 import { CanvasItemNode, type CanvasItemNodeType } from './CanvasItemNode'
@@ -139,11 +140,12 @@ function CanvasInner({
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 	const updateCanvasPosition = useUpdateCanvasPosition()
 	const updateItem = useUpdateItem()
+	const addItem = useAddItem()
 	const { data: groups } = useGroups()
 	const addGroup = useAddGroup()
 	const updateGroup = useUpdateGroup()
 
-	const [createOpen, setCreateOpen] = useState(false)
+	const [createNoteId, setCreateNoteId] = useState<number | null>(null)
 	const lastPaneClick = useRef({ time: 0, x: 0, y: 0 })
 	// Jump to a group/item node once per mount when navigating with a focus search param
 	const focusNodeId =
@@ -166,8 +168,14 @@ function CanvasInner({
 		setEdges(buildEdges(items))
 	}, [items, setEdges])
 
-	const openCreateModal = () => {
-		setCreateOpen(true)
+	const openCreateModal = async () => {
+		const created = await addItem.mutateAsync({
+			name: t('items.defaultName'),
+			description: EMPTY_DESCRIPTION,
+			entityType: 'note',
+		})
+		updateCanvasPosition.mutate({ id: created.id, x: NEW_NOTE_POS.x, y: NEW_NOTE_POS.y })
+		setCreateNoteId(created.id)
 	}
 
 	const handlePaneClick = (event: ReactMouseEvent) => {
@@ -177,7 +185,7 @@ function CanvasInner({
 			now - prev.time < 350 && Math.abs(event.clientX - prev.x) < 8 && Math.abs(event.clientY - prev.y) < 8
 		lastPaneClick.current = { time: now, x: event.clientX, y: event.clientY }
 		if (isDouble) {
-			openCreateModal()
+			void openCreateModal()
 		}
 	}
 
@@ -294,16 +302,16 @@ function CanvasInner({
 				</Button>
 			</div>
 
-			<Modal opened={createOpen} onClose={() => setCreateOpen(false)} title={t('items.newTitle')} size='xl' centered>
-				<ItemPage
-					mode='create'
-					initialEntityType='note'
-					onCancel={() => setCreateOpen(false)}
-					onCreated={(item) => {
-						updateCanvasPosition.mutate({ id: item.id, x: NEW_NOTE_POS.x, y: NEW_NOTE_POS.y })
-						setCreateOpen(false)
-					}}
-				/>
+			<Modal
+				opened={createNoteId != null}
+				onClose={() => setCreateNoteId(null)}
+				title={t('items.newTitle')}
+				size='xl'
+				centered
+			>
+				{createNoteId != null && (
+					<ItemPage id={createNoteId} mode='edit' isModal onCancel={() => setCreateNoteId(null)} />
+				)}
 			</Modal>
 		</div>
 	)

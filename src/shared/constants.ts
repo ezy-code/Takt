@@ -9,3 +9,5 @@ export const META_DEFAULT_RATE_KEY = 'default_hourly_rate'
 export const META_CURRENCY_KEY = 'currency'
 export const META_TIMER_AUTO_STOP_KEY = 'timer_auto_stop_on_idle'
 export const META_TIMER_AUTO_RESUME_KEY = 'timer_auto_resume'
+
+export const EMPTY_DESCRIPTION = '{}'

@@ -26,6 +26,11 @@ export const ru: typeof en = {
 		created: 'Создано: {{date}}',
 		all: 'Все',
 	},
+	saveStatus: {
+		saved: 'Все изменения сохранены',
+		saving: 'Сохранение...',
+		saveFailed: 'Не удалось сохранить',
+	},
 	search: {
 		title: 'Поиск entities',
 		open: 'Открыть поиск',
@@ -59,6 +64,7 @@ export const ru: typeof en = {
 	items: {
 		title: 'Элементы',
 		newItem: 'Новый элемент',
+		defaultName: 'Новая задача',
 		moreFilters: 'Другие фильтры',
 		filterType: 'Тип',
 		group: 'Группа',

@@ -4,7 +4,7 @@ import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/constants'
-import { useActiveTimer, useLastTimer, useTimerChangedSync } from '../api'
+import { useActiveTimer, useCreateItem, useLastTimer, useTimerChangedSync } from '../api'
 import { ROUTES } from '../routes'
 import { SpotlightSearch } from './SpotlightSearch'
 import { TimerControl } from './TimerControl'
@@ -23,6 +23,7 @@ export default function AppLayout() {
 	const { t } = useTranslation()
 	const activeTimer = useActiveTimer().data
 	const { data: lastTimer } = useLastTimer()
+	const createItem = useCreateItem()
 	useTimerChangedSync()
 	const [appImageDesktop, setAppImageDesktop] = useState<{ supported: boolean; enabled: boolean | null } | null>(null)
 
@@ -94,7 +95,7 @@ export default function AppLayout() {
 										size='sm'
 										onClick={(e) => {
 											e.stopPropagation()
-											navigate({ to: ROUTES.ITEMS_NEW })
+											void createItem()
 										}}
 									>
 										<IconPlus size={14} />

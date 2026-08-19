@@ -3,7 +3,6 @@ import { useEffect } from 'react'
 import AppLayout from './components/AppLayout'
 
 import { ROUTES } from './routes'
-import type { EntityType } from './types'
 
 const rootRoute = createRootRoute({
 	component: AppLayout,
@@ -18,15 +17,6 @@ const itemsRoute = createRoute({
 		focusItem: search.focusItem != null ? Number(search.focusItem) : undefined,
 	}),
 }).lazy(() => import('./routes/items.lazy').then((d) => d.Route))
-
-const itemsNewRoute = createRoute({
-	getParentRoute: () => rootRoute,
-	path: ROUTES.ITEMS_NEW,
-	validateSearch: (search: Record<string, unknown>): { parentId?: number; entityType?: EntityType } => ({
-		parentId: search.parentId != null ? Number(search.parentId) : undefined,
-		entityType: ['task', 'note'].includes(String(search.entityType)) ? (search.entityType as EntityType) : undefined,
-	}),
-}).lazy(() => import('./routes/items-new.lazy').then((d) => d.Route))
 
 const itemDetailRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -71,7 +61,6 @@ const routeTree = rootRoute.addChildren([
 	indexRoute,
 	myDayRoute,
 	itemsRoute,
-	itemsNewRoute,
 	itemDetailRoute,
 	itemEditRoute,
 	timeEntriesRoute,

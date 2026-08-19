@@ -33,3 +33,13 @@
 .markdown-preview hr {
 	margin: 0.6em 0;
 }
+
+@keyframes takt-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}

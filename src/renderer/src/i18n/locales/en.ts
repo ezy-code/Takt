@@ -24,6 +24,11 @@ export const en = {
 		created: 'Created: {{date}}',
 		all: 'All',
 	},
+	saveStatus: {
+		saved: 'All changes saved',
+		saving: 'Saving...',
+		saveFailed: 'Save failed',
+	},
 	search: {
 		title: 'Search entities',
 		open: 'Open search',
@@ -57,6 +62,7 @@ export const en = {
 	items: {
 		title: 'Items',
 		newItem: 'New Item',
+		defaultName: 'New task',
 		moreFilters: 'More filters',
 		filterType: 'Type',
 		group: 'Group',
