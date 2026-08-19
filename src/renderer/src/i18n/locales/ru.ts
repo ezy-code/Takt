@@ -109,6 +109,10 @@ export const ru: typeof en = {
 		defaultForNew: 'Статус по умолчанию для новых элементов',
 		setDefaultForNew: 'Сделать статусом по умолчанию для новых элементов',
 		none: 'Пока нет статусов.',
+		deleteErrorTitle: 'Не удалось удалить статус',
+		deleteErrorLastStatus: 'Нельзя удалить последний статус',
+		deleteErrorHasItems: 'Статус используется элементами',
+		deleteErrorUnknown: 'Неизвестная ошибка',
 	},
 	groups: {
 		manage: 'Управление группами',

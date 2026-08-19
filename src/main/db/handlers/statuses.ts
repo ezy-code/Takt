@@ -41,6 +41,8 @@ export function registerStatusesHandlers(db: Db) {
 	})
 
 	ipcMain.handle(IPC.DELETE_STATUS, (_event, id: number) => {
+		const total = db.select({ cnt: sql<number>`count(*)` }).from(statuses).get()
+		if (total!.cnt <= 1) return { success: false, reason: 'Last status' }
 		const itemCount = db.select({ cnt: sql<number>`count(*)` }).from(items).where(eq(items.statusId, id)).get()
 		if (itemCount!.cnt > 0) return { success: false, reason: 'Has items' }
 		const status = db.select({ isDefault: statuses.isDefault }).from(statuses).where(eq(statuses.id, id)).get()

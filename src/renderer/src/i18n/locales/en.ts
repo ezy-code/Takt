@@ -107,6 +107,10 @@ export const en = {
 		defaultForNew: 'Default for new items',
 		setDefaultForNew: 'Set as default for new items',
 		none: 'No statuses yet.',
+		deleteErrorTitle: 'Cannot delete status',
+		deleteErrorLastStatus: 'Cannot delete the last status',
+		deleteErrorHasItems: 'Status is in use by items',
+		deleteErrorUnknown: 'Unknown error',
 	},
 	groups: {
 		manage: 'Manage Groups',

@@ -170,7 +170,21 @@ export function ManageStatusesModal() {
 											key={status.id}
 											status={status}
 											onUpdate={(id, name, color) => updateStatus.mutate({ id, name, color })}
-											onDelete={(id) => confirmDelete(() => deleteStatus.mutate(id))}
+											onDelete={(id) =>
+												confirmDelete(() => {
+													void deleteStatus.mutateAsync(id).then((res) => {
+														if (!res.success) {
+															const bodyKey =
+																res.reason === 'Last status'
+																	? 'statuses.deleteErrorLastStatus'
+																	: res.reason === 'Has items'
+																		? 'statuses.deleteErrorHasItems'
+																		: 'statuses.deleteErrorUnknown'
+															void window.api.showNotification(t('statuses.deleteErrorTitle'), t(bodyKey))
+														}
+													})
+												})
+											}
 											onSetDefault={(id) => setDefaultStatus.mutate(id)}
 										/>
 									))}
