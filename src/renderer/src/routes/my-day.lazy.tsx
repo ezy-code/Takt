@@ -13,9 +13,9 @@ function MyDayPage() {
 
 	const today = new Date().toISOString().split('T')[0]
 	const items = myDayItems ?? []
-	const overdue = items.filter((t) => t.my_day_date && t.my_day_date < today)
-	const current = items.filter((t) => t.my_day_date === today)
-	const otherItems = (allItems ?? []).filter((t) => !t.my_day_date)
+	const overdue = items.filter((t) => t.myDayDate && t.myDayDate < today)
+	const current = items.filter((t) => t.myDayDate === today)
+	const otherItems = (allItems ?? []).filter((t) => !t.myDayDate)
 
 	return (
 		<Container

@@ -33,12 +33,12 @@ export function ItemCard({ item }: ItemCardProps) {
 	const status = statuses?.find((s) => s.id === item.statusId)
 	const parent = item.parentName
 	const group = groups?.find((g) => g.id === item.groupId)
-	const isPast = item.reminder_at != null && new Date(item.reminder_at).getTime() < Date.now()
+	const isPast = item.reminderAt != null && new Date(item.reminderAt).getTime() < Date.now()
 	const children = items?.filter((t) => t.parentId === item.id) ?? []
 
 	const menuItems = (
 		<>
-			<MyDayControl itemId={item.id} myDayDate={item.my_day_date} variant='menu-item' />
+			<MyDayControl itemId={item.id} myDayDate={item.myDayDate} variant='menu-item' />
 			<Menu.Divider />
 			<Menu.Item
 				leftSection={<IconEye size={14} />}
@@ -90,7 +90,7 @@ export function ItemCard({ item }: ItemCardProps) {
 									</Group>
 								</div>
 								<Group gap='xs' wrap='nowrap' align='center'>
-									<TimerControl itemId={item.id} duration={item.total_duration} />
+									<TimerControl itemId={item.id} duration={item.totalDuration} />
 									<Menu shadow='md' width={200} position='bottom-end'>
 										<Menu.Target>
 											<ActionIcon variant='subtle' color='gray' size='sm' aria-label={t('items.actions')}>
@@ -102,9 +102,9 @@ export function ItemCard({ item }: ItemCardProps) {
 								</Group>
 							</Group>
 
-							{/* {item.description_md && (
+							{/* {item.descriptionMd && (
 							<Spoiler maxHeight={80} showLabel='Show more' hideLabel='Hide'>
-								<MarkdownPreview content={item.description_md} variant='preview' />
+								<MarkdownPreview content={item.descriptionMd} variant='preview' />
 							</Spoiler>
 						)} */}
 
@@ -130,7 +130,7 @@ export function ItemCard({ item }: ItemCardProps) {
 
 							<Group gap='md' align='center' justify='space-between'>
 								<ItemCostPill item={item} />
-								<MyDayControl itemId={item.id} myDayDate={item.my_day_date} />
+								<MyDayControl itemId={item.id} myDayDate={item.myDayDate} />
 								{item.entityType === 'task' && status && <StatusBadge status={status} itemId={item.id} />}
 								{group && (
 									<Badge
@@ -169,7 +169,7 @@ export function ItemCard({ item }: ItemCardProps) {
 										</Text>
 									</Group>
 								)}
-								{item.reminder_at && (
+								{item.reminderAt && (
 									<Group
 										gap={5}
 										align='center'
@@ -180,7 +180,7 @@ export function ItemCard({ item }: ItemCardProps) {
 											color={isPast ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-dimmed)'}
 										/>
 										<Text size='xs' c={isPast ? 'red' : 'dimmed'}>
-											{new Date(item.reminder_at).toLocaleString(undefined, {
+											{new Date(item.reminderAt).toLocaleString(undefined, {
 												dateStyle: 'short',
 												timeStyle: 'short',
 											})}
@@ -188,7 +188,7 @@ export function ItemCard({ item }: ItemCardProps) {
 									</Group>
 								)}
 								<Text size='xs' c='dimmed'>
-									{new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+									{new Date(item.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
 								</Text>
 							</Group>
 						</Stack>

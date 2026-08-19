@@ -47,14 +47,14 @@ function SortableStatusItem({ status, onUpdate, onDelete, onSetDefault }: Sortab
 				<IconGripVertical size={16} />
 			</div>
 			<div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }} />
-			<Tooltip label={status.is_default ? t('statuses.defaultForNew') : t('statuses.setDefaultForNew')}>
+			<Tooltip label={status.isDefault ? t('statuses.defaultForNew') : t('statuses.setDefaultForNew')}>
 				<ActionIcon
 					size='sm'
-					variant={status.is_default ? 'filled' : 'subtle'}
-					color={status.is_default ? 'yellow' : 'gray'}
-					onClick={() => !status.is_default && onSetDefault(status.id)}
+					variant={status.isDefault ? 'filled' : 'subtle'}
+					color={status.isDefault ? 'yellow' : 'gray'}
+					onClick={() => !status.isDefault && onSetDefault(status.id)}
 				>
-					{status.is_default ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+					{status.isDefault ? <IconStarFilled size={14} /> : <IconStar size={14} />}
 				</ActionIcon>
 			</Tooltip>
 			{editing ? (

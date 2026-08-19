@@ -298,7 +298,7 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 		)
 
 	const status = statuses?.find((s) => s.id === (mode === 'view' ? item?.statusId : statusId))
-	const isPast = item?.reminder_at != null && new Date(item.reminder_at).getTime() < Date.now()
+	const isPast = item?.reminderAt != null && new Date(item.reminderAt).getTime() < Date.now()
 
 	const parentOptions = entities
 		.filter((entity) => entity.id !== item?.id && !isDescendant(entities, item?.id, entity.id))

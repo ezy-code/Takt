@@ -5,7 +5,7 @@ import type { Db } from '../index'
 import { items, statuses } from '../schema'
 
 export function getDefaultStatusId(db: Db): number | undefined {
-	const defaultStatus = db.select({ id: statuses.id }).from(statuses).where(eq(statuses.is_default, true)).get()
+	const defaultStatus = db.select({ id: statuses.id }).from(statuses).where(eq(statuses.isDefault, true)).get()
 	if (defaultStatus) return defaultStatus.id
 	const first = db.select({ id: statuses.id }).from(statuses).orderBy(asc(statuses.position)).limit(1).get()
 	return first?.id
@@ -34,8 +34,8 @@ export function registerStatusesHandlers(db: Db) {
 
 	ipcMain.handle(IPC.SET_DEFAULT_STATUS, (_event, id: number) => {
 		db.transaction(() => {
-			db.update(statuses).set({ is_default: false }).run()
-			db.update(statuses).set({ is_default: true }).where(eq(statuses.id, id)).run()
+			db.update(statuses).set({ isDefault: false }).run()
+			db.update(statuses).set({ isDefault: true }).where(eq(statuses.id, id)).run()
 		})
 		return db.select().from(statuses).where(eq(statuses.id, id)).get()
 	})
@@ -43,11 +43,11 @@ export function registerStatusesHandlers(db: Db) {
 	ipcMain.handle(IPC.DELETE_STATUS, (_event, id: number) => {
 		const itemCount = db.select({ cnt: sql<number>`count(*)` }).from(items).where(eq(items.statusId, id)).get()
 		if (itemCount!.cnt > 0) return { success: false, reason: 'Has items' }
-		const status = db.select({ is_default: statuses.is_default }).from(statuses).where(eq(statuses.id, id)).get()
+		const status = db.select({ isDefault: statuses.isDefault }).from(statuses).where(eq(statuses.id, id)).get()
 		db.delete(statuses).where(eq(statuses.id, id)).run()
-		if (status?.is_default) {
+		if (status?.isDefault) {
 			const next = db.select({ id: statuses.id }).from(statuses).orderBy(asc(statuses.position)).limit(1).get()
-			if (next) db.update(statuses).set({ is_default: true }).where(eq(statuses.id, next.id)).run()
+			if (next) db.update(statuses).set({ isDefault: true }).where(eq(statuses.id, next.id)).run()
 		}
 		return { success: true }
 	})

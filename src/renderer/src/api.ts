@@ -229,8 +229,8 @@ export function useStopTimer() {
 		onSuccess: (result, itemId) => {
 			if (result) {
 				const patchItem = (t: Item): Item => {
-					const total_duration = (t.total_duration ?? 0) + (result.entry.duration ?? 0)
-					return { ...t, total_duration, cost: costOf(total_duration, t.rate ?? 0) }
+					const totalDuration = (t.totalDuration ?? 0) + (result.entry.duration ?? 0)
+					return { ...t, totalDuration, cost: costOf(totalDuration, t.rate ?? 0) }
 				}
 				const listUpdater = (items: Item[] | undefined) => {
 					if (!items) return items

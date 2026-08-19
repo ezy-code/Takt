@@ -17,13 +17,13 @@ type ItemRateRow = {
 	id: number
 	name: string
 	description: string | null
-	description_md: string | null
-	description_html: string | null
-	created_at: string | null
+	descriptionMd: string | null
+	descriptionHtml: string | null
+	createdAt: string | null
 	parentId: number | null
 	entityType: string
-	hourly_rate: number | null
-	total_duration: number
+	hourlyRate: number | null
+	totalDuration: number
 }
 
 function getRows(db: Db) {
@@ -32,22 +32,22 @@ function getRows(db: Db) {
 			id: items.id,
 			name: items.name,
 			description: items.description,
-			description_md: items.descriptionMarkdown,
-			description_html: items.descriptionHtml,
+			descriptionMd: items.descriptionMd,
+			descriptionHtml: items.descriptionHtml,
 			statusId: items.statusId,
 			parentId: items.parentId,
-			my_day_date: items.my_day_date,
-			reminder_at: items.reminderAt,
-			created_at: items.created_at,
+			myDayDate: items.myDayDate,
+			reminderAt: items.reminderAt,
+			createdAt: items.createdAt,
 			position: items.position,
 			canvasX: items.canvasX,
 			canvasY: items.canvasY,
 			canvasWidth: items.canvasWidth,
 			canvasHeight: items.canvasHeight,
 			groupId: items.groupId,
-			hourly_rate: items.hourly_rate,
+			hourlyRate: items.hourlyRate,
 			entityType: items.entityType,
-			total_duration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
+			totalDuration: sql<number>`coalesce(sum(${timeEntries.duration}), 0)`,
 		})
 		.from(items)
 		.leftJoin(timeEntries, eq(items.id, timeEntries.itemId))
@@ -59,26 +59,26 @@ function decorateRows<T extends ItemRateRow>(rows: T[], defaultRate: number) {
 
 	return rows.map((row) => {
 		const parent = row.parentId == null ? null : byId.get(row.parentId)
-		const { rate, rateSource } = resolveRate(row.hourly_rate, defaultRate)
+		const { rate, rateSource } = resolveRate(row.hourlyRate, defaultRate)
 		return {
 			...row,
 			description: row.description ?? '',
-			description_md: row.description_md ?? '',
-			description_html: row.description_html ?? '',
-			created_at: row.created_at ?? '',
+			descriptionMd: row.descriptionMd ?? '',
+			descriptionHtml: row.descriptionHtml ?? '',
+			createdAt: row.createdAt ?? '',
 			entityType: row.entityType as EntityType,
 			parentName: parent?.name ?? null,
 			parentType: (parent?.entityType as EntityType | undefined) ?? null,
 			rate,
 			rateSource,
-			cost: costOf(row.total_duration ?? 0, rate),
+			cost: costOf(row.totalDuration ?? 0, rate),
 		}
 	})
 }
 
 export function getItemsWithRate(db: Db) {
 	return decorateRows(getRows(db).all(), getDefaultRate()).sort(
-		(a, b) => a.position - b.position || String(b.created_at).localeCompare(String(a.created_at)),
+		(a, b) => a.position - b.position || String(b.createdAt).localeCompare(String(a.createdAt)),
 	)
 }
 
@@ -87,7 +87,7 @@ export function getItemWithRate(db: Db, id: number) {
 }
 
 export function getMyDayItemsWithRate(db: Db) {
-	return getItemsWithRate(db).filter((item) => item.my_day_date != null)
+	return getItemsWithRate(db).filter((item) => item.myDayDate != null)
 }
 
 export function getItemForTimer(db: Db, id: number) {

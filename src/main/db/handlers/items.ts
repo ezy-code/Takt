@@ -57,8 +57,8 @@ export function registerItemsHandlers(db: Db) {
 			{
 				name,
 				description,
-				description_md,
-				description_html,
+				descriptionMd,
+				descriptionHtml,
 				statusId,
 				parentId,
 				groupId,
@@ -73,7 +73,7 @@ export function registerItemsHandlers(db: Db) {
 			validateParent(db, null, parentId)
 			const resolvedStatusId = resolvedEntityType === 'task' ? (statusId ?? getDefaultStatusId(db)) : null
 			if (resolvedEntityType === 'task' && resolvedStatusId == null) throw new Error('No statuses configured')
-			const my_day_date = resolveMyDayDate(myDay)
+			const myDayDate = resolveMyDayDate(myDay)
 			const maxPos = db
 				.select({ maxPos: sql<number>`coalesce(max(${items.position}), -1)` })
 				.from(items)
@@ -84,15 +84,15 @@ export function registerItemsHandlers(db: Db) {
 				.values({
 					name,
 					description,
-					descriptionMarkdown: description_md ?? '',
-					descriptionHtml: description_html ?? '',
+					descriptionMd: descriptionMd ?? '',
+					descriptionHtml: descriptionHtml ?? '',
 					statusId: resolvedStatusId,
 					parentId: parentId ?? null,
 					groupId: groupId ?? null,
-					my_day_date,
+					myDayDate,
 					reminderAt: reminderAt ?? null,
 					position: maxPos!.maxPos + 1,
-					hourly_rate: hourlyRate ?? null,
+					hourlyRate: hourlyRate ?? null,
 					entityType: resolvedEntityType,
 				})
 				.returning()
@@ -108,8 +108,8 @@ export function registerItemsHandlers(db: Db) {
 				id,
 				name,
 				description,
-				description_md,
-				description_html,
+				descriptionMd,
+				descriptionHtml,
 				statusId,
 				parentId,
 				groupId,
@@ -129,14 +129,14 @@ export function registerItemsHandlers(db: Db) {
 			const updates: Partial<typeof items.$inferInsert> = {}
 			if (name !== undefined) updates.name = name
 			if (description !== undefined) updates.description = description
-			if (description_md !== undefined) updates.descriptionMarkdown = description_md
-			if (description_html !== undefined) updates.descriptionHtml = description_html
+			if (descriptionMd !== undefined) updates.descriptionMd = descriptionMd
+			if (descriptionHtml !== undefined) updates.descriptionHtml = descriptionHtml
 			if (statusId !== undefined) updates.statusId = statusId
 			if (parentId !== undefined) updates.parentId = parentId
 			if (groupId !== undefined) updates.groupId = groupId
-			if (myDay !== undefined) updates.my_day_date = resolveMyDayDate(myDay)
+			if (myDay !== undefined) updates.myDayDate = resolveMyDayDate(myDay)
 			if (reminderAt !== undefined) updates.reminderAt = reminderAt
-			if (hourlyRate !== undefined) updates.hourly_rate = hourlyRate
+			if (hourlyRate !== undefined) updates.hourlyRate = hourlyRate
 			if (canvasX !== undefined) updates.canvasX = canvasX
 			if (canvasY !== undefined) updates.canvasY = canvasY
 			if (canvasWidth != null) updates.canvasWidth = canvasWidth

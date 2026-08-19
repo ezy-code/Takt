@@ -35,13 +35,13 @@ export function startReminderPoller(db: Db) {
 	setInterval(() => {
 		const now = Date.now()
 		const reminderItems = db
-			.select({ id: items.id, name: items.name, reminder_at: items.reminderAt })
+			.select({ id: items.id, name: items.name, reminderAt: items.reminderAt })
 			.from(items)
 			.where(sql`${items.reminderAt} is not null`)
 			.all()
 		for (const item of reminderItems) {
-			if (!item.reminder_at || notifiedReminders.has(item.id)) continue
-			const remindAt = new Date(item.reminder_at).getTime()
+			if (!item.reminderAt || notifiedReminders.has(item.id)) continue
+			const remindAt = new Date(item.reminderAt).getTime()
 			if (remindAt - now > 20_000 || remindAt - now <= -10_000) continue
 			notifiedReminders.add(item.id)
 			showItemReminderNotification(db, item)

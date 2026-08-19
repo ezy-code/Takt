@@ -12,8 +12,8 @@ export const statuses = sqliteTable('statuses', {
 	name: text('name').notNull(),
 	color: text('color').notNull().default('#868e96'),
 	position: integer('position').notNull().default(0),
-	is_default: integer('is_default', { mode: 'boolean' }).notNull().default(false),
-	created_at: text('created_at').default(sql`(datetime('now'))`),
+	isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+	createdAt: text('created_at').default(sql`(datetime('now'))`),
 })
 
 export const groups = sqliteTable('groups', {
@@ -25,7 +25,7 @@ export const groups = sqliteTable('groups', {
 	width: real('width').notNull().default(320),
 	height: real('height').notNull().default(220),
 	color: text('color').notNull().default('#868e96'),
-	created_at: text('created_at').default(sql`(datetime('now'))`),
+	createdAt: text('created_at').default(sql`(datetime('now'))`),
 })
 
 export const items = sqliteTable('items', {
@@ -34,17 +34,17 @@ export const items = sqliteTable('items', {
 	description: text('description').default(''),
 	statusId: integer('status_id').references(() => statuses.id),
 	parentId: integer('parent_id').references((): AnySQLiteColumn => items.id, { onDelete: 'set null' }),
-	my_day_date: text('my_day_date'),
+	myDayDate: text('my_day_date'),
 	reminderAt: text('reminder_at'),
-	created_at: text('created_at').default(sql`(datetime('now'))`),
+	createdAt: text('created_at').default(sql`(datetime('now'))`),
 	position: integer('position').notNull().default(0),
-	descriptionMarkdown: text('description_md').default(''),
+	descriptionMd: text('description_md').default(''),
 	descriptionHtml: text('description_html').default(''),
 	canvasX: real('canvas_x'),
 	canvasY: real('canvas_y'),
 	canvasWidth: real('canvas_width').notNull().default(260),
 	canvasHeight: real('canvas_height').notNull().default(200),
-	hourly_rate: real('hourly_rate'),
+	hourlyRate: real('hourly_rate'),
 	groupId: integer('group_id').references(() => groups.id, { onDelete: 'set null' }),
 	entityType: text('entity_type').notNull().default('task'),
 })
@@ -57,7 +57,7 @@ export const timeEntries = sqliteTable('time_entries', {
 	startTime: text('start_time').notNull(),
 	stopTime: text('stop_time'),
 	duration: integer('duration'),
-	created_at: text('created_at').default(sql`(datetime('now'))`),
+	createdAt: text('created_at').default(sql`(datetime('now'))`),
 })
 
 export const statusesRelations = relations(statuses, ({ many }) => ({

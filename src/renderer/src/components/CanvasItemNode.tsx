@@ -85,7 +85,7 @@ export function CanvasItemNode({ data, selected }: NodeProps<CanvasItemNodeType>
 						</Anchor>
 						<EntityTypeBadge entityType={item.entityType} ml={6} />
 					</div>
-					{item.description_md && (
+					{item.descriptionMd && (
 						<div
 							style={{
 								marginTop: 6,
@@ -96,7 +96,7 @@ export function CanvasItemNode({ data, selected }: NodeProps<CanvasItemNodeType>
 								overflow: 'auto',
 							}}
 						>
-							<MarkdownPreview content={item.description_md} variant='preview' />
+							<MarkdownPreview content={item.descriptionMd} variant='preview' />
 						</div>
 					)}
 					<div style={{ marginTop: 'auto' }}>

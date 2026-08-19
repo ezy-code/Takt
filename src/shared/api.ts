@@ -5,8 +5,8 @@ export interface Status {
 	name: string
 	color: string
 	position: number
-	is_default: boolean
-	created_at: string
+	isDefault: boolean
+	createdAt: string
 }
 
 export type RateSource = 'item' | 'default'
@@ -17,24 +17,24 @@ export interface Item {
 	id: number
 	name: string
 	description: string
-	description_md: string
-	description_html: string
+	descriptionMd: string
+	descriptionHtml: string
 	statusId?: number | null
 	parentId?: number | null
 	parentName?: string | null
 	parentType?: EntityType | null
 	groupId?: number | null
 	entityType?: EntityType
-	my_day_date?: string | null
-	reminder_at?: string | null
-	created_at: string
+	myDayDate?: string | null
+	reminderAt?: string | null
+	createdAt: string
 	position?: number
-	total_duration?: number
+	totalDuration?: number
 	canvasX?: number | null
 	canvasY?: number | null
 	canvasWidth?: number | null
 	canvasHeight?: number | null
-	hourly_rate?: number | null
+	hourlyRate?: number | null
 	rate?: number | null
 	rateSource?: RateSource
 	cost?: number
@@ -105,17 +105,17 @@ export interface Group {
 	width: number
 	height: number
 	color: string
-	created_at?: string | null
+	createdAt?: string | null
 }
 
-export type AddGroupPayload = Partial<Omit<Group, 'id' | 'created_at'>>
-export type UpdateGroupPayload = Partial<Omit<Group, 'created_at'>> & { id: number }
+export type AddGroupPayload = Partial<Omit<Group, 'id' | 'createdAt'>>
+export type UpdateGroupPayload = Partial<Omit<Group, 'createdAt'>> & { id: number }
 
 export interface AddItemPayload {
 	name: string
 	description: string
-	description_md?: string
-	description_html?: string
+	descriptionMd?: string
+	descriptionHtml?: string
 	statusId?: number | null
 	parentId?: number | null
 	groupId?: number | null
