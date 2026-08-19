@@ -17,7 +17,18 @@ import {
 	TreeSelect,
 } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
-import { IconClock, IconCoin, IconFolder, IconTrash } from '@tabler/icons-react'
+import {
+	IconArrowLeft,
+	IconClock,
+	IconCoin,
+	IconDeviceFloppy,
+	IconEdit,
+	IconFolder,
+	IconPlus,
+	IconTrash,
+	IconTrashX,
+	IconX,
+} from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useBlocker, useNavigate } from '@tanstack/react-router'
 import dayjs from 'dayjs'
@@ -529,10 +540,12 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 					)}
 					{isModal && (
 						<Group justify='flex-end' mt='lg'>
-							<Button variant='default' onClick={goBack}>
+							<Button variant='default' leftSection={<IconX size={16} />} onClick={goBack}>
 								{t('common.cancel')}
 							</Button>
-							<Button type='submit'>{t('common.create')}</Button>
+							<Button type='submit' leftSection={<IconPlus size={16} />}>
+								{t('common.create')}
+							</Button>
 						</Group>
 					)}
 				</Stack>
@@ -558,14 +571,15 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 							<Group>
 								{mode === 'view' ? (
 									<>
+										<Button variant='default' leftSection={<IconArrowLeft size={16} />} onClick={goToPrevious}>
+											{t('common.back')}
+										</Button>
 										<Button
 											variant='default'
+											leftSection={<IconEdit size={16} />}
 											onClick={() => navigate({ to: ROUTES.ITEM_EDIT, params: { id: String(item!.id) } })}
 										>
 											{t('common.edit')}
-										</Button>
-										<Button variant='default' onClick={goToPrevious}>
-											{t('common.back')}
 										</Button>
 										<Button
 											variant='light'
@@ -584,10 +598,15 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 									</>
 								) : (
 									<>
-										<Button variant='default' onClick={goBack}>
+										<Button variant='default' leftSection={<IconX size={16} />} onClick={goBack}>
 											{t('common.cancel')}
 										</Button>
-										<Button type='submit'>{isEdit ? t('common.save') : t('common.create')}</Button>
+										<Button
+											type='submit'
+											leftSection={isEdit ? <IconDeviceFloppy size={16} /> : <IconPlus size={16} />}
+										>
+											{isEdit ? t('common.save') : t('common.create')}
+										</Button>
 									</>
 								)}
 							</Group>
@@ -605,13 +624,19 @@ export function ItemPage({ id, mode, onCreated, onCancel, initialEntityType, ini
 				>
 					<Text>{t('items.unsavedBody')}</Text>
 					<Group justify='flex-end' mt='lg'>
-						<Button variant='default' onClick={() => blocker.reset?.()}>
+						<Button variant='default' leftSection={<IconX size={16} />} onClick={() => blocker.reset?.()}>
 							{t('common.cancel')}
 						</Button>
-						<Button color='red' variant='outline' onClick={() => blocker.proceed?.()}>
+						<Button
+							color='red'
+							variant='outline'
+							leftSection={<IconTrashX size={16} />}
+							onClick={() => blocker.proceed?.()}
+						>
 							{t('common.discard')}
 						</Button>
 						<Button
+							leftSection={<IconDeviceFloppy size={16} />}
 							onClick={() => {
 								blocker.reset?.()
 								form.handleSubmit()
