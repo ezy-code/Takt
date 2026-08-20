@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0
+## v0.2.2
 
 ### English
 
@@ -17,7 +17,7 @@
 - Visual polish
 - And much more
 
-Full commit list: [v0.1.0...v0.2.0](https://github.com/ezy-code/Takt/compare/v0.1.0...v0.2.0)
+Full commit list: [v0.1.0...v0.2.2](https://github.com/ezy-code/Takt/compare/v0.1.0...v0.2.2)
 
 ### Russian
 
@@ -34,7 +34,7 @@ Full commit list: [v0.1.0...v0.2.0](https://github.com/ezy-code/Takt/compare/v0.
 - Улучшения внешнего вида
 - И еще много всего
 
-Полный список коммитов: [v0.1.0...v0.2.0](https://github.com/ezy-code/Takt/compare/v0.1.0...v0.2.0)
+Полный список коммитов: [v0.1.0...v0.2.2](https://github.com/ezy-code/Takt/compare/v0.1.0...v0.2.2)
 
 ## v0.1.0
 
