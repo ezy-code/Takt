@@ -51,6 +51,6 @@
 - Version lives in `package.json`; a release is a version bump
 - Update `CHANGELOG.md` with a `## vX.Y.Z` section (English + Russian) covering changes since the last tag
 - Run `pnpm typecheck` before releasing
-- Commit as `chore: bump version to X.Y.Z`
+- Commit as `build: bump version to X.Y.Z`
 - Create an annotated tag `vX.Y.Z` on the bump commit (`git tag -a vX.Y.Z -m "..."`)
 - Push the commits and tag to GitHub (`git push origin main --tags`) — `.github/workflows/release.yml` builds the Linux distributable and creates the release with notes from `CHANGELOG.md`
