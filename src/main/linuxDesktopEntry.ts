@@ -1,3 +1,4 @@
+import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -84,9 +85,31 @@ function copyIcon(): boolean {
 
 export const getAppImageDesktopEntryPath = (): string => desktopFilePath(launcherDir())
 
+function refreshKdeDesktopCache(): void {
+	if (!isLinux()) return
+	const desktop = process.env.XDG_CURRENT_DESKTOP ?? ''
+	if (process.env.KDE_FULL_SESSION !== 'true' && !desktop.includes('KDE')) return
+	for (const bin of ['kbuildsycoca6', 'kbuildsycoca5']) {
+		try {
+			spawnSync(bin, { stdio: 'ignore' })
+			return
+		} catch {}
+	}
+}
+
+function updateDesktopDatabase(): void {
+	if (!isLinux()) return
+	try {
+		spawnSync('update-desktop-database', [launcherDir()], { stdio: 'ignore' })
+	} catch {}
+}
+
 export const createAppImageDesktopEntry = (): boolean => {
 	if (!isAppImage()) return false
-	return copyIcon() && writeDesktopEntry(launcherDir(), buildLauncherFields())
+	const ok = copyIcon() && writeDesktopEntry(launcherDir(), buildLauncherFields())
+	if (ok) refreshKdeDesktopCache()
+	updateDesktopDatabase()
+	return ok
 }
 
 export const deleteAppImageDesktopEntry = (): boolean => deleteDesktopEntry(launcherDir())
