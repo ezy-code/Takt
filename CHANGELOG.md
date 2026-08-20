@@ -17,6 +17,8 @@
 - Visual polish
 - And much more
 
+Full commit list: [v0.1.0...v0.2.0](https://github.com/ezy-code/Takt/compare/v0.1.0...v0.2.0)
+
 ### Russian
 
 - Задачи и заметки объединены в единую сущность items с parent-child связями
@@ -31,6 +33,8 @@
 - Отдельная dev-база от production
 - Улучшения внешнего вида
 - И еще много всего
+
+Полный список коммитов: [v0.1.0...v0.2.0](https://github.com/ezy-code/Takt/compare/v0.1.0...v0.2.0)
 
 ## v0.1.0
 
