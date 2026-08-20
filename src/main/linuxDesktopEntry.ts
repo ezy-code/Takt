@@ -83,8 +83,6 @@ function copyIcon(): boolean {
 	}
 }
 
-export const getAppImageDesktopEntryPath = (): string => desktopFilePath(launcherDir())
-
 function refreshKdeDesktopCache(): void {
 	if (!isLinux()) return
 	const desktop = process.env.XDG_CURRENT_DESKTOP ?? ''
@@ -129,16 +127,24 @@ function getAppImageDesktopEntryStatus(): { supported: boolean; enabled: boolean
 	return { supported: true, enabled: value === null ? null : value === '1' }
 }
 
+function execLineOf(dir: string): string | null {
+	const fp = desktopFilePath(dir)
+	if (!fs.existsSync(fp)) return null
+	return (
+		fs
+			.readFileSync(fp, 'utf-8')
+			.split('\n')
+			.find((l) => l.startsWith('Exec=')) ?? null
+	)
+}
+
 function ensureAppImageDesktopEntryUpToDate(): void {
-	const fp = getAppImageDesktopEntryPath()
-	const execLine = fs.existsSync(fp)
-		? fs
-				.readFileSync(fp, 'utf-8')
-				.split('\n')
-				.find((l) => l.startsWith('Exec='))
-		: null
-	if (!execLine?.includes(process.env.APPIMAGE ?? '')) {
+	const appImage = process.env.APPIMAGE ?? ''
+	if (!execLineOf(launcherDir())?.includes(appImage)) {
 		createAppImageDesktopEntry()
+	}
+	if (isLinuxAutostartEnabled() && !execLineOf(autostartDir())?.includes(appImage)) {
+		createLinuxAutostartEntry()
 	}
 }
 
