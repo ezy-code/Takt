@@ -27,7 +27,10 @@ jobs:
       - name: Build dependencies
         run: pnpm build
 
+      - name: Extract release notes
+        run: awk -v ver="## $GITHUB_REF_NAME" '$0==ver{f=1;next} f&&/^## /{exit} f' CHANGELOG.md > notes.md
+
       - name: Build and Publish Electron App
-        run: pnpm exec electron-builder --linux --publish always
+        run: pnpm exec electron-builder --linux --publish always -c.releaseInfo.releaseNotesFile=notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
